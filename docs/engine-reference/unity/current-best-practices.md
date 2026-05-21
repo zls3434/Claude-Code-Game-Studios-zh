@@ -1,39 +1,41 @@
-# Unity 6.3 LTS — Current Best Practices
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-**Last verified:** 2026-02-13
+# Unity 6.3 LTS — 当前最佳实践
 
-Modern Unity 6 patterns that may not be in the LLM's training data.
-These are production-ready recommendations as of Unity 6.3 LTS.
+**最后验证时间：** 2026-02-13
 
----
-
-## Project Setup
-
-### Use Unity 6.3 LTS for Production
-- **Tech Stream** (6.4+): Latest features, less stable
-- **LTS** (6.3): Production-ready, 2-year support (until Dec 2027)
-
-### Choose the Right Render Pipeline
-- **URP (Universal)**: Mobile, cross-platform, good performance ✅ Recommended for most games
-- **HDRP (High Definition)**: High-end PC/console, photorealistic
-- **Built-in**: Deprecated, avoid for new projects
+LLM 训练数据中可能不包含的现代 Unity 6 模式。
+以下为 Unity 6.3 LTS 的生产就绪建议。
 
 ---
 
-## Scripting
+## 项目设置
 
-### Use C# 9+ Features (Unity 6 Supports C# 9)
+### 生产环境使用 Unity 6.3 LTS
+- **Tech Stream**（6.4+）：最新特性，稳定性较低
+- **LTS**（6.3）：生产就绪，两年支持期（至 2027 年 12 月）
+
+### 选择合适的渲染管线
+- **URP（通用渲染管线）**：移动端、跨平台、性能良好 ✅ 推荐大多数游戏使用
+- **HDRP（高清渲染管线）**：高端 PC/主机，照片级真实感
+- **Built-in（内置）**：已弃用，新项目避免使用
+
+---
+
+## 脚本编写
+
+### 使用 C# 9+ 特性（Unity 6 支持 C# 9）
 
 ```csharp
-// ✅ Record types for data
+// ✅ 数据使用 Record 类型
 public record PlayerData(string Name, int Level, float Health);
 
-// ✅ Init-only properties
+// ✅ Init-only 属性
 public class Config {
     public string GameMode { get; init; }
 }
 
-// ✅ Pattern matching
+// ✅ 模式匹配
 var result = enemy switch {
     Boss boss => boss.Enrage(),
     Minion minion => minion.Flee(),
@@ -41,20 +43,20 @@ var result = enemy switch {
 };
 ```
 
-### Async/Await for Asset Loading
+### 资源加载使用 Async/Await
 
 ```csharp
-// ✅ Modern async pattern
+// ✅ 现代异步模式
 public async Task<GameObject> LoadEnemyAsync(string key) {
     var handle = Addressables.LoadAssetAsync<GameObject>(key);
     return await handle.Task;
 }
 ```
 
-### Use Source Generators for Serialization (Unity 6+)
+### 序列化使用 Source Generator（Unity 6+）
 
 ```csharp
-// ✅ Source-generated serialization (faster, less reflection)
+// ✅ 源生成序列化（更快速，更少反射）
 [GenerateSerializer]
 public partial struct PlayerStats : IComponentData {
     public int Health;
@@ -64,12 +66,12 @@ public partial struct PlayerStats : IComponentData {
 
 ---
 
-## DOTS/ECS (Production-Ready in Unity 6.3 LTS)
+## DOTS/ECS（Unity 6.3 LTS 生产就绪）
 
-### Use ISystem (Not ComponentSystem)
+### 使用 ISystem（而非 ComponentSystem）
 
 ```csharp
-// ✅ Modern unmanaged ISystem (Burst-compatible)
+// ✅ 现代非托管 ISystem（兼容 Burst）
 public partial struct MovementSystem : ISystem {
     public void OnCreate(ref SystemState state) { }
 
@@ -82,10 +84,10 @@ public partial struct MovementSystem : ISystem {
 }
 ```
 
-### Use IJobEntity for Parallel Jobs
+### 使用 IJobEntity 进行并行 Job
 
 ```csharp
-// ✅ IJobEntity (replaces IJobForEach)
+// ✅ IJobEntity（替代 IJobForEach）
 [BurstCompile]
 public partial struct DamageJob : IJobEntity {
     public float DeltaTime;
@@ -95,19 +97,19 @@ public partial struct DamageJob : IJobEntity {
     }
 }
 
-// Schedule it
+// 调度执行
 var job = new DamageJob { DeltaTime = SystemAPI.Time.DeltaTime };
 job.ScheduleParallel();
 ```
 
 ---
 
-## Input
+## 输入
 
-### Use Input System Package (Not Legacy Input)
+### 使用 Input System 包（而非旧版 Input）
 
 ```csharp
-// ✅ Input Actions (rebindable, cross-platform)
+// ✅ Input Actions（可重绑定、跨平台）
 using UnityEngine.InputSystem;
 
 public class PlayerInput : MonoBehaviour {
@@ -123,16 +125,16 @@ public class PlayerInput : MonoBehaviour {
 }
 ```
 
-Create Input Actions asset in editor, generate C# class via inspector.
+在编辑器中创建 Input Actions 资源，通过 Inspector 生成 C# 类。
 
 ---
 
 ## UI
 
-### Use UI Toolkit for Runtime UI (Production-Ready in Unity 6)
+### 运行时 UI 使用 UI Toolkit（Unity 6 中生产就绪）
 
 ```csharp
-// ✅ UI Toolkit (replaces UGUI for new projects)
+// ✅ UI Toolkit（新项目替代 UGUI）
 using UnityEngine.UIElements;
 
 public class MainMenu : MonoBehaviour {
@@ -143,62 +145,62 @@ public class MainMenu : MonoBehaviour {
         playButton.clicked += StartGame;
 
         var scoreLabel = root.Q<Label>("score");
-        scoreLabel.text = $"High Score: {PlayerPrefs.GetInt("HighScore")}";
+        scoreLabel.text = $"最高分：{PlayerPrefs.GetInt("HighScore")}";
     }
 }
 ```
 
-**UXML** (UI structure) + **USS** (styling) = HTML/CSS-like workflow.
+**UXML**（UI 结构）+ **USS**（样式）= 类似 HTML/CSS 的工作流。
 
 ---
 
-## Asset Management
+## 资源管理
 
-### Use Addressables (Not Resources)
+### 使用 Addressables（而非 Resources）
 
 ```csharp
-// ✅ Addressables (async, memory-efficient)
+// ✅ Addressables（异步、内存高效）
 using UnityEngine.AddressableAssets;
 
 public async Task SpawnEnemyAsync(string enemyKey) {
     var handle = Addressables.InstantiateAsync(enemyKey);
     var enemy = await handle.Task;
 
-    // Cleanup: release when destroyed
+    // 清理：销毁时释放
     Addressables.ReleaseInstance(enemy);
 }
 ```
 
-**Benefits:** Async loading, remote content delivery, better memory control.
+**优势：** 异步加载、远程内容分发、更好的内存控制。
 
 ---
 
-## Rendering
+## 渲染
 
-### Use RenderGraph API for Custom Passes (URP/HDRP)
+### 自定义 Pass 使用 RenderGraph API（URP/HDRP）
 
 ```csharp
-// ✅ RenderGraph API (Unity 6+)
+// ✅ RenderGraph API（Unity 6+）
 public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData) {
     using (var builder = renderGraph.AddRasterRenderPass<PassData>("My Pass", out var passData)) {
         // Setup pass
         builder.SetRenderFunc((PassData data, RasterGraphContext context) => {
-            // Execute commands
+            // 执行命令
         });
     }
 }
 ```
 
-**Replaces:** Old `CommandBuffer.Execute()` pattern.
+**替代：** 旧的 `CommandBuffer.Execute()` 模式。
 
 ---
 
-## Performance
+## 性能
 
-### Use Burst Compiler + Jobs System
+### 使用 Burst 编译器 + Jobs System
 
 ```csharp
-// ✅ Burst-compiled job (massive performance gain)
+// ✅ Burst 编译的 Job（性能大幅提升）
 [BurstCompile]
 struct ParticleUpdateJob : IJobParallelFor {
     public NativeArray<float3> Positions;
@@ -210,7 +212,7 @@ struct ParticleUpdateJob : IJobParallelFor {
     }
 }
 
-// Schedule
+// 调度执行
 var job = new ParticleUpdateJob {
     Positions = positions,
     Velocities = velocities,
@@ -219,14 +221,14 @@ var job = new ParticleUpdateJob {
 job.Schedule(positions.Length, 64).Complete();
 ```
 
-**20-100x faster** than equivalent C# code.
+**比等效 C# 代码快 20-100 倍。**
 
 ---
 
-### Use GPU Instancing for Repeated Objects
+### 重复对象使用 GPU Instancing
 
 ```csharp
-// ✅ GPU Instancing (thousands of objects, minimal draw calls)
+// ✅ GPU Instancing（数千个对象，极少的 Draw Call）
 Graphics.RenderMeshInstanced(
     new RenderParams(material),
     mesh,
@@ -237,29 +239,29 @@ Graphics.RenderMeshInstanced(
 
 ---
 
-## Memory Management
+## 内存管理
 
-### Use NativeContainers (Not Managed Arrays in Jobs)
+### 使用 NativeContainer（而非 Job 中的托管数组）
 
 ```csharp
-// ✅ NativeArray (no GC, Burst-compatible)
+// ✅ NativeArray（无 GC，兼容 Burst）
 NativeArray<int> data = new NativeArray<int>(1000, Allocator.TempJob);
-// ... use in job
-data.Dispose(); // Manual cleanup required
+// ... 在 Job 中使用
+data.Dispose(); // 需要手动清理
 
-// ✅ Or use using statement
+// ✅ 或使用 using 语句
 using var data = new NativeArray<int>(1000, Allocator.TempJob);
-// Auto-disposed
+// 自动释放
 ```
 
 ---
 
-## Multiplayer
+## 多人联机
 
-### Use Netcode for GameObjects (Official)
+### 使用 Netcode for GameObjects（官方方案）
 
 ```csharp
-// ✅ Unity's official netcode
+// ✅ Unity 官方 Netcode
 using Unity.Netcode;
 
 public class Player : NetworkBehaviour {
@@ -272,23 +274,23 @@ public class Player : NetworkBehaviour {
 }
 ```
 
-**Replaces:** UNet (deprecated), MLAPI (renamed to Netcode for GameObjects).
+**替代：** UNet（已弃用）、MLAPI（已更名为 Netcode for GameObjects）。
 
 ---
 
-## Testing
+## 测试
 
-### Use Unity Test Framework (NUnit-based)
+### 使用 Unity Test Framework（基于 NUnit）
 
 ```csharp
-// ✅ Play Mode Test
+// ✅ Play Mode 测试
 [UnityTest]
 public IEnumerator Player_TakesDamage_HealthDecreases() {
     var player = new GameObject().AddComponent<Player>();
     player.Health = 100;
 
     player.TakeDamage(25);
-    yield return null; // Wait one frame
+    yield return null; // 等待一帧
 
     Assert.AreEqual(75, player.Health);
 }
@@ -296,17 +298,17 @@ public IEnumerator Player_TakesDamage_HealthDecreases() {
 
 ---
 
-## Debugging
+## 调试
 
-### Use Logging Best Practices
+### 使用日志最佳实践
 
 ```csharp
-// ✅ Structured logging (Unity 6+)
+// ✅ 结构化日志（Unity 6+）
 using UnityEngine;
 
-Debug.Log($"Player {playerName} scored {score} points");
+Debug.Log($"玩家 {playerName} 得分 {score}");
 
-// ✅ Conditional compilation for debug code
+// ✅ 调试代码条件编译
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     Debug.DrawRay(transform.position, direction, Color.red);
 #endif
@@ -314,21 +316,21 @@ Debug.Log($"Player {playerName} scored {score} points");
 
 ---
 
-## Summary: Unity 6 Tech Stack
+## 总结：Unity 6 技术栈
 
-| Feature | Use This (2026) | Avoid This (Legacy) |
+| 功能 | 用这个（2026） | 避免这个（旧版） |
 |---------|------------------|----------------------|
-| **Input** | Input System package | `Input` class |
-| **UI** | UI Toolkit | UGUI (Canvas) |
+| **输入** | Input System 包 | `Input` 类 |
+| **UI** | UI Toolkit | UGUI（Canvas） |
 | **ECS** | ISystem + IJobEntity | ComponentSystem |
-| **Rendering** | URP + RenderGraph | Built-in pipeline |
-| **Assets** | Addressables | Resources |
-| **Jobs** | Burst + IJobParallelFor | Coroutines for heavy work |
-| **Multiplayer** | Netcode for GameObjects | UNet |
+| **渲染** | URP + RenderGraph | Built-in 管线 |
+| **资源** | Addressables | Resources |
+| **Job** | Burst + IJobParallelFor | 用 Coroutine 做重活 |
+| **多人联机** | Netcode for GameObjects | UNet |
 
 ---
 
-**Sources:**
+**来源：**
 - https://docs.unity3d.com/6000.0/Documentation/Manual/BestPracticeGuides.html
 - https://docs.unity3d.com/Packages/com.unity.entities@1.3/manual/index.html
 - https://docs.unity3d.com/Packages/com.unity.inputsystem@1.11/manual/index.html

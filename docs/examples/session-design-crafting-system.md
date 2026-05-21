@@ -1,262 +1,264 @@
-# Example Session: Designing the Crafting System
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-**Context:** Solo indie dev, week 2 of project, needs to design the crafting system mentioned in the game pillars.
+# 示例会话：设计合成系统
 
-**Starting State:**
-- Game concept and pillars defined
-- Engine set up (Godot 4.6)
-- Core combat system designed but not implemented yet
-- Pillar 2: "Emergent Discovery Through Experimentation"
+**上下文：** 独立开发者，项目第 2 周，需要设计游戏支柱中提到的合成系统。
 
-**Session Duration:** ~45 minutes
-**Turns:** 12
-**Outcome:** Complete crafting system GDD ready for implementation
+**初始状态：**
+- 游戏概念和支柱已定义
+- 引擎已搭建（Godot 4.6）
+- 核心战斗系统已设计但尚未实现
+- 支柱 2："通过实验发现涌现玩法"
 
----
-
-## Turn 1: User Initiates Design
-
-**User:**
-> I need to design the crafting system. Pillar 2 is "Emergent Discovery Through Experimentation", so I want players to discover recipes by trying combinations.
-
-## Turn 2: Agent Asks Clarifying Questions
-
-**Agent (game-designer):**
-> I'll help design the crafting system with discovery at its core. Before proposing mechanics, I need to understand your vision:
->
-> 1. **Discovery Method**: Should recipes be pure trial-and-error, or should there be hints/clues to guide players?
-> 2. **Failure Punishment**: When players try an invalid combination, what happens?
->    - Materials completely lost (harsh)
->    - Materials partially refunded (moderate)
->    - No cost to experiment (forgiving)
-> 3. **Progression**: Does crafting skill improve over time? If so, what does higher skill unlock?
-> 4. **Scope**: How central is crafting to the game? Core pillar feature or supporting system?
-> 5. **Reference Games**: Any crafting systems you love or hate? (Minecraft, Terraria, Stardew Valley, Potion Craft?)
-
-## Turn 3: User Provides Context
-
-**User:**
-> 1. I want hints that unlock gradually - start with pure discovery, earn hints through skill
-> 2. Moderate punishment - waste materials but gain partial XP
-> 3. Yes, skill unlocks hint system and improves success rates
-> 4. Core feature - one of the three main loops (combat, exploration, crafting)
-> 5. Love Potion Craft's deduction mechanic. Hate Minecraft wikis being mandatory.
-
-## Turn 4: Agent Presents Options
-
-**Agent:**
-> Perfect context! Based on "emergent discovery" + "deduction over wikis" + "Potion Craft inspiration", here are three mechanical approaches:
->
-> **Option A: Pure Randomized Discovery**
-> - **Mechanics**: Try any 2-4 ingredient combo, roll for success based on compatibility
-> - **Hint System**: None - players document discoveries manually
-> - **Pros**:
->   - Maximum emergent discovery
->   - Community can share findings without breaking core loop
->   - Aligns strongly with "experimentation" pillar
-> - **Cons**:
->   - High frustration for completionists
->   - Low skill expression (mostly RNG)
->   - Players may feel "wiki is required" despite your intent
-> - **Aligns with Pillars**: ✅✅ Emergent Discovery, ⚠️ Meaningful Choices (randomness reduces agency)
->
-> **Option B: Tag-Based Deduction System (Potion Craft-style)**
-> - **Mechanics**: Each ingredient has hidden "tags" (Fire, Water, Healing, Damage, etc.)
->   - Recipes require specific tag combinations
->   - At Skill 0: No tags visible, pure experimentation
->   - At Skill 5: Can inspect items to see 1 tag
->   - At Skill 10: See 2 tags, etc.
-> - **Hint System**: Tags ARE the hint system, unlocked by skill
-> - **Pros**:
->   - Rewards observation and pattern recognition (skill expression!)
->   - Progressive scaffolding - accessible to all player types
->   - Creates "aha!" moments when patterns click
->   - No wiki needed - everything discoverable in-game
-> - **Cons**:
->   - More complex to implement (tag system + UI)
->   - Requires careful tag design to avoid degeneracy
-> - **Aligns with Pillars**: ✅✅ Emergent Discovery, ✅✅ Meaningful Choices
->
-> **Option C: Ingredient Compatibility Matrix**
-> - **Mechanics**: Each ingredient pairs well/poorly with others
->   - Success rate = compatibility score
->   - Skill 0: No compatibility shown, ~30% base success
->   - Higher skill: See color-coded compatibility (red/yellow/green)
-> - **Hint System**: Visual compatibility indicators unlock with skill
-> - **Pros**:
->   - Simple to implement and understand
->   - Clear progression arc (skill = more information)
->   - Feels fair (players understand why they failed)
-> - **Cons**:
->   - Less emergent than tag system (more prescriptive)
->   - Optimal recipes more obvious once you have hints
-> - **Aligns with Pillars**: ✅ Emergent Discovery, ✅ Meaningful Choices
->
-> **My Recommendation: Option B (Tag-Based Deduction)**
->
-> **Reasoning:**
-> - It's the only option that creates TRUE emergent discovery through systems interaction
-> - Players develop mastery by learning tag patterns, not memorizing recipes
-> - The progressive reveal (tags unlock with skill) serves both Explorers (discovery) and Achievers (progression)
-> - Potion Craft proved this works and is satisfying
-> - Avoids wiki-dependency because the deduction is solvable in-game
->
-> Which option resonates with your vision? Or should I explore a hybrid?
-
-## Turn 5: User Decides with Modification
-
-**User:**
-> Option B feels perfect, but I want to add: failed attempts should give hints about which tags were WRONG, not just which were right. Like "You added Fire, but this recipe needs Water instead."
-
-## Turn 6: Agent Incorporates Feedback and Drafts
-
-**Agent:**
-> Excellent modification! That adds a deduction game on TOP of the tag discovery. Now failed attempts aren't just "waste" - they're valuable information.
->
-> Let me draft the **Overview** and **Player Fantasy** sections:
->
-> ---
->
-> ## Overview
->
-> The crafting system uses a tag-based deduction mechanic where players experiment with ingredient combinations to discover recipes. Each ingredient has 1-3 hidden tags (Fire, Water, Earth, Air, Healing, Damage, Poison, etc.). Recipes require specific tag combinations. Failed attempts waste materials but provide feedback ("This needs Water, not Fire") that teaches players tag patterns. As crafting skill increases, players unlock the ability to inspect ingredients to see their tags directly, transforming pure experimentation into informed deduction.
->
-> ## Player Fantasy
->
-> "I'm an alchemist-scientist discovering nature's hidden patterns. Each failed potion teaches me something new about how elements interact. Over time, I develop intuition - I can look at a mushroom and KNOW it contains Earth and Poison tags before even testing it. I don't need recipes from a wiki; I understand the RULES that generate recipes, and I can create my own solutions."
->
-> **Target MDA Aesthetics**:
-> - Discovery (primary): Uncovering hidden tag patterns
-> - Challenge (secondary): Deduction puzzle
-> - Expression (tertiary): Creating custom recipes once rules are mastered
->
-> ---
->
-> Does this capture your intent? Should I continue to **Detailed Rules**?
-
-## Turn 7: User Approves and Requests Next Section
-
-**User:**
-> Yes, that's perfect! Continue to Detailed Rules.
-
-## Turn 8: Agent Drafts Rules, Asks About Edge Case
-
-**Agent:**
-> Drafting Detailed Rules...
->
-> ---
->
-> ## Detailed Rules
->
-> ### Core Loop
-> 1. Player selects 2-4 ingredients from inventory
-> 2. Player activates crafting station
-> 3. System checks ingredient tags against recipe database
-> 4. **If exact tag match**: Success! Recipe learned, item created, full XP awarded
-> 5. **If partial match** (some tags correct): Failure. Feedback: "Close! This needs [missing tag]." Materials consumed, 40% XP awarded, recipe marked as "Discovered (Incomplete)"
-> 6. **If no match**: Failure. Feedback: "Incompatible. Try replacing [wrong tag] with [needed tag]." Materials consumed, 15% XP awarded
->
-> ### Tag System
-> - 12 core tags: Fire, Water, Earth, Air, Healing, Damage, Poison, Light, Dark, Metal, Plant, Magic
-> - Each ingredient has 1-3 tags (simple ingredients have 1, rare ingredients have 3)
-> - Each recipe requires 2-6 total tags (basic potions need 2, advanced need 6)
-> - Tag combinations must be unique (no two recipes with identical tag sets)
->
-> ### Skill Progression
-> - Skill 0-4: No inspection ability. Pure experimentation.
-> - Skill 5-9: Can inspect ingredients to see 1 tag
-> - Skill 10-14: Can see 2 tags per ingredient
-> - Skill 15+: Can see all tags per ingredient
->
-> ### XP Gain
-> ```
-> success_xp = base_xp * recipe_complexity^1.3
-> failure_xp_partial = success_xp * 0.40
-> failure_xp_none = success_xp * 0.15
-> ```
->
-> Where `recipe_complexity` = number of unique tags required (2-6)
->
-> ---
->
-> **Question before I continue:** What happens if a player discovers a tag combination that DOESN'T match any recipe in the database? Should we:
-> A) Allow it and create "junk items" (player wasted materials)
-> B) Always provide feedback steering toward valid recipes
-> C) Procedurally generate a minor potion for any valid tag combo not in the DB
->
-> This affects the "experimentation" feel - option A is harsh but realistic, option C rewards all experimentation.
-
-## Turn 9: User Resolves Edge Case
-
-**User:**
-> Option C - let's procedurally generate minor potions. If someone finds Fire+Water (not a designed recipe), give them "Warm Water" that restores 5 HP. Rewards experimentation even when "off the beaten path."
-
-## Turn 10: Agent Completes Remaining Sections
-
-**Agent:**
-> Perfect! That keeps experimentation always rewarding. Updating rules with that edge case...
->
-> [Agent continues drafting Formulas, Edge Cases, Dependencies, Tuning Knobs, and Acceptance Criteria sections, showing each and incorporating minor feedback]
->
-> [After all sections complete]
->
-> Complete crafting system GDD ready. Here's the summary:
->
-> **8 Required Sections:**
-> ✅ Overview - Tag-based deduction system
-> ✅ Player Fantasy - Alchemist-scientist discovering patterns
-> ✅ Detailed Rules - Core loop with tag matching and feedback system
-> ✅ Formulas - XP curves, success rates, skill thresholds
-> ✅ Edge Cases - Procedural minor potions for non-recipe combos, inventory full, skill at max
-> ✅ Dependencies - Requires inventory system, integrates with progression system
-> ✅ Tuning Knobs - XP rates, skill thresholds, tag count per ingredient, feedback verbosity
-> ✅ Acceptance Criteria - Players discover 10 recipes in 30 minutes without wiki, skill progression feels meaningful
->
-> **Delegations Made:**
-> - Consulted `systems-designer` for XP curve formula validation
-> - Consulted `economy-designer` for material cost balancing
->
-> May I write this to `design/gdd/crafting-system.md`?
-
-## Turn 11: User Approves Writing
-
-**User:**
-> Yes, write it!
-
-## Turn 12: Agent Writes File and Offers Next Steps
-
-**Agent:**
-> ✅ Created `design/gdd/crafting-system.md`
->
-> **Next Steps:**
-> 1. Run `/design-review design/gdd/crafting-system.md` to validate against 8-section standard
-> 2. Create data file structure in `assets/data/` for ingredients and recipes
-> 3. When ready to implement, use `/team-combat` pattern but for crafting (game-designer → gameplay-programmer → ui-programmer → qa-tester)
->
-> Would you like me to run the design review now, or would you prefer to read it first?
+**会话时长：** 约 45 分钟
+**轮次：** 12
+**结果：** 完整的合成系统 GDD，准备就绪可供实现
 
 ---
 
-## Session Summary
+## 第 1 轮：用户发起设计
 
-**What Worked Well:**
-- Agent asked clarifying questions upfront instead of guessing
-- Presented 3 distinct options with clear pros/cons and pillar alignment
-- User's modification ("wrong tag feedback") was incorporated immediately
-- Edge case (non-recipe combos) was flagged proactively, not assumed
-- Each section was shown for approval before moving to next
-- Explicit permission requested before writing file
+**用户：**
+> 我需要设计合成系统。支柱 2 是"通过实验发现涌现玩法"，所以我希望玩家通过尝试各种组合来发现配方。
 
-**Key Collaborative Moments:**
-- Turn 2: Agent asked 5 questions to understand vision
-- Turn 4: Agent presented 3 options, made recommendation but deferred to user
-- Turn 5: User modified recommended option, agent incorporated it
-- Turn 8: Agent caught edge case and asked rather than assuming
-- Turn 9: User's choice (procedural potions) changed design direction
-- Turn 10: Agent requested approval before writing file
+## 第 2 轮：Agent 提出澄清性问题
 
-**Files Created:**
-- `design/gdd/crafting-system.md` (complete 8-section GDD)
+**Agent（game-designer）：**
+> 我将帮助你设计以发现为核心的合成系统。在提出机制之前，我需要了解你的愿景：
+>
+> 1. **发现方式**：配方应该是纯粹的试错，还是应该有线索/提示引导玩家？
+> 2. **失败惩罚**：当玩家尝试无效组合时会发生什么？
+>    - 材料完全损失（严厉）
+>    - 材料部分返还（适中）
+>    - 实验无成本（宽容）
+> 3. **进阶**：合成技能会随时间提升吗？如果是，更高技能能解锁什么？
+> 4. **范围**：合成对游戏有多核心？是核心支柱特性还是辅助系统？
+> 5. **参考游戏**：有哪些你喜欢的或讨厌的合成系统？（Minecraft、Terraria、Stardew Valley、Potion Craft？）
 
-**Context Usage:** ~35% (estimated)
-**User Satisfaction:** High - user made all creative decisions, agent provided expert guidance
+## 第 3 轮：用户提供上下文
+
+**用户：**
+> 1. 我希望提示逐步解锁 —— 从纯发现开始，通过技能获取提示
+> 2. 适中的惩罚 —— 浪费材料但获得部分 XP
+> 3. 是的，技能解锁提示系统并提高成功率
+> 4. 核心功能 —— 三大主循环之一（战斗、探索、合成）
+> 5. 喜欢 Potion Craft 的推导机制。讨厌 Minecraft 必须查 wiki。
+
+## 第 4 轮：Agent 呈现选项
+
+**Agent：**
+> 完美的上下文！基于"涌现发现"+"推导优先于查 wiki"+"Potion Craft 启发"，以下是三个机制方案：
+>
+> **方案 A：纯随机发现**
+> - **机制**：尝试任意 2-4 种材料组合，根据兼容性掷骰决定成功
+> - **提示系统**：无 —— 玩家手动记录发现
+> - **优点**：
+>   - 最大化涌现发现
+>   - 社区可以分享发现而不破坏核心循环
+>   - 与"实验"支柱高度一致
+> - **缺点**：
+>   - 对追求完整体验的玩家挫败感强
+>   - 低技能表达（主要靠 RNG）
+>   - 玩家可能仍然觉得"需要查 wiki"，违背你的意图
+> - **与支柱对齐度**：✅✅ 涌现发现，⚠️ 有意义的选择（随机性降低自主感）
+>
+> **方案 B：标签式推导系统（Potion Craft 风格）**
+> - **机制**：每种材料具有隐藏的"标签"（火、水、治疗、伤害等）
+>   - 配方需要特定的标签组合
+>   - 技能 0：无标签可见，纯实验
+>   - 技能 5：可以检视物品看到 1 个标签
+>   - 技能 10：看到 2 个标签，以此类推
+> - **提示系统**：标签本身就是提示系统，通过技能解锁
+> - **优点**：
+>   - 奖励观察和模式识别（技能表达！）
+>   - 渐进式支撑 —— 对所有类型玩家都友好
+>   - 当模式被理解时创造"顿悟！"时刻
+>   - 不需要 wiki —— 一切都可以在游戏内发现
+> - **缺点**：
+>   - 实现更复杂（标签系统 + UI）
+>   - 需要精心设计标签以避免退化
+> - **与支柱对齐度**：✅✅ 涌现发现，✅✅ 有意义的选择
+>
+> **方案 C：材料兼容性矩阵**
+> - **机制**：每种材料与其他材料有好的/差的配对关系
+>   - 成功率 = 兼容性分数
+>   - 技能 0：无兼容性显示，约 30% 基础成功率
+>   - 更高技能：看到颜色编码的兼容性（红/黄/绿）
+> - **提示系统**：视觉效果化的兼容性指标，随技能解锁
+> - **优点**：
+>   - 实现和理解简单
+>   - 清晰的进阶曲线（技能 = 更多信息）
+>   - 感觉公平（玩家理解为什么失败）
+> - **缺点**：
+>   - 不如标签系统涌现性强（更规定性）
+>   - 一旦获得提示，最优配方更明显
+> - **与支柱对齐度**：✅ 涌现发现，✅ 有意义的选择
+>
+> **我的推荐：方案 B（标签式推导）**
+>
+> **理由：**
+> - 这是唯一能通过系统交互创造真正涌现发现的方案
+> - 玩家通过学习标签模式来获得掌握感，而非死记配方
+> - 渐进式揭示（标签随技能解锁）同时服务于探索者（发现）和成就者（进阶）
+> - Potion Craft 证明了这可行且令人满意
+> - 避免了对 wiki 的依赖，因为推导是可以在游戏内完成的
+>
+> 哪个方案与你愿景产生共鸣？还是我应该探索一种混合方案？
+
+## 第 5 轮：用户决定并修改
+
+**用户：**
+> 方案 B 感觉很完美，但我想添加一点：失败的尝试应该给出哪些标签是"错误的"提示，而不仅仅是哪些是正确的。比如"你加了火，但这个配方需要水"。
+
+## 第 6 轮：Agent 融入反馈并起草
+
+**Agent：**
+> 出色的修改！这在标签发现之上增加了一个推导游戏。现在失败的尝试不仅仅是"浪费"——它们变成了有价值的信息。
+>
+> 让我起草**概述**和**玩家幻想**两节：
+>
+> ---
+>
+> ## 概述
+>
+> 合成系统使用基于标签的推导机制，玩家通过实验材料组合来发现配方。每种材料具有 1-3 个隐藏标签（火、水、土、风、治疗、伤害、毒、等）。配方需要特定的标签组合。失败的尝试会浪费材料，但提供反馈（"这需要水，而不是火"），教玩家认识标签模式。随着合成技能的提升，玩家解锁检视材料直接查看标签的能力，将纯粹的实验转变为有信息的推导。
+>
+> ## 玩家幻想
+>
+> "我是一名发现自然隐秘规律的炼金科学家。每次失败的药剂都教会我关于元素如何相互作用的新知识。随着时间推移，我培养出直觉 —— 我能在测试之前就看着蘑菇就知道它包含土和毒标签。我不需要来自 wiki 的配方；我理解生成配方的规则，可以创造自己的解决方案。"
+>
+> **目标 MDA 美学**：
+> - 发现（主要）：揭示隐藏的标签模式
+> - 挑战（次要）：推导谜题
+> - 表达（第三层）：一旦掌握规则后创造自定义配方
+>
+> ---
+>
+> 这是否表达了你的意图？我应该继续写**详细规则**吗？
+
+## 第 7 轮：用户批准并请求下一节
+
+**用户：**
+> 是的，这太完美了！继续写详细规则。
+
+## 第 8 轮：Agent 起草规则，询问边界情况
+
+**Agent：**
+> 正在起草详细规则……
+>
+> ---
+>
+> ## 详细规则
+>
+> ### 核心循环
+> 1. 玩家从背包中选择 2-4 种材料
+> 2. 玩家激活合成站
+> 3. 系统将材料标签与配方数据库比对
+> 4. **如果精确标签匹配**：成功！学会配方，创建物品，获得完整 XP
+> 5. **如果部分匹配**（部分标签正确）：失败。反馈："接近了！还需要 [缺失标签]。"材料消耗，获得 40% XP，配方标记为"已发现（不完整）"
+> 6. **如果不匹配**：失败。反馈："不兼容。尝试将 [错误标签] 替换为 [所需标签]。"材料消耗，获得 15% XP
+>
+> ### 标签系统
+> - 12 个核心标签：火、水、土、风、治疗、伤害、毒、光、暗、金属、植物、魔法
+> - 每种材料有 1-3 个标签（简单材料 1 个，稀有材料 3 个）
+> - 每个配方需要 2-6 个总标签（基础药剂 2 个，高级 6 个）
+> - 标签组合必须唯一（没有两个配方的标签集完全相同）
+>
+> ### 技能进阶
+> - 技能 0-4：无检视能力。纯实验。
+> - 技能 5-9：可检视材料看到 1 个标签
+> - 技能 10-14：每种材料可看到 2 个标签
+> - 技能 15+：每种材料可看到所有标签
+>
+> ### XP 获取
+> ```
+> 成功XP = 基础XP × 配方复杂度^1.3
+> 失败XP_部分匹配 = 成功XP × 0.40
+> 失败XP_不匹配 = 成功XP × 0.15
+> ```
+>
+> 其中 `配方复杂度` = 所需唯一标签数（2-6）
+>
+> ---
+>
+> **继续之前的问题：** 如果玩家发现了一个标签组合，但数据库中没有任何配方匹配，会发生什么？我们应该：
+> A) 允许并创建"垃圾物品"（玩家浪费了材料）
+> B) 始终提供指向有效配方的引导反馈
+> C) 为数据库中没有的任何有效标签组合程序化生成一个小药剂
+>
+> 这影响"实验"的感觉 —— 方案 A 严厉但真实，方案 C 奖励所有实验行为。
+
+## 第 9 轮：用户解决边界情况
+
+**用户：**
+> 方案 C —— 让我们程序化生成小型药剂。如果某人找到火+水（不是设计好的配方），给他们一瓶"温水"，恢复 5 HP。即使偏离常规路线也奖励实验。
+
+## 第 10 轮：Agent 完成剩余各节
+
+**Agent：**
+> 完美！这让实验始终有回报。用这个边界情况更新规则……
+>
+> [Agent 继续起草公式、边界情况、依赖、可调参数和验收标准各节，展示每一节并融入细微反馈]
+>
+> [所有节完成后]
+>
+> 完整的合成系统 GDD 已就绪。以下是摘要：
+>
+> **8 个必需节：**
+> ✅ 概述 —— 标签式推导系统
+> ✅ 玩家幻想 —— 发现模式的炼金科学家
+> ✅ 详细规则 —— 核心循环，带标签匹配和反馈系统
+> ✅ 公式 —— XP 曲线、成功率、技能阈值
+> ✅ 边界情况 —— 非配方组合的程序化小型药剂、背包满、技能已满
+> ✅ 依赖 —— 需要背包系统，与进度系统集成
+> ✅ 可调参数 —— XP 倍率、技能阈值、每种材料的标签数、反馈详细程度
+> ✅ 验收标准 —— 玩家在 30 分钟内不查 wiki 发现 10 个配方，技能进阶有意义
+>
+> **已做出的委托：**
+> - 咨询了 `systems-designer` 验证 XP 曲线公式
+> - 咨询了 `economy-designer` 平衡材料成本
+>
+> 我可以将此写入 `design/gdd/crafting-system.md` 吗？
+
+## 第 11 轮：用户批准写入
+
+**用户：**
+> 可以，写吧！
+
+## 第 12 轮：Agent 写入文件并提供后续步骤
+
+**Agent：**
+> ✅ 已创建 `design/gdd/crafting-system.md`
+>
+> **后续步骤：**
+> 1. 运行 `/design-review design/gdd/crafting-system.md` 对照 8 节标准进行验证
+> 2. 在 `assets/data/` 中为材料和配方创建数据文件结构
+> 3. 准备实现时，使用 `/team-combat` 模式的合成版（game-designer → gameplay-programmer → ui-programmer → qa-tester）
+>
+> 你想让我现在运行设计审查，还是你想先自己读一遍？
+
+---
+
+## 会话摘要
+
+**做得好的地方：**
+- Agent 先提出澄清性问题，而不是猜测
+- 呈现了 3 个不同选项，带有清晰的优缺点和支柱对齐度
+- 用户的修改（"错误标签反馈"）被立即融入
+- 边界情况（非配方组合）被主动标记，而非假设
+- 每节都在进入下一节前展示审批
+- 写入文件前明确请求许可
+
+**关键协作时刻：**
+- 第 2 轮：Agent 问了 5 个问题了解愿景
+- 第 4 轮：Agent 呈现了 3 个选项，给出推荐但由用户决定
+- 第 5 轮：用户修改了推荐选项，Agent 融入了它
+- 第 8 轮：Agent 捕获了边界情况并询问而非假设
+- 第 9 轮：用户的选择（程序化药剂）改变了设计方向
+- 第 10 轮：Agent 在写入文件前请求批准
+
+**创建的文件：**
+- `design/gdd/crafting-system.md`（完整的 8 节 GDD）
+
+**上下文占用：** 约 35%（估计）
+**用户满意度：** 高 —— 用户做出了所有创意决策，Agent 提供了专家指导

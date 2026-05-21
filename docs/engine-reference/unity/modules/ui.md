@@ -1,50 +1,52 @@
-# Unity 6.3 — UI Module Reference
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-**Last verified:** 2026-02-13
-**Knowledge Gap:** Unity 6 UI Toolkit is production-ready for runtime UI
+# Unity 6.3 — UI 模块参考
 
----
-
-## Overview
-
-Unity 6 UI systems:
-- **UI Toolkit** (RECOMMENDED): Modern, performant, HTML/CSS-like (production-ready in Unity 6)
-- **UGUI (Canvas)**: Legacy system, still supported but not recommended for new projects
-- **IMGUI**: Editor-only, deprecated for runtime UI
+**最后验证时间：** 2026-02-13
+**知识差距：** Unity 6 UI Toolkit 运行时 UI 已生产就绪
 
 ---
 
-## UI Toolkit (Modern UI)
+## 概述
 
-### Setup UI Document
+Unity 6 UI 系统：
+- **UI Toolkit**（推荐）：现代、高性能、类 HTML/CSS（Unity 6 中生产就绪）
+- **UGUI（Canvas）**：旧版系统，仍受支持但新项目不推荐使用
+- **IMGUI**：仅编辑器使用，运行时 UI 已弃用
 
-1. Create UXML (UI structure):
+---
+
+## UI Toolkit（现代 UI）
+
+### 设置 UI Document
+
+1. 创建 UXML（UI 结构）：
    - `Assets > Create > UI Toolkit > UI Document`
-2. Create USS (styling):
+2. 创建 USS（样式）：
    - `Assets > Create > UI Toolkit > StyleSheet`
-3. Add to scene:
+3. 添加到场景：
    - `GameObject > UI Toolkit > UI Document`
-   - Assign UXML to `UIDocument > Source Asset`
+   - 将 UXML 分配到 `UIDocument > Source Asset`
 
 ---
 
-### UXML (UI Structure)
+### UXML（UI 结构）
 
 ```xml
 <!-- MainMenu.uxml -->
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:VisualElement class="container">
-        <ui:Label text="Main Menu" class="title" />
-        <ui:Button name="play-button" text="Play" />
-        <ui:Button name="settings-button" text="Settings" />
-        <ui:Button name="quit-button" text="Quit" />
+        <ui:Label text="主菜单" class="title" />
+        <ui:Button name="play-button" text="开始游戏" />
+        <ui:Button name="settings-button" text="设置" />
+        <ui:Button name="quit-button" text="退出" />
     </ui:VisualElement>
 </ui:UXML>
 ```
 
 ---
 
-### USS (Styling)
+### USS（样式）
 
 ```css
 /* MainMenu.uss */
@@ -77,7 +79,7 @@ Button:hover {
 
 ---
 
-### C# Scripting (UI Toolkit)
+### C# 脚本（UI Toolkit）
 
 ```csharp
 using UnityEngine;
@@ -87,74 +89,74 @@ public class MainMenu : MonoBehaviour {
     void OnEnable() {
         var root = GetComponent<UIDocument>().rootVisualElement;
 
-        // Query elements by name
+        // 按名称查询元素
         var playButton = root.Q<Button>("play-button");
         var settingsButton = root.Q<Button>("settings-button");
         var quitButton = root.Q<Button>("quit-button");
 
-        // Register callbacks
+        // 注册回调
         playButton.clicked += OnPlayClicked;
         settingsButton.clicked += OnSettingsClicked;
         quitButton.clicked += Application.Quit;
     }
 
     void OnPlayClicked() {
-        Debug.Log("Play clicked");
-        // Load game scene
+        Debug.Log("开始游戏被点击");
+        // 加载游戏场景
     }
 
     void OnSettingsClicked() {
-        Debug.Log("Settings clicked");
-        // Open settings menu
+        Debug.Log("设置被点击");
+        // 打开设置菜单
     }
 }
 ```
 
 ---
 
-### Common UI Elements
+### 常用 UI 元素
 
 ```csharp
-// Label (text display)
+// Label（文本显示）
 var label = root.Q<Label>("score-label");
-label.text = "Score: 100";
+label.text = "分数：100";
 
 // Button
 var button = root.Q<Button>("submit-button");
 button.clicked += OnSubmit;
 
-// TextField (text input)
+// TextField（文本输入）
 var textField = root.Q<TextField>("name-input");
 string playerName = textField.value;
 
-// Toggle (checkbox)
+// Toggle（复选框）
 var toggle = root.Q<Toggle>("music-toggle");
 bool isMusicEnabled = toggle.value;
 
-// Slider
+// Slider（滑块）
 var slider = root.Q<Slider>("volume-slider");
 float volume = slider.value; // 0-1
 
-// DropdownField (dropdown menu)
+// DropdownField（下拉菜单）
 var dropdown = root.Q<DropdownField>("difficulty-dropdown");
-dropdown.choices = new List<string> { "Easy", "Normal", "Hard" };
-dropdown.value = "Normal";
+dropdown.choices = new List<string> { "简单", "普通", "困难" };
+dropdown.value = "普通";
 ```
 
 ---
 
-### Dynamic UI Creation (No UXML)
+### 动态创建 UI（无需 UXML）
 
 ```csharp
 void CreateUI() {
     var root = GetComponent<UIDocument>().rootVisualElement;
 
-    // Create elements
+    // 创建元素
     var container = new VisualElement();
     container.AddToClassList("container");
 
-    var label = new Label("Hello, UI Toolkit!");
-    var button = new Button(() => Debug.Log("Clicked")) { text = "Click Me" };
+    var label = new Label("你好，UI Toolkit！");
+    var button = new Button(() => Debug.Log("被点击")) { text = "点击我" };
 
     container.Add(label);
     container.Add(button);
@@ -164,26 +166,26 @@ void CreateUI() {
 
 ---
 
-### USS Flexbox Layout
+### USS Flexbox 布局
 
 ```css
-/* Horizontal layout */
+/* 水平布局 */
 .horizontal {
     flex-direction: row;
 }
 
-/* Vertical layout (default) */
+/* 垂直布局（默认） */
 .vertical {
     flex-direction: column;
 }
 
-/* Center children */
+/* 居中对齐子元素 */
 .centered {
     align-items: center;
     justify-content: center;
 }
 
-/* Spacing */
+/* 间距均匀分布 */
 .spaced {
     justify-content: space-between;
 }
@@ -191,15 +193,15 @@ void CreateUI() {
 
 ---
 
-## UGUI (Legacy Canvas UI)
+## UGUI（旧版 Canvas UI）
 
-### Basic Setup (Still Works in Unity 6)
+### 基础设置（Unity 6 中仍可使用）
 
 ```csharp
-// GameObject > UI > Canvas (creates Canvas, EventSystem)
+// GameObject > UI > Canvas（创建 Canvas、EventSystem）
 
-// UI Elements:
-// - Text (use TextMeshPro instead)
+// UI 元素：
+// - Text（请改用 TextMeshPro）
 // - Button
 // - Image
 // - Slider
@@ -209,7 +211,7 @@ void CreateUI() {
 
 ---
 
-### UGUI Scripting
+### UGUI 脚本
 
 ```csharp
 using UnityEngine;
@@ -222,18 +224,18 @@ public class LegacyUI : MonoBehaviour {
     public Slider volumeSlider;
 
     void Start() {
-        // Update text
-        scoreText.text = "Score: 100";
+        // 更新文本
+        scoreText.text = "分数：100";
 
-        // Button click
+        // 按钮点击
         playButton.onClick.AddListener(OnPlayClicked);
 
-        // Slider value changed
+        // 滑块值变更
         volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
     }
 
     void OnPlayClicked() {
-        Debug.Log("Play clicked");
+        Debug.Log("开始游戏被点击");
     }
 
     void OnVolumeChanged(float value) {
@@ -244,95 +246,95 @@ public class LegacyUI : MonoBehaviour {
 
 ---
 
-### TextMeshPro (Better Text Rendering)
+### TextMeshPro（更好的文本渲染）
 
 ```csharp
-// Install: Window > TextMeshPro > Import TMP Essential Resources
+// 安装：Window > TextMeshPro > Import TMP Essential Resources
 
-// Use TMP_Text instead of Unity's Text component
+// 使用 TMP_Text 替代 Unity 的 Text 组件
 using TMPro;
 
 public TextMeshProUGUI tmpText;
-tmpText.text = "High Quality Text";
+tmpText.text = "高质量文本";
 tmpText.fontSize = 24;
 tmpText.color = Color.white;
 ```
 
 ---
 
-## Canvas Settings (UGUI)
+## Canvas 设置（UGUI）
 
-### Render Modes
+### 渲染模式
 
 ```csharp
-// Screen Space - Overlay: UI rendered on top of everything (no camera needed)
-// Screen Space - Camera: UI rendered by specific camera (allows effects)
-// World Space: UI in 3D world (e.g., floating health bars)
+// Screen Space - Overlay：UI 渲染在最上层（无需相机）
+// Screen Space - Camera：UI 由指定相机渲染（可应用效果）
+// World Space：UI 在 3D 世界中（如浮动血条）
 ```
 
-### Canvas Scaler (Responsive UI)
+### Canvas Scaler（响应式 UI）
 
 ```csharp
-// UI Scale Mode:
-// - Constant Pixel Size: UI elements have fixed pixel size
-// - Scale With Screen Size: UI scales based on reference resolution (RECOMMENDED)
-// - Constant Physical Size: UI elements have fixed physical size (cm)
+// UI Scale Mode：
+// - Constant Pixel Size：UI 元素具有固定像素大小
+// - Scale With Screen Size：UI 基于参考分辨率缩放（推荐）
+// - Constant Physical Size：UI 元素具有固定物理尺寸（cm）
 
-// Example: Scale With Screen Size
-// Reference Resolution: 1920x1080
-// Screen Match Mode: Match Width Or Height (0.5 = balanced)
+// 示例：Scale With Screen Size
+// Reference Resolution：1920x1080
+// Screen Match Mode：Match Width Or Height（0.5 = 平衡）
 ```
 
 ---
 
-## Layout Groups (UGUI)
+## 布局组（UGUI）
 
 ### Horizontal Layout Group
 
 ```csharp
-// Auto-arranges children horizontally
-// Add: GameObject > Add Component > Horizontal Layout Group
+// 自动水平排列子元素
+// 添加：GameObject > Add Component > Horizontal Layout Group
 ```
 
 ### Vertical Layout Group
 
 ```csharp
-// Auto-arranges children vertically
+// 自动垂直排列子元素
 ```
 
 ### Grid Layout Group
 
 ```csharp
-// Arranges children in a grid
+// 以网格形式排列子元素
 ```
 
 ---
 
-## Performance (UI Toolkit vs UGUI)
+## 性能（UI Toolkit vs UGUI）
 
-### UI Toolkit Advantages
-- ✅ Faster rendering (retained mode)
-- ✅ Better for complex UIs with many elements
-- ✅ Easier styling (CSS-like)
-- ✅ Better for dynamic UIs
+### UI Toolkit 优势
+- ✅ 渲染更快（保留模式）
+- ✅ 对具有大量元素的复杂 UI 更友好
+- ✅ 更简单的样式（类 CSS）
+- ✅ 对动态 UI 更友好
 
-### UGUI Advantages
-- ✅ More mature, widely documented
-- ✅ Better integration with Unity Editor
-- ✅ Easier for beginners
+### UGUI 优势
+- ✅ 更成熟，文档丰富
+- ✅ 与 Unity Editor 的集成更好
+- ✅ 对初学者更友好
 
 ---
 
-## Common Patterns
+## 常见模式
 
-### Health Bar (UI Toolkit)
+### 血条（UI Toolkit）
 
 ```csharp
 var healthBar = root.Q<VisualElement>("health-bar");
 healthBar.style.width = new StyleLength(new Length(healthPercent, LengthUnit.Percent));
 ```
 
-### Health Bar (UGUI)
+### 血条（UGUI）
 
 ```csharp
 public Image healthBarImage;
@@ -344,7 +346,7 @@ void UpdateHealth(float percent) {
 
 ---
 
-### Fade In/Out (UI Toolkit)
+### 淡入/淡出（UI Toolkit）
 
 ```csharp
 IEnumerator FadeIn(VisualElement element, float duration) {
@@ -359,19 +361,19 @@ IEnumerator FadeIn(VisualElement element, float duration) {
 
 ---
 
-## Debugging
+## 调试
 
 ### UI Toolkit Debugger
 - `Window > UI Toolkit > Debugger`
-- Inspect element hierarchy, styles, layout
+- 检查元素层级、样式、布局
 
 ### UGUI Event System Debugger
-- Select EventSystem in Hierarchy
-- Inspector shows active input module, raycast info
+- 在 Hierarchy 中选择 EventSystem
+- Inspector 显示活动的输入模块、射线检测信息
 
 ---
 
-## Sources
+## 来源
 - https://docs.unity3d.com/6000.0/Documentation/Manual/UIElements.html
 - https://docs.unity3d.com/Packages/com.unity.ui@2.0/manual/index.html
 - https://docs.unity3d.com/Packages/com.unity.ugui@2.0/manual/index.html

@@ -1,76 +1,78 @@
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+
 # Unity 6.3 — Cinemachine
 
-**Last verified:** 2026-02-13
-**Status:** Production-Ready
-**Package:** `com.unity.cinemachine` v3.0+ (Package Manager)
+**最后验证时间：** 2026-02-13
+**状态：** 生产就绪
+**包名：** `com.unity.cinemachine` v3.0+（Package Manager）
 
 ---
 
-## Overview
+## 概述
 
-**Cinemachine** is Unity's virtual camera system that enables professional, dynamic camera
-behavior without manual scripting. It's the industry standard for Unity camera work.
+**Cinemachine** 是 Unity 的虚拟相机系统，无需手动编写脚本即可实现专业、动态的
+相机行为。它是 Unity 相机工作的行业标准。
 
-**Use Cinemachine for:**
-- 3rd person follow cameras
-- Cutscenes and cinematics
-- Camera blending and transitions
-- Dynamic camera framing
-- Screen shake and camera effects
+**适用于 Cinemachine 的场景：**
+- 第三人称跟随相机
+- 过场动画与电影化呈现
+- 相机混合与过渡
+- 动态相机取景
+- 屏幕震动与相机效果
 
-**⚠️ Knowledge Gap:** Cinemachine 3.0 (Unity 6) is a major rewrite from 2.x.
-Many API names and components changed.
+**⚠️ 知识差距：** Cinemachine 3.0（Unity 6）相较 2.x 是重大重写。
+许多 API 名称和组件已更改。
 
 ---
 
-## Installation
+## 安装
 
-### Install via Package Manager
+### 通过 Package Manager 安装
 
 1. `Window > Package Manager`
-2. Unity Registry > Search "Cinemachine"
-3. Install `Cinemachine` (version 3.0+)
+2. Unity Registry > 搜索 "Cinemachine"
+3. 安装 `Cinemachine`（版本 3.0+）
 
 ---
 
-## Core Concepts
+## 核心概念
 
-### 1. **Virtual Cameras**
-- Define camera behavior (position, rotation, lens)
-- Multiple virtual cameras can exist; only one is "live" at a time
+### 1. **Virtual Cameras（虚拟相机）**
+- 定义相机行为（位置、旋转、镜头）
+- 可存在多个虚拟相机；同一时间只有一个处于"激活"状态
 
 ### 2. **Cinemachine Brain**
-- Component on main Camera
-- Blends between virtual cameras
-- Applies virtual camera settings to Unity Camera
+- 挂载在 Main Camera 上的组件
+- 在虚拟相机之间进行混合
+- 将虚拟相机设置应用到 Unity 相机
 
-### 3. **Priorit**ies**
-- Virtual cameras have priority values
-- Highest priority camera is active
-- Blends smoothly when priority changes
+### 3. **优先级（Priorities）**
+- 虚拟相机有优先级数值
+- 优先级最高的相机处于活动状态
+- 优先级变更时平滑混合
 
 ---
 
-## Basic Setup
+## 基础设置
 
-### 1. Add Cinemachine Brain to Main Camera
+### 1. 将 Cinemachine Brain 添加到 Main Camera
 
 ```csharp
-// Automatically added when creating first virtual camera
-// Or manually: Add Component > Cinemachine Brain
+// 创建第一个虚拟相机时自动添加
+// 或手动：Add Component > Cinemachine Brain
 ```
 
-### 2. Create Virtual Camera
+### 2. 创建 Virtual Camera
 
 `GameObject > Cinemachine > Cinemachine Camera`
 
-This creates a **CinemachineCamera** GameObject with default settings.
+这将创建一个带有默认设置的 **CinemachineCamera** GameObject。
 
 ---
 
-## Virtual Camera Components
+## Virtual Camera 组件
 
-### CinemachineCamera (Unity 6 / Cinemachine 3.0+)
+### CinemachineCamera（Unity 6 / Cinemachine 3.0+）
 
 ```csharp
 using Unity.Cinemachine;
@@ -79,13 +81,13 @@ public class CameraController : MonoBehaviour {
     public CinemachineCamera virtualCamera;
 
     void Start() {
-        // Set priority (higher = active)
+        // 设置优先级（越高 = 活跃）
         virtualCamera.Priority = 10;
 
-        // Set follow target
+        // 设置跟随目标
         virtualCamera.Follow = playerTransform;
 
-        // Set look-at target
+        // 设置注视目标
         virtualCamera.LookAt = playerTransform;
     }
 }
@@ -93,97 +95,97 @@ public class CameraController : MonoBehaviour {
 
 ---
 
-## Follow Modes (Body Component)
+## 跟随模式（Body 组件）
 
-### 3rd Person Follow (Orbital Follow)
+### 第三人称跟随（Orbital Follow）
 
 ```csharp
-// In Inspector:
+// 在 Inspector 中：
 // CinemachineCamera > Body > 3rd Person Follow
 
-// Configure:
-// - Shoulder Offset: (0.5, 0, 0) for over-shoulder
-// - Camera Distance: 5.0
-// - Vertical Damping: 0.5 (smooth up/down)
+// 配置：
+// - Shoulder Offset：（0.5, 0, 0）实现越肩视角
+// - Camera Distance：5.0
+// - Vertical Damping：0.5（平滑上下移动）
 ```
 
-### Framing Transposer (Smooth Follow)
+### Framing Transposer（平滑跟随）
 
 ```csharp
 // CinemachineCamera > Body > Position Composer
 
-// Configure:
-// - Screen Position: Center (0.5, 0.5)
-// - Dead Zone: Don't move camera if target within zone
-// - Damping: Smooth following
+// 配置：
+// - Screen Position：Center（0.5, 0.5）
+// - Dead Zone：目标在区域内时不移动相机
+// - Damping：平滑跟随
 ```
 
-### Hard Lock (Exact Follow)
+### Hard Lock（精确跟随）
 
 ```csharp
 // CinemachineCamera > Body > Hard Lock to Target
-// Camera exactly matches target position (no offset or damping)
+// 相机精确匹配目标位置（无偏移或阻尼）
 ```
 
 ---
 
-## Aim Modes (Aim Component)
+## 瞄准模式（Aim 组件）
 
-### Composer (Frame Target)
+### Composer（取景目标）
 
 ```csharp
 // CinemachineCamera > Aim > Composer
 
-// Configure:
-// - Tracked Object Offset: Aim at target's head instead of feet
-// - Screen Position: Where target appears on screen
-// - Dead Zone: Don't rotate if target within zone
+// 配置：
+// - Tracked Object Offset：瞄准目标头部而非脚部
+// - Screen Position：目标在屏幕上的位置
+// - Dead Zone：目标在区域内时不旋转
 ```
 
 ### Look At Target
 
 ```csharp
 // CinemachineCamera > Aim > Rotate With Follow Target
-// Camera rotation matches target rotation (e.g., first-person)
+// 相机旋转匹配目标旋转（如第一人称）
 ```
 
 ---
 
-## Blending Between Cameras
+## 相机间混合
 
-### Priority-Based Blending
+### 基于优先级的混合
 
 ```csharp
-public CinemachineCamera normalCamera; // Priority: 10
-public CinemachineCamera aimCamera;    // Priority: 5
+public CinemachineCamera normalCamera; // 优先级：10
+public CinemachineCamera aimCamera;    // 优先级：5
 
 void StartAiming() {
-    // Set aim camera to higher priority
-    aimCamera.Priority = 15; // Now active
-    // Brain automatically blends from normalCamera to aimCamera
+    // 将瞄准相机设为更高优先级
+    aimCamera.Priority = 15; // 现在处于活动状态
+    // Brain 自动从 normalCamera 混合到 aimCamera
 }
 
 void StopAiming() {
-    aimCamera.Priority = 5; // Back to normal
+    aimCamera.Priority = 5; // 恢复正常
 }
 ```
 
-### Custom Blend Times
+### 自定义混合时间
 
 ```csharp
-// Create Custom Blends Asset:
+// 创建 Custom Blends Asset：
 // Assets > Create > Cinemachine > Cinemachine Blender Settings
 
-// In Cinemachine Brain:
-// - Custom Blends = your asset
-// - Configure blend times per camera pair
+// 在 Cinemachine Brain 中：
+// - Custom Blends = 你的资源
+// - 按相机对配置混合时间
 ```
 
 ---
 
-## Camera Shake
+## 相机震动
 
-### Impulse Source (Trigger Shake)
+### Impulse Source（触发震动）
 
 ```csharp
 using Unity.Cinemachine;
@@ -192,157 +194,157 @@ public class ExplosionShake : MonoBehaviour {
     public CinemachineImpulseSource impulseSource;
 
     void Explode() {
-        // Trigger camera shake
+        // 触发相机震动
         impulseSource.GenerateImpulse();
     }
 }
 ```
 
-### Impulse Listener (Receive Shake)
+### Impulse Listener（接收震动）
 
 ```csharp
-// Add to CinemachineCamera:
+// 添加到 CinemachineCamera：
 // Add Component > CinemachineImpulseListener
 
-// Impulse listener automatically receives shake from nearby Impulse Sources
+// Impulse Listener 自动接收来自附近 Impulse Source 的震动
 ```
 
 ---
 
-## Freelook Camera (Third Person with Mouse Look)
+## Freelook Camera（第三人称鼠标视角）
 
 ### Cinemachine Free Look
 
 ```csharp
 // GameObject > Cinemachine > Cinemachine Free Look
 
-// Creates 3 rigs (Top, Middle, Bottom) that blend based on vertical input
-// Configure:
-// - Orbit Radius: Distance from target
-// - Height Offset: Camera height at each rig
-// - X/Y Axis: Mouse or joystick input
+// 创建 3 个 Rig（顶部、中部、底部），基于垂直输入混合
+// 配置：
+// - Orbit Radius：与目标的距离
+// - Height Offset：每个 Rig 的相机高度
+// - X/Y Axis：鼠标或手柄输入
 ```
 
 ---
 
-## State-Driven Camera (Anim ator-Based)
+## 状态驱动相机（基于 Animator）
 
 ### Cinemachine State-Driven Camera
 
 ```csharp
 // GameObject > Cinemachine > Cinemachine State-Driven Camera
 
-// Configure:
-// - Animated Target: Character with Animator
-// - Layer: Animator layer to track
-// - State: Assign camera per animation state (Idle, Run, Jump, etc.)
+// 配置：
+// - Animated Target：带有 Animator 的角色
+// - Layer：要跟踪的 Animator 层
+// - State：按动画状态分配相机（Idle、Run、Jump 等）
 
-// Camera automatically switches based on animation state
+// 相机根据动画状态自动切换
 ```
 
 ---
 
-## Dolly Tracks (Cutscenes)
+## Dolly Tracks（移动轨道 / 过场动画）
 
 ### Cinemachine Dolly Track
 
 ```csharp
-// 1. Create Spline: GameObject > Cinemachine > Cinemachine Spline
+// 1. 创建 Spline：GameObject > Cinemachine > Cinemachine Spline
 
-// 2. Create Dolly Camera:
+// 2. 创建 Dolly Camera：
 //    GameObject > Cinemachine > Cinemachine Camera
 //    Body > Spline Dolly
-//    Assign Spline
+//    分配 Spline
 
-// 3. Animate dolly position on spline (Timeline or script)
+// 3. 在 Spline 上动画化 Dolly 位置（通过 Timeline 或脚本）
 ```
 
 ---
 
-## Common Patterns
+## 常见模式
 
-### Third-Person Follow Camera
+### 第三人称跟随相机
 
 ```csharp
 // CinemachineCamera
-// - Follow: Player Transform
-// - Body: 3rd Person Follow (shoulder offset, distance: 5)
-// - Aim: Composer (frame player at center)
+// - Follow：玩家 Transform
+// - Body：3rd Person Follow（越肩偏移，距离：5）
+// - Aim：Composer（将玩家取景在中央）
 ```
 
 ---
 
-### Aiming Camera (Zoom In)
+### 瞄准相机（拉近）
 
 ```csharp
-// Normal Camera (Priority 10):
-//   - Distance: 5.0
+// Normal Camera（优先级 10）：
+//   - Distance：5.0
 
-// Aim Camera (Priority 5):
-//   - Distance: 2.0
-//   - FOV: Narrower
+// Aim Camera（优先级 5）：
+//   - Distance：2.0
+//   - FOV：更窄
 
-// Script:
+// 脚本：
 void StartAiming() {
-    aimCamera.Priority = 15; // Blend to aim camera
+    aimCamera.Priority = 15; // 混合到瞄准相机
 }
 ```
 
 ---
 
-### Cutscene Camera Sequence
+### 过场动画相机序列
 
 ```csharp
-// Use Timeline:
-// 1. Create Timeline (Assets > Create > Timeline)
-// 2. Add Cinemachine Track
-// 3. Add virtual cameras as clips
-// 4. Timeline automatically blends between cameras
+// 使用 Timeline：
+// 1. 创建 Timeline（Assets > Create > Timeline）
+// 2. 添加 Cinemachine Track
+// 3. 将虚拟相机作为 Clip 添加
+// 4. Timeline 自动在相机间混合
 ```
 
 ---
 
-## Migration from Cinemachine 2.x (Unity 2021)
+## 从 Cinemachine 2.x 迁移（Unity 2021）
 
-### API Changes (Unity 6 / Cinemachine 3.0)
+### API 变更（Unity 6 / Cinemachine 3.0）
 
 ```csharp
-// ❌ OLD (Cinemachine 2.x):
+// ❌ 旧版（Cinemachine 2.x）：
 CinemachineVirtualCamera vcam;
 vcam.m_Follow = target;
 
-// ✅ NEW (Cinemachine 3.0+):
+// ✅ 新版（Cinemachine 3.0+）：
 CinemachineCamera vcam;
-vcam.Follow = target; // Cleaner API
+vcam.Follow = target; // 更清晰的 API
 ```
 
-**Major Changes:**
+**主要变更：**
 - `CinemachineVirtualCamera` → `CinemachineCamera`
-- `m_Follow`, `m_LookAt` → `Follow`, `LookAt` (no "m_" prefix)
-- Components renamed for clarity
-- Better performance
+- `m_Follow`、`m_LookAt` → `Follow`、`LookAt`（无 "m_" 前缀）
+- 组件重命名以提高清晰度
+- 更好的性能
 
 ---
 
-## Performance Tips
+## 性能提示
 
-- Limit active virtual cameras (only activate when needed)
-- Use lower-priority cameras instead of destroying/creating
-- Disable virtual cameras when far from player
+- 限制活动虚拟相机数量（仅在需要时激活）
+- 使用较低优先级的相机而非销毁/创建
+- 远离玩家时禁用虚拟相机
 
 ---
 
-## Debugging
+## 调试
 
 ### Cinemachine Debug
 
 ```csharp
 // Window > Analysis > Cinemachine Debugger
-// Shows active camera, blend info, shot quality
+// 显示活动相机、混合信息、镜头质量
 ```
 
 ---
 
-## Sources
+## 来源
 - https://docs.unity3d.com/Packages/com.unity.cinemachine@3.0/manual/index.html
 - https://learn.unity.com/tutorial/cinemachine

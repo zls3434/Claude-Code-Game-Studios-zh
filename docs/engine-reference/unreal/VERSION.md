@@ -1,54 +1,54 @@
-# Unreal Engine — Version Reference
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Unreal Engine — 版本参考
 
-| Field | Value |
+| 字段 | 值 |
 |-------|-------|
-| **Engine Version** | Unreal Engine 5.7 |
-| **Release Date** | November 2025 |
-| **Project Pinned** | 2026-02-13 |
-| **Last Docs Verified** | 2026-02-13 |
-| **LLM Knowledge Cutoff** | May 2025 |
+| **引擎版本** | Unreal Engine 5.7 |
+| **发布日期** | 2025年11月 |
+| **项目锁定日期** | 2026-02-13 |
+| **文档最后验证日期** | 2026-02-13 |
+| **LLM 知识截止日期** | 2025年5月 |
 
-## Knowledge Gap Warning
+## 知识盲区警告
 
-The LLM's training data likely covers Unreal Engine up to ~5.3. Versions 5.4, 5.5,
-5.6, and 5.7 introduced significant changes that the model does NOT know about.
-Always cross-reference this directory before suggesting Unreal API calls.
+LLM 的训练数据最多覆盖到 Unreal Engine ~5.3 版本。5.4、5.5、5.6 和 5.7 版本引入了许多重要变更，模型对这些内容并不了解。
+在建议 Unreal API 调用之前，务必先交叉参考本目录下的文档。
 
-## Post-Cutoff Version Timeline
+## 截止日期后的版本时间线
 
-| Version | Release | Risk Level | Key Theme |
+| 版本 | 发布 | 风险等级 | 关键主题 |
 |---------|---------|------------|-----------|
-| 5.4 | ~Mid 2025 | HIGH | Motion Design tools, animation improvements, PCG enhancements |
-| 5.5 | ~Sep 2025 | HIGH | Megalights (millions of lights), animation authoring, MegaCity demo |
-| 5.6 | ~Oct 2025 | MEDIUM | Performance optimizations, bug fixes |
-| 5.7 | Nov 2025 | HIGH | PCG production-ready, Substrate production-ready, AI assistant |
+| 5.4 | ~2025年中 | 高 | Motion Design 工具、动画改进、PCG 增强 |
+| 5.5 | ~2025年9月 | 高 | Megalights（百万级光源）、动画创作、MegaCity 演示 |
+| 5.6 | ~2025年10月 | 中 | 性能优化、Bug 修复 |
+| 5.7 | 2025年11月 | 高 | PCG 生产就绪、Substrate 生产就绪、AI 助手 |
 
-## Major Changes from UE 5.3 to UE 5.7
+## UE 5.3 到 UE 5.7 的主要变更
 
-### Breaking Changes
-- **Substrate Material System**: New material framework (replaces legacy materials)
-- **PCG (Procedural Content Generation)**: Production-ready, major API changes
-- **Megalights**: New lighting system (millions of dynamic lights)
-- **Animation Authoring**: New rigging and animation tools
-- **AI Assistant**: In-editor AI guidance (experimental)
+### 破坏性变更
+- **Substrate 材质系统**：新的材质框架（替代旧版材质系统）
+- **PCG（程序化内容生成）**：生产就绪，重大 API 变更
+- **Megalights**：全新光照系统（百万级动态光源）
+- **动画创作**：新的骨骼绑定和动画工具
+- **AI 助手**：编辑器内置 AI 引导功能（实验性）
 
-### New Features (Post-Cutoff)
-- **Megalights**: Dynamic lighting at massive scale (millions of lights)
-- **Substrate Materials**: Production-ready modular material system
-- **PCG Framework**: Procedural world generation (production-ready in 5.7)
-- **Enhanced Virtual Production**: MetaHuman integration, deeper VP workflows
-- **Animation Improvements**: Better rigging, blending, procedural animation
-- **AI Assistant**: In-editor AI help (experimental)
+### 新功能（截止日期后）
+- **Megalights**：大规模动态光照（百万级光源）
+- **Substrate 材质**：生产就绪的模块化材质系统
+- **PCG 框架**：程序化世界生成（5.7 中生产就绪）
+- **增强型虚拟制片**：MetaHuman 集成、更深入的虚拟制片工作流
+- **动画改进**：更优的骨骼绑定、混合、程序化动画
+- **AI 助手**：编辑器内置 AI 帮助（实验性）
 
-### Deprecated Systems
-- **Legacy Material System**: Migrate to Substrate for new projects
-- **Old PCG API**: Use new production-ready PCG API (5.7+)
+### 已弃用系统
+- **旧版材质系统**：新项目请迁移至 Substrate
+- **旧版 PCG API**：请使用新的生产就绪 PCG API（5.7+）
 
-## Verified Sources
+## 已验证来源
 
-- Official docs: https://docs.unrealengine.com/5.7/
-- UE 5.7 release notes: https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-7-release-notes
-- What's new in 5.7: https://dev.epicgames.com/documentation/en-us/unreal-engine/whats-new
-- UE 5.7 announcement: https://www.unrealengine.com/en-US/news/unreal-engine-5-7-is-now-available
-- UE 5.5 blog: https://www.unrealengine.com/en-US/blog/unreal-engine-5-5-is-now-available
-- Migration guides: https://docs.unrealengine.com/5.7/en-US/upgrading-projects/
+- 官方文档：https://docs.unrealengine.com/5.7/
+- UE 5.7 发布说明：https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-7-release-notes
+- 5.7 新特性：https://dev.epicgames.com/documentation/en-us/unreal-engine/whats-new
+- UE 5.7 公告：https://www.unrealengine.com/en-US/news/unreal-engine-5-7-is-now-available
+- UE 5.5 博客：https://www.unrealengine.com/en-US/blog/unreal-engine-5-5-is-now-available
+- 迁移指南：https://docs.unrealengine.com/5.7/en-US/upgrading-projects/

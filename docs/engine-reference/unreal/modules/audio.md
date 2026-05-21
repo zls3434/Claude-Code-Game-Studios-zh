@@ -1,33 +1,34 @@
-# Unreal Engine 5.7 — Audio Module Reference
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Unreal Engine 5.7 — 音频模块参考
 
-**Last verified:** 2026-02-13
-**Knowledge Gap:** UE 5.7 MetaSounds production-ready
-
----
-
-## Overview
-
-UE 5.7 audio systems:
-- **MetaSounds**: Node-based procedural audio (RECOMMENDED, production-ready)
-- **Sound Cues**: Legacy node-based audio (use for simple cases)
-- **Audio Component**: Play sounds on actors
+**最后验证日期：** 2026-02-13
+**知识盲区：** UE 5.7 MetaSounds 生产就绪
 
 ---
 
-## Basic Audio Playback
+## 概述
 
-### Play Sound at Location
+UE 5.7 音频系统：
+- **MetaSounds**：基于节点的程序化音频（推荐，生产就绪）
+- **Sound Cue**：旧版基于节点的音频（简单场景使用）
+- **Audio Component**：在 actor 上播放声音
+
+---
+
+## 基础音频播放
+
+### 在指定位置播放声音
 
 ```cpp
 #include "Kismet/GameplayStatics.h"
 
-// ✅ Play 2D sound (no spatialization)
+// ✅ 播放 2D 声音（无空间化）
 UGameplayStatics::PlaySound2D(GetWorld(), ExplosionSound);
 
-// ✅ Play sound at location (3D spatial audio)
+// ✅ 在指定位置播放声音（3D 空间音频）
 UGameplayStatics::PlaySoundAtLocation(GetWorld(), ExplosionSound, GetActorLocation());
 
-// ✅ With volume and pitch
+// ✅ 带音量和音高参数
 UGameplayStatics::PlaySoundAtLocation(GetWorld(), ExplosionSound, GetActorLocation(), 0.7f, 1.2f);
 ```
 
@@ -35,47 +36,47 @@ UGameplayStatics::PlaySoundAtLocation(GetWorld(), ExplosionSound, GetActorLocati
 
 ## Audio Component
 
-### Audio Component (Persistent Sound)
+### Audio Component（持续声音）
 
 ```cpp
-// Create audio component
+// 创建音频组件
 UAudioComponent* AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio"));
 AudioComp->SetupAttachment(RootComponent);
 AudioComp->SetSound(LoopingAmbience);
 
-// Play/Stop
+// 播放/停止
 AudioComp->Play();
 AudioComp->Stop();
 
-// Fade in/out
-AudioComp->FadeIn(2.0f); // 2 seconds
-AudioComp->FadeOut(1.5f, 0.0f); // 1.5s to volume 0
+// 淡入/淡出
+AudioComp->FadeIn(2.0f); // 2 秒
+AudioComp->FadeOut(1.5f, 0.0f); // 1.5 秒淡出到音量 0
 
-// Adjust volume/pitch
+// 调整音量/音高
 AudioComp->SetVolumeMultiplier(0.5f);
 AudioComp->SetPitchMultiplier(1.2f);
 ```
 
 ---
 
-## 3D Spatial Audio
+## 3D 空间音频
 
-### Attenuation Settings
+### Attenuation 设置
 
 ```cpp
-// Create Sound Attenuation asset:
-// Content Browser > Sounds > Sound Attenuation
+// 创建 Sound Attenuation 资产：
+// 内容浏览器 > 声音 > Sound Attenuation
 
-// Configure:
-// - Attenuation Shape: Sphere, Capsule, Box, Cone
-// - Falloff Distance: Distance where sound becomes inaudible
-// - Attenuation Function: Linear, Logarithmic, Inverse, etc.
+// 配置：
+// - Attenuation Shape：球体、胶囊体、盒子、锥体
+// - Falloff Distance：声音变得听不到的距离
+// - Attenuation Function：线性、对数、反比等
 
-// Assign in C++:
+// 在 C++ 中分配：
 AudioComp->AttenuationSettings = AttenuationAsset;
 ```
 
-### Attenuation Override in Code
+### 在代码中覆盖 Attenuation
 
 ```cpp
 FSoundAttenuationSettings AttenuationOverride;
@@ -89,35 +90,35 @@ AudioComp->bOverrideAttenuation = true;
 
 ---
 
-## MetaSounds (Procedural Audio)
+## MetaSounds（程序化音频）
 
-### Create MetaSound Source
+### 创建 MetaSound Source
 
-1. Content Browser > Sounds > MetaSound Source
-2. Open MetaSound editor
-3. Build node graph:
-   - **Inputs**: Triggers, parameters
-   - **Generators**: Oscillators, noise, samples
-   - **Modulators**: Envelopes, LFOs
-   - **Effects**: Filters, reverb, delay
-   - **Output**: Audio output
+1. 内容浏览器 > 声音 > MetaSound Source
+2. 打开 MetaSound 编辑器
+3. 构建节点图：
+   - **输入**：触发器、参数
+   - **生成器**：振荡器、噪声、采样
+   - **调制器**：包络、LFO
+   - **效果器**：滤波器、混响、延迟
+   - **输出**：音频输出
 
-### Play MetaSound
+### 播放 MetaSound
 
 ```cpp
-// Play MetaSound like any sound
+// 像播放任何声音一样播放 MetaSound
 UGameplayStatics::PlaySound2D(GetWorld(), MetaSoundSource);
 
-// Or with Audio Component
+// 或使用 Audio Component
 AudioComp->SetSound(MetaSoundSource);
 AudioComp->Play();
 ```
 
-### Set MetaSound Parameters
+### 设置 MetaSound 参数
 
 ```cpp
-// Define parameter in MetaSound (Input node with exposed parameter)
-// Set parameter in C++:
+// 在 MetaSound 中定义参数（带暴露参数的 Input 节点）
+// 在 C++ 中设置参数：
 AudioComp->SetFloatParameter(FName("Volume"), 0.8f);
 AudioComp->SetIntParameter(FName("OctaveShift"), 2);
 AudioComp->SetBoolParameter(FName("EnableReverb"), true);
@@ -125,81 +126,81 @@ AudioComp->SetBoolParameter(FName("EnableReverb"), true);
 
 ---
 
-## Sound Cues (Legacy)
+## Sound Cue（旧版）
 
-### Create Sound Cue
+### 创建 Sound Cue
 
-1. Content Browser > Sounds > Sound Cue
-2. Open Sound Cue editor
-3. Add nodes: Random, Modulator, Mixer, etc.
+1. 内容浏览器 > 声音 > Sound Cue
+2. 打开 Sound Cue 编辑器
+3. 添加节点：Random、Modulator、Mixer 等
 
-### Use Sound Cue
+### 使用 Sound Cue
 
 ```cpp
-// Play like any sound
+// 像播放任何声音一样播放
 UGameplayStatics::PlaySound2D(GetWorld(), SoundCue);
 ```
 
 ---
 
-## Sound Classes & Sound Mixes
+## Sound Class 与 Sound Mix
 
-### Sound Class (Volume Groups)
+### Sound Class（音量分组）
 
 ```cpp
-// Create Sound Class: Content Browser > Sounds > Sound Class
-// Hierarchy: Master > Music, SFX, Dialogue
+// 创建 Sound Class：内容浏览器 > 声音 > Sound Class
+// 层级结构：Master > Music、SFX、Dialogue
 
-// Assign to sound asset:
+// 分配给声音资产：
 // Sound Wave > Sound Class = SFX
 
-// Set volume in C++:
+// 在 C++ 中设置音量：
 UAudioSettings* AudioSettings = GetMutableDefault<UAudioSettings>();
-// Configure via Sound Class hierarchy
+// 通过 Sound Class 层级进行配置
 ```
 
-### Sound Mix (Dynamic Mixing)
+### Sound Mix（动态混音）
 
 ```cpp
-// Create Sound Mix asset
-// Define adjustments: Lower music during dialogue, etc.
+// 创建 Sound Mix 资产
+// 定义调整项：对话时降低音乐音量等
 
-// Push sound mix
+// 压入 sound mix
 UGameplayStatics::PushSoundMixModifier(GetWorld(), DuckedMusicMix);
 
-// Pop sound mix
+// 弹出 sound mix
 UGameplayStatics::PopSoundMixModifier(GetWorld(), DuckedMusicMix);
 ```
 
 ---
 
-## Audio Occlusion & Reverb
+## 音频遮蔽与混响
 
-### Audio Occlusion (Walls Block Sound)
+### Audio Occlusion（墙壁阻挡声音）
 
 ```cpp
-// Enable in Audio Component:
+// 在 Audio Component 中启用：
 AudioComp->bEnableOcclusion = true;
 
-// Requires geometry with collision
+// 需要带有碰撞的几何体
 ```
 
-### Reverb Volumes
+### Reverb Volume
 
 ```cpp
-// Add Audio Volume to level (Volumes > Audio Volume)
-// Configure reverb settings in Details panel
-// Audio component automatically picks up reverb when inside volume
+// 在关卡中添加 Audio Volume（Volumes > Audio Volume）
+// 在 Details 面板中配置混响设置
+// Audio Component 在进入 volume 时会自动启用混响
 ```
 
 ---
 
-## Common Patterns
+## 常用模式
 
-### Footstep Sounds (Random Variation)
+### 脚步声（随机变化）
 
 ```cpp
-// Use Sound Cue with Random node, or:
+// 使用带 Random 节点的 Sound Cue，或：
 UPROPERTY(EditAnywhere, Category = "Audio")
 TArray<TObjectPtr<USoundBase>> FootstepSounds;
 
@@ -209,7 +210,7 @@ void PlayFootstep() {
 }
 ```
 
-### Music Crossfade
+### 音乐交叉淡入淡出
 
 ```cpp
 UAudioComponent* MusicA;
@@ -221,48 +222,48 @@ void CrossfadeMusic(float Duration) {
 }
 ```
 
-### Check if Sound is Playing
+### 检查声音是否正在播放
 
 ```cpp
 if (AudioComp->IsPlaying()) {
-    // Sound is playing
+    // 声音正在播放
 }
 ```
 
 ---
 
-## Audio Concurrency
+## 音频并发
 
-### Limit Concurrent Sounds
+### 限制并发声音
 
 ```cpp
-// Create Sound Concurrency asset:
-// Content Browser > Sounds > Sound Concurrency
+// 创建 Sound Concurrency 资产：
+// 内容浏览器 > 声音 > Sound Concurrency
 
-// Configure:
-// - Max Count: Maximum instances of this sound
-// - Resolution Rule: Stop Oldest, Stop Quietest, etc.
+// 配置：
+// - Max Count：此声音的最大实例数
+// - Resolution Rule：停止最旧的、最安静的等
 
-// Assign to sound:
+// 分配给声音：
 // Sound Wave > Concurrency Settings
 ```
 
 ---
 
-## Performance Tips
+## 性能提示
 
-### Audio Optimization
+### 音频优化
 
 ```cpp
-// Compression settings (Sound Wave asset):
-// - Compression Quality: 40 (balance quality/size)
-// - Streaming: Enable for large files (music)
+// 压缩设置（Sound Wave 资产）：
+// - Compression Quality：40（平衡质量/大小）
+// - Streaming：对大文件启用（音乐）
 
-// Reduce audio mixing cost:
-// - Limit concurrent sounds via Sound Concurrency
-// - Use simple attenuation shapes
+// 减少音频混音成本：
+// - 通过 Sound Concurrency 限制并发声音
+// - 使用简单的 attenuation 形状
 
-// Disable audio for distant actors:
+// 对远处 actor 禁用音频：
 if (Distance > MaxAudibleDistance) {
     AudioComp->Stop();
 }
@@ -270,20 +271,20 @@ if (Distance > MaxAudibleDistance) {
 
 ---
 
-## Debugging
+## 调试
 
-### Audio Debug Commands
+### 音频调试命令
 
 ```cpp
-// Console commands:
-// au.Debug.Sounds 1 - Show active sounds
-// au.3dVisualize.Enabled 1 - Visualize 3D audio
-// stat soundwaves - Show sound statistics
-// stat soundmixes - Show active sound mixes
+// 控制台命令：
+// au.Debug.Sounds 1 - 显示活跃的声音
+// au.3dVisualize.Enabled 1 - 可视化 3D 音频
+// stat soundwaves - 显示声音统计
+// stat soundmixes - 显示活跃的 sound mix
 ```
 
 ---
 
-## Sources
+## 来源
 - https://docs.unrealengine.com/5.7/en-US/audio-in-unreal-engine/
 - https://docs.unrealengine.com/5.7/en-US/metasounds-in-unreal-engine/
