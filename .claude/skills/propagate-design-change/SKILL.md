@@ -1,239 +1,154 @@
 ---
 name: propagate-design-change
-description: "When a GDD is revised, scans all ADRs and the traceability index to identify which architectural decisions are now potentially stale. Produces a change impact report and guides the user through resolution."
-argument-hint: "[path/to/changed-gdd.md]"
+description: "当设计文档发生变更时，分析该变更对相关系统、故事、依赖项、资产和平衡的下游影响，以保持一致性。"
+argument-hint: "[path-to-design-file]"
 user-invocable: true
-allowed-tools: Read, Glob, Grep, Write, Bash, Task
-model: sonnet
-agent: technical-director
+allowed-tools: Read, Glob, Grep, Write, Edit
+model: opus
 ---
 
-# Propagate Design Change
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-When a GDD changes, architectural decisions written against it may no longer be
-valid. This skill finds every affected ADR, compares what the ADR assumed against
-what the GDD now says, and guides the user through resolution.
+## 阶段 1：读取变更后的文件并量化增量
 
-**Usage:** `/propagate-design-change design/gdd/combat-system.md`
+读取用户指定的设计文件（GDD、关卡设计、叙事规范等）。
 
----
-
-## 1. Validate Argument
-
-A GDD path argument is **required**. If missing, fail with:
-> "Usage: `/propagate-design-change design/gdd/[system].md`
-> Provide the path to the GDD that was changed."
-
-Verify the file exists. If not, fail with:
-> "[path] not found. Check the path and try again."
+- 提取 `Status` 和其他元数据字段
+- 用一句话描述此文件的范围
+- 捕获此文件变更的确切部分。对于 GDD（`design/gdd/`），记录变更的部分：
+  - 概述、接口、数据模型、核心逻辑、流程、事件、系统交互、状态机、边缘情况、UI 和交互、性能预算、平衡值、验收标准、替代方法、未解答的问题
 
 ---
 
-## 2. Read the Changed GDD
+## 阶段 2：引入匹配的故事文件
 
-Read the current GDD in full.
+为变更后的设计文件选择正确的故事文件以交叉检查范围。
 
----
+**规则：**
 
-## 3. Read the Previous Version
+1. 从设计文件提取 **slug**（文件名减去 `design/gdd/` 前缀和 `.md` 扩展名）。
+2. 使用 **Glob** 匹配 `production/stories/*[slug]*.md`（如果 slug 碰巧出现在 IDE 路径中，请使用绝对路径）。
+3. 如果 Glob 产生多个匹配 → 识别最高编号的结果并继续。
+4. 如果 Glob 没有匹配的语句 → 使用该 slug 并使用 Grep 扫描所有故事文件中的内容以找到匹配项。
+5. 如果 Glob 和 Grep 都为 0 结果：“⚠️ 未找到匹配的故事文件。运行 `/create-stories` 以使故事与设计变更对齐。”
 
-Run git to get the previous committed version:
-
-```bash
-git show HEAD:design/gdd/[filename].md
-```
-
-If the file has no git history (new file), report:
-> "No previous version in git — this appears to be a new GDD, not a revision.
-> Nothing to propagate."
-
-If git returns the previous version, do a conceptual diff:
-- Identify sections that changed (new rules, removed rules, modified formulas,
-  changed acceptance criteria, changed tuning knobs)
-- Identify sections that are unchanged
-- Produce a change summary:
-
-```
-## Change Summary: [GDD filename]
-Date of revision: [today]
-
-Changed sections:
-- [Section name]: [what changed — new rule, removed rule, formula modified, etc.]
-
-Unchanged sections:
-- [Section name]
-
-Key changes affecting architecture:
-- [Change 1 — likely to affect ADRs]
-- [Change 2]
-```
+如果找到匹配的故事文件，读取它并提取：
+- 故事文件的 Slug 和标题
+- 当前 `Story-Status` 字段
 
 ---
 
-## 4. Load Architecture Inputs
+## 阶段 3：检测受影响的文件
 
-Read all ADRs in `docs/architecture/`:
-- For each ADR, read the full file
-- Extract the "GDD Requirements Addressed" table
-- Note which GDD documents and requirement IDs each ADR references
+**从源到消费者的依赖关系跟踪：**
 
-Read `docs/architecture/architecture-traceability.md` if it exists.
-
-Report: "Loaded [N] ADRs. [M] reference [gdd filename]."
+1. **扫描代码进入点**：使用 Grep 在源代码中搜索通过类名、文件名、唯一字符串字面量、场景资源路径等方式引用已更改系统/功能的调用者。
+2. **扫描故事进入点**：使用 Grep 在 `production/stories/` 中搜索故事文件，这些故事文件通过其控制清单条目、文件名或范围部分的系统名称来引用已更改的功能。
+3. **扫描 GDD 进入点**：检查 `design/gdd/systems-index.md` 以获取声明了对已更改功能的依赖关系的系统 GDD 列表。为每一个标记"受影响的 GDD"。
+4. **扫描数据模型**：对于 GDD 变更影响了数据模型（阶段 1 中的"数据模型"检查）的情况，搜索序列化/保存/表文件的变化。
 
 ---
 
-## 5. Impact Analysis
+## 阶段 4：分类并呈现影响
 
-For each ADR that references the changed GDD:
+通过以下方式评估影响：
 
-Compare the ADR's "GDD Requirements Addressed" entries against the changed sections
-of the GDD. For each referenced requirement:
-
-1. **Locate the requirement** in the current GDD — does it still exist?
-2. **Compare**: What did the GDD say when the ADR was written vs. what it says now?
-3. **Assess the ADR decision**: Is the architectural decision still valid?
-
-Classify each affected ADR as one of:
-
-| Status | Meaning |
-|--------|---------|
-| ✅ **Still Valid** | The GDD change doesn't affect what this ADR decided |
-| ⚠️ **Needs Review** | The GDD change may affect this ADR — human judgment needed |
-| 🔴 **Likely Superseded** | The GDD change directly contradicts what this ADR assumed |
-
-For each affected ADR, produce an impact entry:
-
-```
-### ADR-NNNN: [title]
-Status: [Still Valid / Needs Review / Likely Superseded]
-
-What the ADR assumed about this GDD:
-  "[relevant quote from the ADR's GDD Requirements Addressed section]"
-
-What the GDD now says:
-  "[relevant quote from the current GDD]"
-
-Assessment:
-  [Explanation of whether the ADR decision is still valid, and why]
-
-Recommended action:
-  [Keep as-is | Review and update | Mark Superseded and write new ADR]
-```
+- **文件**：哪些其他文档或源代码引用了变更后的内容
+- **系统**：哪些系统（来自 `design/gdd/systems-index.md`）交互或依赖于此系统的更改部分
+- **故事**：哪些故事（从阶段 2 和阶段 3 收集）引用了已更改的内容
+- **资产**：哪些资产（从设计文档中引用）受到接口或流程变更的影响
+- **平衡**：对于平衡/数值变更——哪些其他系统依赖于此平衡
 
 ---
 
-## 6. Present Impact Report
+## 阶段 5：显示输出
 
-Present the full impact report to the user before asking for any action. Format:
-
-```
-## Design Change Impact Report
-GDD: [filename]
-Date: [today]
-Changes detected: [N sections changed]
-ADRs referencing this GDD: [M]
-
-### Not Affected
-[ADRs referencing this GDD whose decisions remain valid]
-
-### Needs Review ([count])
-[ADRs that may need updating]
-
-### Likely Superseded ([count])
-[ADRs whose assumptions are now contradicted]
-```
-
----
-
-## 6b. Director Gate — Technical Impact Review
-
-**Review mode check** — apply before spawning TD-CHANGE-IMPACT:
-- `solo` → skip. Note: "TD-CHANGE-IMPACT skipped — Solo mode." Proceed to Phase 7.
-- `lean` → skip. Note: "TD-CHANGE-IMPACT skipped — Lean mode." Proceed to Phase 7.
-- `full` → spawn as normal.
-
-Spawn `technical-director` via Task using gate **TD-CHANGE-IMPACT** (`.claude/docs/director-gates.md`).
-
-Pass: the full Design Change Impact Report from Phase 6 (change summary, all affected ADRs with their Still Valid / Needs Review / Likely Superseded classifications, and recommended actions).
-
-The technical-director reviews whether:
-- The impact classifications are correct (no ADRs under-classified)
-- The recommended actions are architecturally sound
-- Any cascading effects on other ADRs or systems were missed
-
-Apply the verdict:
-- **APPROVE** → proceed to Phase 7 resolution workflow
-- **CONCERNS** → surface the specific ADRs or recommendations flagged; use `AskUserQuestion` with options: `Revise the impact assessment` / `Accept with noted concerns` / `Discuss further`
-- **REJECT** → do not proceed to resolution; re-analyze the impact before continuing
-
----
-
-## 7. Resolution Workflow
-
-For each ADR marked "Needs Review" or "Likely Superseded", ask the user what to do:
-
-Ask for each ADR in turn:
-> "ADR-NNNN ([title]) — [status]. What would you like to do?"
-> Options:
-> - "Mark Superseded (I'll write a new ADR)" — updates ADR status line to `Superseded by: [pending]`
-> - "Update in place (minor revision)" — opens the ADR for editing; note what to revise
-> - "Keep as-is (the change doesn't actually affect this decision)"
-> - "Skip for now (revisit later)"
-
-For ADRs marked **Superseded**:
-- Update the ADR's Status field: `Superseded by ADR-[next number] (pending — see change-impact-[date]-[system].md)`
-- Ask: "May I update the status in [ADR filename]?"
-
----
-
-## 8. Update Traceability Index
-
-If `docs/architecture/architecture-traceability.md` exists:
-- Add the changed GDD requirements to the "Superseded Requirements" table:
+将影响报告呈现为树状结构，其中叶节点是具体的受影响文件：
 
 ```markdown
-## Superseded Requirements
-| Date | GDD | Requirement | Changed To | ADRs Affected | Resolution |
-|------|-----|-------------|------------|---------------|------------|
-| [date] | [gdd] | [old requirement text] | [new requirement text] | ADR-NNNN | [Superseded/Updated/Valid] |
+## 影响范围：[Design File.md]
+
+**状态**：[来自设计文件的 Status 字段]
+**变更的部分**：[列表]
+
+### 受影响的文件
+- design/gdd/[system-name].md
+- design/gdd/[dependent-system].md
+- production/stories/[story-slug].md
+- src/[path/to/source/file]
+- assets/[path/to/asset]
+
+### 受影响的文件摘要
+- GDD：[#] 个文件
+- 故事：[#] 个文件
+- 源代码：[#] 个文件
+- 资产：[#] 个文件
+
+### 下游影响
+
+| # | 文件 | 影响的 GDD 部分 | 影响类型 | 严重性 |
+|---|------|-------------------|-------------|----------|
+| 1 | design/gdd/[file].md | [部分] | [数据变更 / 接口变更 / 逻辑变更 / 平衡变更] | [低/中/高] |
+| 2 | production/stories/[story-slug].md | 实现说明，[#] | [范围变更] | [中] |
+... 
+
+### 行动矩阵
+
+对于每个受影响的项目，输出：
+
+| # | 文件 | 影响 | 需要行动 | 建议 |
+|---|------|--------|------------|----------|
+| 1 | [文件路径] | [描述] | [是/否] | [行动可执行语句] |
 ```
 
-Ask: "May I update the traceability index?"
+### 严重性规则
+
+所有严重性基于阶段 1 中变更的部分：
+
+- **高**：故事文件引用了已变更的数据模型、接口、逻辑或平衡部分。更新是可执行的（例如"需要新的日志表条目"或"在故事 N 中修改`EventBus.emit()`调用"）。
+- **中**：故事文件引用了已变更的 UI、流程、验收标准或替代方法部分。没有代码变更，但可能需要重新调整意图。
+- **低**：故事文件引用了概述/边缘情况——需要检查但不立即阻塞。
 
 ---
 
-## 9. Output Change Impact Document
+## 阶段 6：建议操作路由
 
-Ask: "May I write the change impact report to `docs/architecture/change-impact-[date]-[system-slug].md`?"
+对于高严重性项：用户决策循环，单选选项：
+- `[A] 立即传播更新`（修改受影响的故事/源文件）
+- `[B] 推迟到故事实现`（在故事开始之前不要更改）
+- `[C] 暂不处理`（记录为已知问题）
 
-The document contains:
-- The change summary from step 3
-- The full impact analysis from step 5
-- Resolution decisions made in step 7
-- List of ADRs that need to be written or updated
+对于中严重性项：批量待办列表：
+- 检查与当前故事的意图对齐
+- 添加到故事实现清单
 
-If user approved: Verdict: **COMPLETE** — change impact report saved.
-If user declined: Verdict: **BLOCKED** — user declined write.
-
----
-
-## 10. Follow-Up Actions
-
-Based on the resolution decisions, suggest:
-
-- **ADRs marked Superseded**: "Run `/architecture-decision [title]` to write the
-  replacement ADR. Then re-run `/propagate-design-change` to verify coverage."
-- **ADRs to update in place**: List the specific fields to update in each ADR
-- **If many ADRs affected**: "Run `/architecture-review` after all ADRs are updated
-  to verify the full traceability matrix is still coherent."
+对于低严重性项：
+- 将其记录为需要检查
 
 ---
 
-## Collaborative Protocol
+## 阶段 7：更新 Sprint-Status.yaml
 
-1. **Read silently** — compute the full impact before presenting anything
-2. **Show the full report first** — let the user see the scope before asking for action
-3. **Ask per-ADR** — don't batch decisions; each affected ADR may need different treatment
-4. **Ask before writing** — always confirm before modifying any file
-5. **Non-destructive** — never delete ADR content; only add "Superseded by" notes
+如果设计文件具有 `Status: Accepted` 或 `Status: Implemented`，并且故事文件被标记为正在进行中，则将故事标记为 **blocked**，并将原因写入原因字段（例如："更新阻塞：[具体更改]"）。
+
+对于每个受影响的故事，更新 `production/sprint-status.yaml`：
+
+```yaml
+- id: "[story-slug]"
+  status: blocked
+  blocker: "设计变更 [Design File] — 执行 /propagate-design-change 输出以清除阻塞"
+```
+
+即使故事尚未标记为 `in-progress`，也应用上述内容，但仅对处于任何活动块中的故事（待办列表、下一个、进行中）应用。不要为已完成或已取消的故事设置状态。
+
+---
+
+## 阶段 8：后续步骤
+
+裁决：**完成**——设计变更传播已完成。
+
+- 对于高严重性行动 A：运行 `/design-review` 验证已更新的故事/文件
+- 对于高严重性行动 B：在冲刺规划期间运行 `/story-readiness [story-slug]`
+- 对于高严重性行动 C：运行 `/scope-check [功能]` 评估影响
+- 受阻塞的故事变动（阶段 7）将在冲刺同步期间由 `/sync-priorities` 拾取
+- 如果没有故事被标记为受影响？运行 `/story-readiness all` 以确保没有遗漏

@@ -1,128 +1,127 @@
 ---
 name: scope-check
-description: "Analyze a feature or sprint for scope creep by comparing current scope against the original plan. Flags additions, quantifies bloat, and recommends cuts. Use when user says 'any scope creep', 'scope review', 'are we staying in scope'."
-argument-hint: "[feature-name or sprint-N]"
+description: "分析功能或 Sprint 是否存在范围蔓延，将当前范围与原始计划对比。标记新增项，量化膨胀程度，并建议裁剪方案。当用户说'有任何范围蔓延吗'、'范围审查'、'我们在范围内吗'时使用。"
+argument-hint: "[功能名称 或 sprint-N]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Bash
 model: haiku
 ---
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-# Scope Check
+# 范围检查
 
-This skill is read-only — it reports findings but writes no files.
+此 Skill 为只读——它报告发现但不写入任何文件。
 
-Compares original planned scope against current state to detect, quantify, and triage
-scope creep.
+将原始计划范围与当前状态进行比较，以检测、量化和分类范围蔓延。
 
-**Argument:** `$ARGUMENTS[0]` — feature name, sprint number, or milestone name.
-
----
-
-## Phase 1: Find the Original Plan
-
-Locate the baseline scope document for the given argument:
-
-- **Feature name** → read `design/gdd/[feature].md` or matching file in `design/`
-- **Sprint number** (e.g., `sprint-3`) → read `production/sprints/sprint-03.md` or similar
-- **Milestone** → read `production/milestones/[name].md`
-
-If the document is not found, report the missing file and stop. Do not proceed without
-a baseline to compare against.
+**参数：** `$ARGUMENTS[0]` — 功能名称、Sprint 编号或里程碑名称。
 
 ---
 
-## Phase 2: Read the Current State
+## 第 1 阶段：查找原始计划
 
-Check what has actually been implemented or is in progress:
+定位给定参数的基准范围文档：
 
-- Scan the codebase for files related to the feature/sprint
-- Read git log for commits related to this work (`git log --oneline --since=[start-date]`)
-- Check for TODO/FIXME comments that indicate unfinished scope additions
-- Check active sprint plan if the feature is mid-sprint
+- **功能名称** → 读取 `design/gdd/[feature].md` 或 `design/` 中匹配的文件
+- **Sprint 编号**（例如 `sprint-3`）→ 读取 `production/sprints/sprint-03.md` 或类似文件
+- **里程碑** → 读取 `production/milestones/[name].md`
+
+如果文档未找到，报告缺失文件并停止。没有可比较的基准，不继续执行。
 
 ---
 
-## Phase 3: Compare Original vs Current Scope
+## 第 2 阶段：读取当前状态
 
-Produce the comparison report:
+检查实际已实现或正在进行的内容：
+
+- 扫描代码库中与功能/Sprint 相关的文件
+- 读取与此工作相关的 git log 提交记录（`git log --oneline --since=[start-date]`）
+- 检查 TODO/FIXME 注释，识别未完成的范围新增项
+- 如果功能处于 Sprint 中期，检查活跃的 Sprint 计划
+
+---
+
+## 第 3 阶段：比较原始范围与当前范围
+
+生成比较报告：
 
 ```markdown
-## Scope Check: [Feature/Sprint Name]
-Generated: [Date]
+## 范围检查：[功能/Sprint 名称]
+生成日期：[日期]
 
-### Original Scope
-[List of items from the original plan]
+### 原始范围
+[原始计划中的项目列表]
 
-### Current Scope
-[List of items currently implemented or in progress]
+### 当前范围
+[当前已实现或正在进行中的项目列表]
 
-### Scope Additions (not in original plan)
-| Addition | Source | When | Justified? | Effort |
+### 范围新增项（不在原始计划中）
+| 新增项 | 来源 | 时间 | 是否有理由？ | 工作量 |
 |----------|--------|------|------------|--------|
-| [item] | [commit/person] | [date] | [Yes/No/Unclear] | [S/M/L] |
+| [项目] | [提交/人员] | [日期] | [是/否/不明确] | [S/M/L] |
 
-### Scope Removals (in original but dropped)
-| Removed Item | Reason | Impact |
+### 范围移除项（在原计划中但被放弃）
+| 移除项 | 原因 | 影响 |
 |-------------|--------|--------|
-| [item] | [why removed] | [what's affected] |
+| [项目] | [移除原因] | [受影响的内容] |
 
-### Bloat Score
-- Original items: [N]
-- Current items: [N]
-- Items added: [N] (+[X]%)
-- Items removed: [N]
-- Net scope change: [+/-N] ([X]%)
+### 膨胀评分
+- 原始项目数：[N]
+- 当前项目数：[N]
+- 新增项目数：[N]（+[X]%）
+- 移除项目数：[N]
+- 净范围变化：[+/-N]（[X]%）
 
-### Risk Assessment
-- **Schedule Risk**: [Low/Medium/High] — [explanation]
-- **Quality Risk**: [Low/Medium/High] — [explanation]
-- **Integration Risk**: [Low/Medium/High] — [explanation]
+### 风险评估
+- **进度风险**：[低/中/高] — [说明]
+- **质量风险**：[低/中/高] — [说明]
+- **集成风险**：[低/中/高] — [说明]
 
-### Recommendations
-1. **Cut**: [Items that should be removed to stay on schedule]
-2. **Defer**: [Items that can move to a future sprint/version]
-3. **Keep**: [Additions that are genuinely necessary]
-4. **Flag**: [Items that need a decision from producer/creative-director]
+### 建议
+1. **裁剪**：[为保持进度应移除的项目]
+2. **延期**：[可移至未来 Sprint/版本的项目]
+3. **保留**：[确实必要的新增项]
+4. **标记**：[需要制作人/创意总监决策的项目]
 ```
 
 ---
 
-## Phase 4: Verdict
+## 第 4 阶段：判定
 
-Assign a canonical verdict based on net scope change:
+根据净范围变化分配标准判定：
 
-| Net Change | Verdict | Meaning |
+| 净变化 | 判定 | 含义 |
 |-----------|---------|---------|
-| ≤10% | **PASS** | On Track — within acceptable variance |
-| 10–25% | **CONCERNS** | Minor Creep — manageable with targeted cuts |
-| 25–50% | **FAIL** | Significant Creep — must cut or formally extend timeline |
-| >50% | **FAIL** | Out of Control — stop, re-plan, escalate to producer |
+| ≤10% | **PASS** | 正常 — 在可接受波动范围内 |
+| 10–25% | **CONCERNS** | 轻微蔓延 — 可通过针对性裁剪管理 |
+| 25–50% | **FAIL** | 显著蔓延 — 必须裁剪或正式延长工期 |
+| >50% | **FAIL** | 失控 — 停止，重新规划，上报制作人 |
 
-Output the verdict prominently:
+突出显示判定：
 
 ```
-**Scope Verdict: [PASS / CONCERNS / FAIL]**
-Net change: [+X%] — [On Track / Minor Creep / Significant Creep / Out of Control]
+**范围判定：[PASS / CONCERNS / FAIL]**
+净变化：[+X%] — [正常 / 轻微蔓延 / 显著蔓延 / 失控]
 ```
 
 ---
 
-## Phase 5: Next Steps
+## 第 5 阶段：后续步骤
 
-After presenting the report, offer concrete follow-up:
+呈现报告后，提供具体的后续行动：
 
-- **PASS** → no action required. Suggest re-running before next milestone.
-- **CONCERNS** → offer to identify the 2–3 additions with best cut ratio. Reference `/sprint-plan update` to formally re-scope.
-- **FAIL** → recommend escalating to producer. Reference `/sprint-plan update` for re-planning or `/estimate` to re-baseline timeline.
+- **PASS** → 无需操作。建议在下一个里程碑之前重新运行。
+- **CONCERNS** → 提议找出 2–3 个裁剪性价比最高的新增项。引用 `/sprint-plan update` 正式重新划定范围。
+- **FAIL** → 建议升级给制作人。引用 `/sprint-plan update` 重新规划或 `/estimate` 重新确定时间基准。
 
-Always end with:
-> "Run `/scope-check [name]` again after cuts are made to verify the verdict improves."
+始终以以下内容结束：
+> "裁剪完成后再次运行 `/scope-check [name]` 以验证判定是否改善。"
 
 ---
 
-### Rules
+### 规则
 
-- Scope creep is additions without corresponding cuts or timeline extensions
-- Not all additions are bad — some are discovered requirements. But they must be acknowledged and accounted for
-- When recommending cuts, prioritize preserving the core player experience over nice-to-haves
-- Always quantify scope changes — "it feels bigger" is not actionable, "+35% items" is
+- 范围蔓延是指没有相应裁剪或工期延长的新增项
+- 并非所有新增项都是不好的——有些是发现的需求。但它们必须被承认并计入
+- 在建议裁剪时，优先保留核心玩家体验而非锦上添花的内容
+- 始终量化范围变化——"感觉变大了"不可操作，"+35% 项目数"才可操作

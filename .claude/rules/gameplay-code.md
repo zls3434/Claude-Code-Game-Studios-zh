@@ -1,31 +1,32 @@
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 ---
 paths:
   - "src/gameplay/**"
 ---
 
-# Gameplay Code Rules
+# 游戏性代码规范
 
-- ALL gameplay values MUST come from external config/data files, NEVER hardcoded
-- Use delta time for ALL time-dependent calculations (frame-rate independence)
-- NO direct references to UI code — use events/signals for cross-system communication
-- Every gameplay system must implement a clear interface
-- State machines must have explicit transition tables with documented states
-- Write unit tests for all gameplay logic — separate logic from presentation
-- Document which design doc each feature implements in code comments
-- No static singletons for game state — use dependency injection
+- 所有游戏性数值必须来自外部配置/数据文件，绝不可硬编码
+- 所有依赖时间的计算必须使用 delta time（确保帧率无关）
+- 禁止直接引用 UI 代码 —— 使用事件/信号进行跨系统通信
+- 每个游戏性系统必须实现明确的接口
+- 状态机必须具有显式的转换表，并附有文档化的状态说明
+- 为所有游戏性逻辑编写单元测试 —— 将逻辑与表现分离
+- 在代码注释中记录每个功能实现了哪个设计文档
+- 不允许多例模式的游戏状态 —— 使用依赖注入
 
-## Examples
+## 示例
 
-**Correct** (data-driven):
+**正确**（数据驱动）：
 
 ```gdscript
 var damage: float = config.get_value("combat", "base_damage", 10.0)
 var speed: float = stats_resource.movement_speed * delta
 ```
 
-**Incorrect** (hardcoded):
+**错误**（硬编码）：
 
 ```gdscript
-var damage: float = 25.0   # VIOLATION: hardcoded gameplay value
-var speed: float = 5.0      # VIOLATION: not from config, not using delta
+var damage: float = 25.0   # 违规：硬编码游戏性数值
+var speed: float = 5.0      # 违规：非来自配置，未使用 delta
 ```

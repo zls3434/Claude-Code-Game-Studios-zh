@@ -1,27 +1,36 @@
-## Summary
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# 拉取请求
 
-Brief description of what this PR does.
+## 📝 描述
+<!-- 清晰简洁地描述此 PR 做了什么 -->
 
-## Type of Change
+## 🔗 相关问题
+<!--
+使用关键字：Closes #, Fixes #, Resolves #
+例如：Closes #42
+-->
 
-- [ ] New agent
-- [ ] New skill
-- [ ] New hook or rule
-- [ ] Bug fix
-- [ ] Documentation improvement
-- [ ] Other:
+## 🧪 测试
+<!--
+你是如何测试这些更改的？
+- [ ] 单元测试通过
+- [ ] 集成测试通过
+- [ ] 手动测试
+- [ ] 性能测试通过
+-->
 
-## Changes
+## ✅ 检查清单
+<!-- 在提交 PR 前检查所有方面 -->
+- [ ] 代码遵循项目编码规范（.claude/docs/coding-standards.md）
+- [ ] 所有新代码已添加注释
+- [ ] 设计文档已更新（如适用）
+- [ ] ADR 已创建/已更新（如为架构更改）
+- [ ] 在不支持的最低规格硬件上测试
+- [ ] 无破坏性变更，或已文档化迁移路径
+- [ ] 遵循协作设计原则（docs/COLLABORATIVE-DESIGN-PRINCIPLE.md）
 
--
--
--
+## 📸 截图/视频
+<!-- 如适用，添加截图或 GIF/视频 -->
 
-## Checklist
-
-- [ ] I've tested this in a Claude Code session
-- [ ] New agents include the Collaboration Protocol section
-- [ ] New skills use the subdirectory format (`.claude/skills/<name>/SKILL.md`)
-- [ ] Reference docs are updated (agent-roster, skills-reference, hooks-reference, rules-reference)
-- [ ] Hooks use `grep -E` (POSIX) and fail gracefully without jq/python
-- [ ] No hardcoded paths or platform-specific assumptions
+## 🚀 对等体审核者
+<!-- @提及应审核此 PR 的人员 -->

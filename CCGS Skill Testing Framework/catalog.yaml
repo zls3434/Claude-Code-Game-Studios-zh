@@ -1,7 +1,8 @@
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 version: 2
 last_updated: ""
 skills:
-  # Critical — gate skills that control phase transitions
+  # Critical — 控制阶段转换的 gate skill
   - name: gate-check
     spec: CCGS Skill Testing Framework/skills/gate/gate-check.md
     last_static: ""
@@ -68,7 +69,7 @@ skills:
     priority: critical
     category: review
 
-  # High — pipeline-critical skills
+  # High — pipeline 关键 skill
   - name: create-epics
     spec: CCGS Skill Testing Framework/skills/pipeline/create-epics.md
     last_static: ""
@@ -168,7 +169,7 @@ skills:
     priority: high
     category: analysis
 
-  # Medium — team and sprint management skills
+  # Medium — team 和 sprint 管理 skill
   - name: sprint-plan
     spec: CCGS Skill Testing Framework/skills/sprint/sprint-plan.md
     last_static: ""
@@ -290,7 +291,7 @@ skills:
     priority: medium
     category: team
 
-  # Low — analysis, reporting, utility skills
+  # Low — 分析、报告、实用 skill
   - name: skill-test
     spec: CCGS Skill Testing Framework/skills/utility/skill-test.md
     last_static: ""
@@ -866,7 +867,7 @@ agents:
     last_spec_result: ""
     category: lead
 
-  # Core Specialists (Sonnet)
+  # 核心 Specialists (Sonnet)
   - name: gameplay-programmer
     spec: CCGS Skill Testing Framework/agents/specialists/gameplay-programmer.md
     last_spec: ""

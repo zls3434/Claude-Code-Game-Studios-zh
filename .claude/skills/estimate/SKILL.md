@@ -1,132 +1,134 @@
 ---
 name: estimate
-description: "Estimates task effort by analyzing complexity, dependencies, historical velocity, and risk factors. Produces a structured estimate with confidence levels."
-argument-hint: "[task-description]"
+description: "通过分析复杂度、依赖关系、历史速度和风险因素来估算任务工作量。生成带有置信度等级的结构化估算。"
+argument-hint: "[任务描述]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep
 model: sonnet
 ---
 
-## Phase 1: Understand the Task
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-Read the task description from the argument. If the description is too vague to estimate meaningfully, ask for clarification before proceeding.
+## 阶段 1：理解任务
 
-Read CLAUDE.md for project context: tech stack, coding standards, architectural patterns, and any estimation guidelines.
+从参数中读取任务描述。如果描述太模糊而无法有意义的估算，在继续之前请求澄清。
 
-Read relevant design documents from `design/gdd/` if the task relates to a documented feature or system.
+读取 CLAUDE.md 了解项目背景：技术栈、编码规范、架构模式以及任何估算指南。
 
----
-
-## Phase 2: Scan Affected Code
-
-Identify files and modules that would need to change:
-
-- Assess complexity (size, dependency count, cyclomatic complexity)
-- Identify integration points with other systems
-- Check for existing test coverage in the affected areas
-- Read past sprint data from `production/sprints/` for similar completed tasks and historical velocity
+如果任务与已文档化的功能或系统相关，从 `design/gdd/` 中读取相关设计文档。
 
 ---
 
-## Phase 3: Analyze Complexity Factors
+## 阶段 2：扫描受影响的代码
 
-**Code Complexity:**
-- Lines of code in affected files
-- Number of dependencies and coupling level
-- Whether this touches core/engine code vs leaf/feature code
-- Whether existing patterns can be followed or new patterns are needed
+确定需要更改的文件和模块：
 
-**Scope:**
-- Number of systems touched
-- New code vs modification of existing code
-- Amount of new test coverage required
-- Data migration or configuration changes needed
-
-**Risk:**
-- New technology or unfamiliar libraries
-- Unclear or ambiguous requirements
-- Dependencies on unfinished work
-- Cross-system integration complexity
-- Performance sensitivity
+- 评估复杂度（大小、依赖数量、圈复杂度）
+- 确定与其他系统的集成点
+- 检查受影响区域现有的测试覆盖率
+- 从 `production/sprints/` 中读取类似已完成任务的过往冲刺数据以及历史速度
 
 ---
 
-## Phase 4: Generate the Estimate
+## 阶段 3：分析复杂度因素
+
+**代码复杂度：**
+- 受影响文件中的代码行数
+- 依赖项数量和耦合程度
+- 是否涉及核心/引擎代码 vs 叶子/功能代码
+- 是否可以遵循现有模式还是需要新模式
+
+**范围：**
+- 涉及的系统数量
+- 新代码 vs 修改现有代码
+- 所需新增的测试覆盖率
+- 所需的数据迁移或配置更改
+
+**风险：**
+- 新技术或不熟悉的库
+- 不清晰或模糊的需求
+- 对未完成工作的依赖
+- 跨系统集成的复杂度
+- 性能敏感性
+
+---
+
+## 阶段 4：生成估算
 
 ```markdown
-## Task Estimate: [Task Name]
-Generated: [Date]
+## 任务估算：[任务名称]
+生成时间：[日期]
 
-### Task Description
-[Restate the task clearly in 1-2 sentences]
+### 任务描述
+[用 1-2 句话清晰地重述任务]
 
-### Complexity Assessment
+### 复杂度评估
 
-| Factor | Assessment | Notes |
+| 因素 | 评估 | 备注 |
 |--------|-----------|-------|
-| Systems affected | [List] | [Core, gameplay, UI, etc.] |
-| Files likely modified | [Count] | [Key files listed below] |
-| New code vs modification | [Ratio] | |
-| Integration points | [Count] | [Which systems interact] |
-| Test coverage needed | [Low / Medium / High] | |
-| Existing patterns available | [Yes / Partial / No] | |
+| 受影响的系统 | [列表] | [核心、游戏玩法、UI 等] |
+| 可能修改的文件 | [数量] | [关键文件如下所列] |
+| 新代码 vs 修改 | [比例] | |
+| 集成点 | [数量] | [哪些系统交互] |
+| 所需测试覆盖率 | [低 / 中 / 高] | |
+| 可用的现有模式 | [是 / 部分 / 否] | |
 
-**Key files likely affected:**
-- `[path/to/file1]` -- [what changes here]
+**可能受影响的关键文件：**
+- `[path/to/file1]` -- [此处将发生什么变化]
 
-### Effort Estimate
+### 工作量估算
 
-| Scenario | Days | Assumption |
+| 场景 | 天 | 假设 |
 |----------|------|------------|
-| Optimistic | [X] | Everything goes right, no surprises |
-| Expected | [Y] | Normal pace, minor issues, one round of review |
-| Pessimistic | [Z] | Significant unknowns surface, blocked for a day |
+| 乐观 | [X] | 一切顺利，没有意外 |
+| 预期 | [Y] | 正常节奏，小问题，一次审查 |
+| 悲观 | [Z] | 出现重大未知因素，阻塞一天 |
 
-**Recommended budget: [Y days]**
+**推荐预算：[Y 天]**
 
-### Confidence: [High / Medium / Low]
+### 置信度：[高 / 中 / 低]
 
-[Explain which factors drive the confidence level for this specific task.]
+[解释哪些因素驱动了此特定任务的置信度等级。]
 
-### Risk Factors
+### 风险因素
 
-| Risk | Likelihood | Impact | Mitigation |
+| 风险 | 可能性 | 影响 | 缓解措施 |
 |------|-----------|--------|------------|
 
-### Dependencies
+### 依赖关系
 
-| Dependency | Status | Impact if Delayed |
+| 依赖项 | 状态 | 如果延迟的影响 |
 |-----------|--------|-------------------|
 
-### Suggested Breakdown
+### 建议分解
 
-| # | Sub-task | Estimate | Notes |
+| # | 子任务 | 估算 | 备注 |
 |---|----------|----------|-------|
-| 1 | [Research / spike] | [X days] | |
-| 2 | [Core implementation] | [X days] | |
-| 3 | [Testing and validation] | [X days] | |
-| | **Total** | **[Y days]** | |
+| 1 | [调研 / 试探] | [X 天] | |
+| 2 | [核心实现] | [X 天] | |
+| 3 | [测试和验证] | [X 天] | |
+| | **总计** | **[Y 天]** | |
 
-### Notes and Assumptions
-- [Key assumption that affects the estimate]
-- [Any caveats about scope boundaries]
+### 备注和假设
+- [影响估算的关键假设]
+- [关于范围边界的任何注意事项]
 ```
 
-Output the estimate with a brief summary: recommended budget, confidence level, and the single biggest risk factor.
+输出估算并附带简要摘要：推荐预算、置信度等级以及最大的单一风险因素。
 
-This skill is read-only — no files are written. Verdict: **COMPLETE** — estimate generated.
+本 Skill 是只读的——不写入文件。裁决：**完成**——估算已生成。
 
 ---
 
-## Phase 5: Next Steps
+## 阶段 5：后续步骤
 
-- If confidence is Low: recommend a time-boxed spike (`/prototype`) before committing.
-- If the task is > 10 days: recommend breaking it into smaller stories via `/create-stories`.
-- To schedule the task: run `/sprint-plan update` to add it to the next sprint.
+- 如果置信度为低：建议在提交前进行有时间限制的试探（`/prototype`）。
+- 如果任务超过 10 天：建议通过 `/create-stories` 将其分解为更小的故事。
+- 要安排任务：运行 `/sprint-plan update` 将其添加到下一个冲刺中。
 
-### Guidelines
+### 准则
 
-- Always give a range (optimistic / expected / pessimistic), never a single number
-- The recommended budget should be the expected estimate, not the optimistic one
-- Round to half-day increments — estimating in hours implies false precision for tasks longer than a day
-- Do not pad estimates silently — call out risk explicitly so the team can decide
+- 始终给出范围（乐观 / 预期 / 悲观），从不给出单一数字
+- 推荐预算应为预期估算，而不是乐观估算
+- 四舍五入到半天增量——对于超过一天的任务，按小时估算意味着虚假的精度
+- 不要无声地填充估算——明确地指出风险，以便团队可以做出决策

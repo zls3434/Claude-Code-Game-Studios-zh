@@ -1,101 +1,77 @@
-# Godot Navigation — Quick Reference
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Godot 4.5 — 导航参考
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+> 最后验证：2026-02-13
+> Godot 文档 — [Navigation](https://docs.godotengine.org/en/4.5/tutorials/navigation/navigation_introduction_3d.html)
 
-## What Changed Since ~4.3 (LLM Cutoff)
+## NavigationServer3D
 
-### 4.5 Changes
-- **Dedicated 2D navigation server**: No longer a proxy to 3D NavigationServer
-  - Reduces export binary size for 2D-only games
-  - API remains the same for both 2D and 3D
+核心导航服务器。Agent 应使用 `NavigationServer3D` 而非直接操作底层 API。
 
-### 4.3 Changes (in training data)
-- **`NavigationRegion2D`**: Removed `avoidance_layers` and `constrain_avoidance` properties
+| 方法 | 用途 | 备注 |
+|--------|---------|-------|
+| `map_create()` | 创建导航地图 | 返回 RID |
+| `map_set_active(rid, active)` | 激活/停用地图 | 性能优化 |
+| `region_create()` | 创建导航区域 | 为导航网格返回 RID |
+| `region_set_map(rid, map)` | 将区域分配到地图 | 使导航网格可用于寻路 |
+| `region_set_transform(rid, transform)` | 设置区域变换 | 用于移动导航网格 |
+| `region_set_navigation_mesh(rid, navigation_mesh)` | 设置导航网格 | 使用 NavigationMesh 资源 |
+| `region_set_enabled(rid, enabled)` | 启用/禁用区域 | 临时移除 |
+| `map_get_path(map, from, to, optimize, navigation_layers)` | 计算路径 | 返回 `PackedVector3Array` |
+| `map_get_closest_point(map, point)` | 获取最近点 | 返回导航网格上的 Vector3 |
 
-## Current API Patterns
+## NavigationAgent3D
 
-### NavigationAgent3D (Preferred for Most Cases)
+基于节点的导航代理。方便使用和回调。
+
+| 方法/属性 | 用途 | 备注 |
+|---------------|---------|-------|
+| `target_position` | 导航目标 | 设置目标世界坐标 |
+| `set_target_position(position)` | 替代设置器 | 与上方属性相同 |
+| `get_next_path_position()` | 下一个航点点 | 用于基于 steer 的移动 |
+| `is_navigation_finished()` | 是否到达目标？ | 布尔查询 |
+| `distance_to_target()` | 到目标的距离 | 浮点数，世界单位 |
+| `navigation_finished` | 到达时发出信号 | 连接以获知何时到达 |
+| `path_changed` | 路径更新时发出信号 | 用于可视化 |
+| `velocity_computed` | 安全速度请求 | 用于 `_physics_process` |
+| `avoidance_enabled` | 代理间避让 | 默认开启，布尔属性 |
+| `max_speed` | 代理移动速度 | 由服务器用于避让 |
+| `radius` / `height` | 代理尺寸 | 用于碰撞检查 |
+
+## 常见模式
+
 ```gdscript
-@onready var nav_agent: NavigationAgent3D = %NavigationAgent3D
+extends CharacterBody3D
+
+@onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
 
 func _ready() -> void:
-    nav_agent.path_desired_distance = 0.5
-    nav_agent.target_desired_distance = 1.0
-    nav_agent.velocity_computed.connect(_on_velocity_computed)
+    actor_setup()
 
-func navigate_to(target: Vector3) -> void:
+func actor_setup() -> void:
+    await get_tree().physics_frame  # 等待第一个物理帧
+    set_movement_target(Vector3(10, 0, 10))
+
+func set_movement_target(target: Vector3) -> void:
     nav_agent.target_position = target
 
 func _physics_process(delta: float) -> void:
     if nav_agent.is_navigation_finished():
         return
+
     var next_pos: Vector3 = nav_agent.get_next_path_position()
     var direction: Vector3 = global_position.direction_to(next_pos)
-    nav_agent.velocity = direction * move_speed
-
-func _on_velocity_computed(safe_velocity: Vector3) -> void:
-    velocity = safe_velocity
+    velocity = direction * 5.0
     move_and_slide()
 ```
 
-### NavigationAgent2D
+Go To 行为模式 — 替代上文 `_physics_process`：
+
 ```gdscript
-@onready var nav_agent: NavigationAgent2D = %NavigationAgent2D
-
-func navigate_to(target: Vector2) -> void:
-    nav_agent.target_position = target
-
 func _physics_process(delta: float) -> void:
-    if nav_agent.is_navigation_finished():
-        return
-    var next_pos: Vector2 = nav_agent.get_next_path_position()
-    var direction: Vector2 = global_position.direction_to(next_pos)
-    velocity = direction * move_speed
+    var target: Vector3 = nav_agent.get_next_path_position()
+    var desired_velocity: Vector3 = global_position.direction_to(target) * speed
+    var steering: Vector3 = (desired_velocity - velocity) * 4.0
+    velocity += steering * delta
     move_and_slide()
 ```
-
-### Low-Level Path Query (3D)
-```gdscript
-# Direct server query for custom pathfinding logic
-var query := NavigationPathQueryParameters3D.new()
-query.map = get_world_3d().navigation_map
-query.start_position = global_position
-query.target_position = target_pos
-query.navigation_layers = navigation_layers
-
-var result := NavigationPathQueryResult3D.new()
-NavigationServer3D.query_path(query, result)
-var path: PackedVector3Array = result.path
-```
-
-### Avoidance
-```gdscript
-# Enable RVO2-based local avoidance
-nav_agent.avoidance_enabled = true
-nav_agent.radius = 0.5
-nav_agent.max_speed = move_speed
-nav_agent.neighbor_distance = 10.0
-
-# Use velocity_computed signal for avoidance-safe movement
-nav_agent.velocity_computed.connect(_on_velocity_computed)
-
-# Set velocity each frame (avoidance needs this)
-nav_agent.velocity = desired_velocity
-```
-
-### Navigation Layers
-```gdscript
-# Use layers to separate walkable areas by agent type
-# Layer 1: Ground units
-# Layer 2: Flying units
-# Layer 3: Swimming units
-nav_agent.navigation_layers = 1  # Ground only
-nav_agent.navigation_layers = 1 | 2  # Ground + Flying
-```
-
-## Common Mistakes
-- Calling `get_next_path_position()` without checking `is_navigation_finished()`
-- Not setting `velocity` on the agent when avoidance is enabled (required for RVO2)
-- Using `NavigationRegion2D.avoidance_layers` (removed in 4.3)
-- Forgetting to bake navigation mesh after modifying geometry
-- Not setting `navigation_layers` (defaults to all layers)

@@ -1,228 +1,208 @@
 ---
 name: help
-description: "Analyzes what is done and the users query and offers advice on what to do next. Use if user says what should I do next or what do I do now or I'm stuck or I don't know what to do"
-argument-hint: "[optional: what you just finished, e.g. 'finished design-review' or 'stuck on ADRs']"
+description: "分析已完成的工作和用户查询，提供下一步该做什么的建议。当用户说'我接下来该做什么'、'现在我该做什么'、'我卡住了'或'我不知道该做什么'时使用"
+argument-hint: "[可选：你刚刚完成的工作，例如 'finished design-review' 或 'stuck on ADRs']"
 user-invocable: true
 allowed-tools: Read, Glob, Grep
 context: |
-  !echo "=== Live Project State ===" && echo "Stage: $(cat production/stage.txt 2>/dev/null | tr -d '[:space:]' || echo 'not set')" && echo "Latest sprint: $(ls -t production/sprints/*.md 2>/dev/null | head -1 || echo 'none')" && echo "Session state: $(head -5 production/session-state/active.md 2>/dev/null || echo 'none')"
+  !echo "=== 项目实时状态 ===" && echo "阶段: $(cat production/stage.txt 2>/dev/null | tr -d '[:space:]' || echo 'not set')" && echo "最新冲刺: $(ls -t production/sprints/*.md 2>/dev/null | head -1 || echo 'none')" && echo "会话状态: $(head -5 production/session-state/active.md 2>/dev/null || echo 'none')"
 model: haiku
 ---
 
-# Studio Help — What Do I Do Next?
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-This skill is read-only — it reports findings but writes no files.
+# 工作室帮助——我接下来该做什么？
 
-This skill figures out exactly where you are in the game development pipeline and
-tells you what comes next. It is **lightweight** — not a full audit. For a full
-gap analysis, use `/project-stage-detect`.
+本 Skill 是只读的——它报告发现但不会写入任何文件。
 
----
-
-## Step 1: Read the Catalog
-
-Read `.claude/docs/workflow-catalog.yaml`. This is the authoritative list of all
-phases, their steps (in order), whether each step is required or optional, and
-the artifact globs that indicate completion.
+本 Skill 确切地判断你在游戏开发管线中的位置，并告诉你下一步是什么。它是**轻量级的**——不是完整的审计。如需完整的缺口分析，请使用 `/project-stage-detect`。
 
 ---
 
-## Step 1b: Find Skills Not in the Catalog
+## 步骤 1：读取目录
 
-After reading the catalog, Glob `.claude/skills/*/SKILL.md` to get the full list
-of installed skills. For each file, extract the `name:` field from its frontmatter.
+读取 `.claude/docs/workflow-catalog.yaml`。这是所有阶段及其步骤（按顺序排列）的权威列表，包括每个步骤是必需的还是可选的，以及指示完成情况的产物 glob 模式。
 
-Compare against the `command:` values in the catalog. Any skill whose name does
-not appear as a catalog command is an **uncataloged skill** — still usable but not
-part of the phase-gated workflow.
+---
 
-Collect these for the output in Step 7 — show them as a footer block:
+## 步骤 1b：查找不在目录中的 Skill
+
+读取目录后，使用 Glob 匹配 `.claude/skills/*/SKILL.md` 以获取已安装 Skill 的完整列表。对于每个文件，从其 frontmatter 中提取 `name:` 字段。
+
+与目录中的 `command:` 值进行比较。任何名称未作为目录命令出现的 Skill 都是**未编目的 Skill**——仍然可用，但不是阶段门禁工作流的一部分。
+
+收集这些内容用于步骤 7 的输出——将其作为页脚块展示：
 
 ```
-### Also installed (not in workflow)
-- `/skill-name` — [description from SKILL.md frontmatter]
-- `/skill-name` — [description]
+### 已安装（不在工作流中）
+- `/skill-name` — [来自 SKILL.md frontmatter 的描述]
+- `/skill-name` — [描述]
 ```
 
-Only show this block if at least one uncataloged skill exists. Limit to the 10
-most relevant based on the user's current phase (QA skills in production, team
-skills in production/polish, etc.).
+仅当至少存在一个未编目的 Skill 时才显示此块。根据用户当前阶段，限制为最相关的 10 个（制作阶段的 QA Skill、制作/打磨阶段的团队 Skill 等）。
 
 ---
 
-## Step 2: Determine Current Phase
+## 步骤 2：确定当前阶段
 
-Check in this order:
+按以下顺序检查：
 
-1. **Read `production/stage.txt`** — if it exists and has content, this is the
-   authoritative phase name. Map it to a catalog phase key:
-   - "Concept" → `concept`
-   - "Systems Design" → `systems-design`
-   - "Technical Setup" → `technical-setup`
-   - "Pre-Production" → `pre-production`
-   - "Production" → `production`
-   - "Polish" → `polish`
-   - "Release" → `release`
+1. **读取 `production/stage.txt`**——如果存在且包含内容，这就是权威的阶段名称。将其映射到目录阶段键：
+   - "概念" → `concept`
+   - "系统设计" → `systems-design`
+   - "技术设置" → `technical-setup`
+   - "前期制作" → `pre-production`
+   - "制作" → `production`
+   - "打磨" → `polish`
+   - "发布" → `release`
 
-2. **If stage.txt is missing**, infer phase from artifacts (most-advanced match wins):
-   - `src/` has 10+ source files → `production`
-   - `production/stories/*.md` exists → `pre-production`
-   - `docs/architecture/adr-*.md` exists → `technical-setup`
-   - `design/gdd/systems-index.md` exists → `systems-design`
-   - `design/gdd/game-concept.md` exists → `concept`
-   - Nothing → `concept` (fresh project)
-
----
-
-## Step 3: Read Session Context
-
-Read `production/session-state/active.md` if it exists. Extract:
-- What was most recently worked on
-- Any in-progress tasks or open questions
-- Current epic/feature/task from STATUS block (if present)
-
-This tells you what the user just finished or is stuck on — use it to personalize
-the output.
+2. **如果 stage.txt 缺失**，从产物推断阶段（最靠后的匹配优先）：
+   - `src/` 有 10+ 个源文件 → `production`
+   - `production/stories/*.md` 存在 → `pre-production`
+   - `docs/architecture/adr-*.md` 存在 → `technical-setup`
+   - `design/gdd/systems-index.md` 存在 → `systems-design`
+   - `design/gdd/game-concept.md` 存在 → `concept`
+   - 什么都没有 → `concept`（全新项目）
 
 ---
 
-## Step 4: Check Step Completion for the Current Phase
+## 步骤 3：读取会话上下文
 
-For each step in the current phase (from the catalog):
+读取 `production/session-state/active.md`（如果存在）。提取：
+- 最近正在处理的内容
+- 任何正在进行的任务或未解决的问题
+- 来自 STATUS 块的当前史诗/功能/任务（如果存在）
 
-### Artifact-based checks
-
-If the step has `artifact.glob`:
-- Use Glob to check if files matching the pattern exist
-- If `min_count` is specified, verify at least that many files match
-- If `artifact.pattern` is specified, use Grep to verify the pattern exists in the matched file
-- **Complete** = artifact condition is met
-- **Incomplete** = artifact is missing or pattern not found
-
-If the step has `artifact.note` (no glob):
-- Mark as **MANUAL** — cannot auto-detect, will ask user
-
-If the step has no `artifact` field:
-- Mark as **UNKNOWN** — completion not trackable (e.g. repeatable implementation work)
-
-### Special case: production phase — read `sprint-status.yaml`
-
-When the current phase is `production`, check for `production/sprint-status.yaml`
-before doing any glob-based story checks. If it exists, read it directly:
-
-- Stories with `status: in-progress` → surface as "currently active"
-- Stories with `status: ready-for-dev` → surface as "next up"
-- Stories with `status: done` → count as complete
-- Stories with `status: blocked` → surface as blocker with the `blocker` field
-
-This gives precise per-story status without markdown scanning. Skip the glob
-artifact check for the `implement` and `story-done` steps — the YAML is authoritative.
-
-### Special case: `repeatable: true` (non-production)
-
-For repeatable steps outside production (e.g. "System GDDs"), the artifact
-check tells you whether *any* work has been done, not whether it's finished.
-Label these differently — show what's been detected, then note it may be ongoing.
+这告诉你用户刚刚完成了什么或卡在什么上面——用它来个性化输出。
 
 ---
 
-## Step 5: Find Position and Identify Next Steps
+## 步骤 4：检查当前阶段的步骤完成情况
 
-From the completion data, determine:
+对于当前阶段中的每个步骤（来自目录）：
 
-1. **Last confirmed complete step** — the furthest completed required step
-2. **Current blocker** — the first incomplete *required* step (this is what the
-   user must do next)
-3. **Optional opportunities** — incomplete *optional* steps that can be done
-   before or alongside the blocker
-4. **Upcoming required steps** — required steps after the current blocker
-   (show as "coming up" so user can plan ahead)
+### 基于产物的检查
 
-If the user provided an argument (e.g. "just finished design-review"), use that
-to advance past the step they named even if the artifact check is ambiguous.
+如果步骤有 `artifact.glob`：
+- 使用 Glob 检查匹配该模式的文件是否存在
+- 如果指定了 `min_count`，验证至少有那么多个文件匹配
+- 如果指定了 `artifact.pattern`，使用 Grep 验证该模式存在于匹配的文件中
+- **完成** = 产物条件已满足
+- **未完成** = 产物缺失或未找到模式
+
+如果步骤有 `artifact.note`（没有 glob）：
+- 标记为**手动**——无法自动检测，将询问用户
+
+如果步骤没有 `artifact` 字段：
+- 标记为**未知**——无法跟踪完成情况（例如可重复的实现工作）
+
+### 特殊情况：制作阶段——读取 `sprint-status.yaml`
+
+当前阶段为 `production` 时，在进行任何基于 glob 的故事检查之前检查 `production/sprint-status.yaml`。如果存在，直接读取：
+
+- 状态为 `in-progress` 的故事 → 呈现为"当前活跃"
+- 状态为 `ready-for-dev` 的故事 → 呈现为"下一个"
+- 状态为 `done` 的故事 → 计入已完成
+- 状态为 `blocked` 的故事 → 将封锁项与 `blocker` 字段一起呈现为阻塞
+
+这无需 Markdown 扫描即可给出每个故事精确的状态。跳过 `implement` 和 `story-done` 步骤的 glob 产物检查——YAML 是权威来源。
+
+### 特殊情况：`repeatable: true`（非制作阶段）
+
+对于制作阶段之外的可重复步骤（例如"系统 GDD"），产物检查告诉你是否进行了*任何*工作，而不是是否完成。
+以不同方式标注这些——显示已检测到的内容，然后注明可能仍在进行中。
 
 ---
 
-## Step 6: Check for In-Progress Work
+## 步骤 5：查找位置并确定下一步
 
-If `active.md` shows an active task or epic:
-- Surface it prominently at the top: "It looks like you were working on [X]"
-- Suggest continuing it or confirm if it's done
+从完成数据中确定：
+
+1. **最后确认完成的步骤**——最远的已完成必需步骤
+2. **当前阻塞项**——第一个未完成的*必需*步骤（这是用户接下来必须做的）
+3. **可选机会**——未完成的*可选*步骤，可以在阻塞项之前或同时进行
+4. **即将到来的必需步骤**——当前阻塞项之后的必需步骤（显示为"接下来"以便用户提前规划）
+
+如果用户提供了参数（例如"刚完成设计审查"），即使产物检查模糊不清，也使用该参数将进度推进到他们提到的步骤之后。
 
 ---
 
-## Step 7: Present Output
+## 步骤 6：检查进行中的工作
 
-Keep it **short and direct**. This is a quick orientation, not a report.
+如果 `active.md` 显示活跃任务或史诗：
+- 在顶部突出展示："看起来你正在处理 [X]"
+- 建议继续或确认是否已完成
+
+---
+
+## 步骤 7：呈现输出
+
+保持**简短直接**。这是快速定位，不是报告。
 
 ```
-## Where You Are: [Phase Label]
+## 你的位置：[阶段标签]
 
-**In progress:** [from active.md, if any]
+**进行中：** [来自 active.md，如果有的话]
 
-### ✓ Done
-- [completed step name]
-- [completed step name]
+### ✓ 已完成
+- [已完成的步骤名称]
+- [已完成的步骤名称]
 
-### → Next up (REQUIRED)
-**[Step name]** — [description]
-Command: `[/command]`
+### → 下一步（必需）
+**[步骤名称]** — [描述]
+命令：`[/command]`
 
-### ~ Also available (OPTIONAL)
-- **[Step name]** — [description] → `/command`
-- **[Step name]** — [description] → `/command`
+### ~ 也可用（可选）
+- **[步骤名称]** — [描述] → `/command`
+- **[步骤名称]** — [描述] → `/command`
 
-### Coming up after that
-- [Next required step name] (`/command`)
-- [Next required step name] (`/command`)
+### 之后即将到来
+- [下一个必需步骤名称] (`/command`)
+- [下一个必需步骤名称] (`/command`)
 
 ---
-Approaching **[next phase]** gate → run `/gate-check` when ready.
+正在接近 **[下一阶段]** 门禁 → 准备好后运行 `/gate-check`。
 ```
 
-**Formatting rules:**
-- `✓` for confirmed complete
-- `→` for the current required next step (only one — the first blocker)
-- `~` for optional steps available now
-- Show commands inline as backtick code
-- If a step has no command (e.g. "Implement Stories"), explain what to do instead of showing a slash command
-- For MANUAL steps, ask the user: "I can't tell if [step] is done — has it been completed?"
+**格式规则：**
+- `✓` 表示已确认完成
+- `→` 表示当前必需的下一步（只有一个——第一个阻塞项）
+- `~` 表示当前可用的可选步骤
+- 将命令作为反引号代码内联显示
+- 如果步骤没有命令（例如"实现故事"），解释该做什么而不是显示斜杠命令
+- 对于手动步骤，询问用户："我无法判断 [步骤] 是否完成——已经完成了吗？"
 
-Verdict: **COMPLETE** — next steps identified.
-
----
-
-## Step 8: Gate Warning (if close)
-
-After the current phase's steps, check if the user is likely approaching a gate:
-- If all required steps in the current phase are complete (or nearly complete),
-  add: "You're close to the **[Current] → [Next]** gate. Run `/gate-check` when ready."
-- If multiple required steps remain, skip the gate warning — it's not relevant yet.
+裁决：**完成**——已确定后续步骤。
 
 ---
 
-## Step 9: Escalation Paths
+## 步骤 8：门禁警告（如果接近）
 
-After the recommendations, if the user seems stuck or confused, add:
+在当前阶段的步骤之后，检查用户是否可能接近门禁：
+- 如果当前阶段所有必需步骤都已完成（或几乎完成），添加："你接近 **[当前] → [下一阶段]** 门禁。准备好后运行 `/gate-check`。"
+- 如果仍有多个必需步骤未完成，跳过门禁警告——目前还不相关。
+
+---
+
+## 步骤 9：升级路径
+
+在建议之后，如果用户似乎卡住或困惑，添加：
 
 ```
 ---
-Need more detail?
-- `/project-stage-detect` — full gap analysis with all missing artifacts listed
-- `/gate-check` — formal readiness check for your next phase
-- `/start` — re-orient from scratch
+需要更多细节？
+- `/project-stage-detect` — 完整的缺口分析，列出所有缺失的产物
+- `/gate-check` — 下一阶段的形式化就绪检查
+- `/start` — 从头开始重新定位
 ```
 
-Only show this if the user's input suggested confusion (e.g. "I don't know", "stuck",
-"lost", "not sure"). Don't show it for simple "what's next?" queries.
+仅当用户输入暗示困惑时才显示（例如"我不知道"、"卡住了"、"迷失了"、"不确定"）。对于简单的"下一步是什么？"查询不要显示。
 
 ---
 
-## Collaborative Protocol
+## 协作协议
 
-- **Never auto-run the next skill.** Recommend it, let the user invoke it.
-- **Ask about MANUAL steps** rather than assuming complete or incomplete.
-- **Match the user's tone** — if they sound stressed ("I'm totally lost"), be
-  reassuring and give one action, not a list of six.
-- **One primary recommendation** — the user should leave knowing exactly one thing
-  to do next. Optional steps and "coming up" are secondary context.
+- **绝不自动运行下一个 Skill。** 推荐它，让用户自己调用。
+- **询问手动步骤**而不是假设已完成或未完成。
+- **匹配用户的语气**——如果他们听起来有压力（"我完全迷失了"），给出安抚性的回复和一个行动项，而不是六个的列表。
+- **一个主要建议**——用户离开时应该确切知道接下来要做的一件事。可选步骤和"即将到来"是次要上下文。

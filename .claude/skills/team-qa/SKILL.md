@@ -1,244 +1,151 @@
 ---
 name: team-qa
-description: "Orchestrate the QA team through a full testing cycle. Coordinates qa-lead (strategy + test plan) and qa-tester (test case writing + bug reporting) to produce a complete QA package for a sprint or feature. Covers: test plan generation, test case writing, smoke check gate, manual QA execution, and sign-off report."
-argument-hint: "[sprint | feature: system-name] [--review full|lean|solo]"
+description: "编排 QA 团队进行全面的 Sprint 质量验证：协调 qa-lead、qa-tester、bug-triage Agent 和 performance-analyst，对当前 Sprint 故事执行端到端 QA 流水线。"
+argument-hint: "[sprint | quick | 故事文件路径] [--review full|lean|solo]"
 user-invocable: true
-allowed-tools: Read, Glob, Grep, Write, Task, AskUserQuestion
+allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task, AskUserQuestion, TodoWrite
 model: sonnet
-agent: qa-lead
 ---
-
-When this skill is invoked, orchestrate the QA team through a structured testing cycle.
-
-**Decision Points:** At each phase transition, use `AskUserQuestion` to present
-the user with the subagent's proposals as selectable options. Write the agent's
-full analysis in conversation, then capture the decision with concise labels.
-The user must approve before moving to the next phase.
-
-## Phase 0: Resolve Review Mode
-
-1. If `--review [mode]` was passed as an argument, use that mode.
-2. Else read `production/review-mode.txt` — use whatever is written there.
-3. Else default to `lean`.
-
-Modes:
-- `full` — spawn all director and lead gates as described
-- `lean` — skip director gates unless they are PHASE-GATE type (CD-PHASE-GATE, TD-PHASE-GATE, PR-PHASE-GATE, AD-PHASE-GATE)
-- `solo` — skip all director gate spawning entirely; run the skill without any agent gates
-
-Store the resolved mode for use in all subsequent phases.
-
-## Team Composition
-
-- **qa-lead** — QA strategy, test plan generation, story classification, sign-off report
-- **qa-tester** — Test case writing, bug report writing, manual QA documentation
-
-## How to Delegate
-
-Use the Task tool to spawn each team member as a subagent:
-- `subagent_type: qa-lead` — Strategy, planning, classification, sign-off
-- `subagent_type: qa-tester` — Test case writing and bug report writing
-
-Always provide full context in each agent's prompt (story file paths, QA plan path, scope constraints). Launch independent qa-tester tasks in parallel where possible (e.g., multiple stories in Phase 5 can be scaffolded simultaneously).
-
-## Pipeline
-
-### Phase 1: Load Context
-
-Before doing anything else, gather the full scope:
-
-1. Detect the current sprint or feature scope from the argument:
-   - If argument is a sprint identifier (e.g., `sprint-03`): Glob `production/sprints/` for files matching `*[sprint-identifier]*.md`. Read the matched file. If multiple match, use the most recently modified.
-   - If argument is `feature: [system-name]`: glob story files tagged for that system
-   - If no argument: read `production/session-state/active.md` and `production/sprint-status.yaml` (if present) to infer the active sprint
-
-2. Read `production/stage.txt` to confirm the current project phase.
-
-3. Count stories found and report to the user:
-   > "QA cycle starting for [sprint/feature]. Found [N] stories. Current stage: [stage]. Ready to begin QA strategy?"
-
-### Phase 2: QA Strategy (qa-lead)
-
-Spawn `qa-lead` via Task to review all in-scope stories and produce a QA strategy.
-
-Prompt the qa-lead to:
-- Read each story file
-- Classify each story by type: **Logic** / **Integration** / **Visual/Feel** / **UI** / **Config/Data**
-- Identify which stories require automated test evidence vs. manual QA
-- Flag any stories with missing acceptance criteria or missing test evidence that would block QA
-- Estimate manual QA effort (number of test sessions needed)
-- **Before assessing smoke status, check for an existing smoke check report**: Glob `production/qa/smoke-*.md` and read the most recently modified file (if found). If a report exists, use its verdict and findings directly — do not re-interview the user. If no report exists, note: "No prior smoke check report found — run `/smoke-check sprint` before proceeding." and set smoke check status to UNKNOWN (treat as PASS WITH WARNINGS for the purpose of continuing). Produce a smoke check verdict: **PASS** / **PASS WITH WARNINGS [list]** / **FAIL [list of failures]** / **UNKNOWN (no report found)**
-- Produce a strategy summary table and smoke check result:
-
-  | Story | Type | Automated Required | Manual Required | Blocker? |
-  |-------|------|--------------------|-----------------|----------|
-
-  **Smoke Check**: [PASS / PASS WITH WARNINGS / FAIL / UNKNOWN] — [source: `production/qa/smoke-[date].md` or "no report found"] — [details if not PASS]
-
-If the smoke check result is **FAIL**, the qa-lead must list the failures prominently. QA cannot proceed past the strategy phase with a failed smoke check.
-
-Present the qa-lead's full strategy to the user, then use `AskUserQuestion`:
-
-```
-question: "QA Strategy Review"
-options:
-  - "Looks good — proceed to test plan"
-  - "Adjust story types before proceeding"
-  - "Skip blocked stories and proceed with the rest"
-  - "Smoke check failed — fix issues and re-run /team-qa"
-  - "Cancel — resolve blockers first"
-```
-
-If smoke check **FAIL**: do not proceed to Phase 3. Surface the failures from the smoke check report and stop. The user must fix them, re-run `/smoke-check sprint`, and then re-run `/team-qa`.
-If smoke check **UNKNOWN**: surface a warning — "No smoke check report found. Recommend running `/smoke-check sprint` before QA. Proceeding with caution."
-If smoke check **PASS WITH WARNINGS**: note the warnings for the sign-off report and continue.
-If blockers are present: list them explicitly. The user may choose to skip blocked stories or cancel the cycle.
-
-### Phase 3: Test Plan Generation
-
-Using the strategy from Phase 2, produce a structured test plan document.
-
-The test plan should cover:
-- **Scope**: sprint/feature name, story count, dates
-- **Story Classification Table**: from Phase 2 strategy
-- **Automated Test Requirements**: which stories need test files, expected paths in `tests/`
-- **Manual QA Scope**: which stories need manual walkthrough and what to validate
-- **Out of Scope**: what is explicitly not being tested this cycle and why
-- **Entry Criteria**: what must be true before QA can begin. Always include: (1) Smoke check PASS or PASS WITH WARNINGS report exists at `production/qa/smoke-*.md`, (2) build is stable (no crashes on launch), (3) all Must Have stories have Status: in-progress or done in `production/sprint-status.yaml`. Add any sprint-specific criteria beyond these.
-- **Exit Criteria**: what constitutes a completed QA cycle (all stories PASS or FAIL with bugs filed)
-
-Ask: "May I write the QA plan to `production/qa/qa-plan-[sprint]-[date].md`?"
-
-Write only after receiving approval.
-
-### Phase 4: Test Case Writing (qa-tester)
-
-> **Smoke check** is performed as part of Phase 2 (QA Strategy). If the smoke check returned FAIL in Phase 2, the cycle was stopped there. This phase only runs when the Phase 2 smoke check was PASS, PASS WITH WARNINGS, or UNKNOWN.
-
-For each story requiring manual QA (Visual/Feel, UI, Integration without automated tests):
-
-Spawn `qa-tester` via Task for each story (run in parallel where possible), providing:
-- The story file path
-- The relevant section of the QA plan for that story
-- The GDD acceptance criteria for the system being tested (if available)
-- Instructions to write detailed test cases covering all acceptance criteria
-
-Each test case set should include:
-- **Preconditions**: game state required before testing begins
-- **Steps**: numbered, unambiguous actions
-- **Expected Result**: what should happen
-- **Actual Result**: field left blank for the tester to fill in
-- **Pass/Fail**: field left blank
-
-Present the test cases to the user for review before execution. Group by story.
-
-Use `AskUserQuestion` per story group (batched 3-4 at a time):
-
-```
-question: "Test cases ready for [Story Group]. Review before manual QA begins?"
-options:
-  - "Approved — begin manual QA for these stories"
-  - "Revise test cases for [story name]"
-  - "Skip manual QA for [story name] — not ready"
-```
-
-### Phase 5: Manual QA Execution
-
-Walk through each story in the approved manual QA list.
-
-Batch stories into groups of 3-4 and use `AskUserQuestion` for each:
-
-```
-question: "Manual QA — [Story Title]\n[brief description of what to test]"
-options:
-  - "PASS — all acceptance criteria verified"
-  - "PASS WITH NOTES — minor issues found (describe after)"
-  - "FAIL — criteria not met (describe after)"
-  - "BLOCKED — cannot test yet (reason)"
-```
-
-After each FAIL result: use `AskUserQuestion` to collect the failure description, then spawn `qa-tester` via Task to write a formal bug report in `production/qa/bugs/`.
-
-Bug report naming: `BUG-[NNN]-[short-slug].md` (increment NNN from existing bugs in the directory).
-
-After collecting all results, summarize:
-- Stories PASS: [count]
-- Stories PASS WITH NOTES: [count]
-- Stories FAIL: [count] — bugs filed: [IDs]
-- Stories BLOCKED: [count]
-
-### Phase 6: QA Sign-Off Report
-
-Spawn `qa-lead` via Task to produce the sign-off report using all results from Phases 4–6.
-
-The sign-off report format:
-
-```markdown
-## QA Sign-Off Report: [Sprint/Feature]
-**Date**: [date]
-
-### Test Coverage Summary
-| Story | Type | Auto Test | Manual QA | Result |
-|-------|------|-----------|-----------|--------|
-| [title] | Logic | PASS | — | PASS |
-| [title] | Visual | — | PASS | PASS |
-
-### Bugs Found
-| ID | Story | Severity | Status |
-|----|-------|----------|--------|
-| BUG-001 | [story] | S2 | Open |
-
-### Verdict: APPROVED / APPROVED WITH CONDITIONS / NOT APPROVED
-
-**Conditions** (if any): [list what must be fixed before the build advances]
-
-### Next Step
-[guidance based on verdict]
-```
-
-Verdict rules:
-- **APPROVED**: All stories PASS or PASS WITH NOTES; no S1/S2 bugs open
-- **APPROVED WITH CONDITIONS**: S3/S4 bugs open, or PASS WITH NOTES issues documented; no S1/S2 bugs
-- **NOT APPROVED**: Any S1/S2 bugs open; or stories FAIL without documented workaround
-
-Next step guidance by verdict:
-- APPROVED: "Build is ready for the next phase. Run `/gate-check` to validate advancement."
-- APPROVED WITH CONDITIONS: "Resolve conditions before advancing. S3/S4 bugs may be deferred to polish."
-- NOT APPROVED: "Resolve S1/S2 bugs and re-run `/team-qa` or targeted manual QA before advancing."
-
-Ask: "May I write this QA sign-off report to `production/qa/qa-signoff-[sprint]-[date].md`?"
-
-Write only after receiving approval.
-
-## Error Recovery Protocol
-
-If any spawned agent (via Task) returns BLOCKED, errors, or cannot complete:
-
-1. **Surface immediately**: Report "[AgentName]: BLOCKED — [reason]" to the user before continuing to dependent phases
-2. **Assess dependencies**: Check whether the blocked agent's output is required by subsequent phases. If yes, do not proceed past that dependency point without user input.
-3. **Offer options** via AskUserQuestion with choices:
-   - Skip this agent and note the gap in the final report
-   - Retry with narrower scope
-   - Stop here and resolve the blocker first
-4. **Always produce a partial report** — output whatever was completed. Never discard work because one agent blocked.
-
-Common blockers:
-- Input file missing (story not found, GDD absent) → redirect to the skill that creates it
-- ADR status is Proposed → do not implement; run `/architecture-decision` first
-- Scope too large → split into two stories via `/create-stories`
-- Conflicting instructions between ADR and story → surface the conflict, do not guess
-
-## Output
-
-A summary covering: stories in scope, smoke check result, manual QA results, bugs filed (with IDs and severities), and the final APPROVED / APPROVED WITH CONDITIONS / NOT APPROVED verdict.
-
-Verdict: **COMPLETE** — QA cycle finished.
-Verdict: **BLOCKED** — smoke check failed or critical blocker prevented cycle completion; partial report produced.
-
-## Session State Update
-
-After the final phase completes (sign-off report written or BLOCKED verdict reached), silently append to `production/session-state/active.md`:
-
-```
-<!-- QA RUN: [date] | Sprint: [sprint identifier or "ad-hoc"] | Verdict: [PASS/FAIL/CONCERNS] | Report: production/qa/qa-[date].md -->
-```
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+
+**参数检查。** 如果未提供参数，输出用法指导并退出：
+> 用法：`/team-qa [sprint | quick | 故事文件路径]` — 对当前 Sprint（`sprint`）、上次冒烟失败的快速重新检查（`quick`），或单个故事文件进行 QA 验证。
+然后立即停止，不生成任何子 Agent 或读取任何文件。
+
+**qa-plan 检查。** Glob `production/qa/qa-plan-[sprint].md`（对于 sprint 模式）或读取故事文件检查 `qa_plan:` frontmatter 字段（对于故事模式）。如果不存在 QA 计划：报告"未找到 QA 计划。先运行 `/qa-plan sprint` 然后在 QA 可以在 [scope] 上开始之前。"然后停止。不开始 QA 工作。
+
+当此 Skill 以有效参数调用时，通过结构化流水线编排 QA 团队。
+
+**决策点：** 在每个阶段过渡时，使用 `AskUserQuestion` 将子 Agent 的提案作为可选项展示给用户。将 Agent 的完整分析写到对话中，然后用简洁的标签捕获决策。用户必须在进入下一阶段前批准。
+
+## 第 0 阶段：解析审查模式
+
+1. 如果传入 `--review [mode]` 参数，使用该模式。
+2. 否则读取 `production/review-mode.txt` — 使用其中写入的内容。
+3. 否则默认 `lean`。
+
+模式：
+- `full` — 按描述生成所有主管和牵头关卡
+- `lean` — 跳过主管关卡，除非它们是 PHASE-GATE 类型（CD-PHASE-GATE、TD-PHASE-GATE、PR-PHASE-GATE、AD-PHASE-GATE）
+- `solo` — 完全跳过所有主管关卡生成；在没有任何 Agent 关卡的情况下运行 Skill
+
+存储解析后的模式以供所有后续阶段使用。
+
+## 团队组成
+- **qa-lead** — QA 策略、待办事项优先级、签收决策
+- **qa-tester** — 测试执行、Bug 报告、测试证据
+- **bug-triage Agent** — 自动 Bug 分类和优先级排序（用于分诊传入 Bug 的 `/skill`）
+- **performance-analyst** — 性能验证和帧预算检查
+
+## 如何委托
+
+使用 Task 工具将每个团队成员作为子 Agent 生成：
+- `subagent_type: qa-lead` — QA 策略、待办事项优先级、签收
+- `subagent_type: qa-tester` — 测试执行、Bug 报告
+- `subagent_type: performance-analyst` — 性能验证
+
+始终向每个 Agent 的提示提供完整上下文（故事文件内容、QA 计划路径、QA 测试用例、测试基础设施配置、已知 Bug 列表）。在流水线允许的地方并行启动独立 Agent（例如第 2 阶段和第 3 阶段 Agent 可以同时运行）。
+
+## 流水线
+
+### 第 1 阶段：测试规划
+委托给 **qa-lead**：
+- 为 Sprint 或故事建立 QA 测试范围
+- 识别被测试系统之间任何跨故事测试依赖
+- 将测试用例分配优先级：关键路径、边缘情况、回归
+- **审查 QA 测试用例**：对于 QA 计划中的每个测试用例，检查其是否有效且范围适当 — 不要仅仅依赖 CI 通过作为证据。如果测试用例缺失或不足，补充或纠正它。
+- 为故事验证定义冒烟测试子集（用于第 4 阶段和第 5 阶段的快速重检查）
+- 输出：QA 测试计划及按测试者分的测试分配
+
+### 第 2 阶段：自动化测试执行 + 性能（并行）
+委托给 **performance-analyst**：
+- 如果被测试功能是可配置的，对照性能预算进行基准测试
+- 检查重载下的帧预算和内存使用
+- 识别与功能实现相关的任何性能退化
+- 输出：附通过与/未通过指标的性能验证报告
+
+并行委托给 **qa-tester**：
+- 运行所有可用且范围内的自动化测试套件
+- 报告结果：通过/失败，并附证据
+- 识别任何测试基础设施问题
+- 输出：自动化测试结果
+
+**如果性能预算未配置**（检查 `.claude/docs/technical-preferences.md` Performance Budgets）：
+
+- 目标 FPS：[未配置 / 数值]
+- 帧预算：[未配置 / 数值]
+- 内存上限：[未配置 / 数值]
+
+如果未配置，记录："性能预算未在 `.claude/docs/technical-preferences.md` 中设置。性能分析将检查退化但无法对硬性预算进行基准测试。"
+
+### 第 3 阶段：手动验证（qa-tester）
+委托给 **qa-tester**：
+- 执行 QA 测试计划中的关键路径测试用例
+- 文档化通过/失败，并附证据（截图、日志、复现步骤）
+- 创建/更新 Bug 报告
+- 验证验收标准（来自故事文件）
+- 输出：手动测试结果及证据
+
+**QA 测试用例：** qa-tester 必须将测试计划中的测试用例作为验证的起点，而不是推测测试。在第 1 阶段审查每个测试用例后（通过 qa-lead），qa-tester 在相关处执行它们。
+
+### 第 4 阶段：Bug 分类
+委托给 **qa-lead**：
+- 审查在第 3 阶段发现的所有新 Bug
+- 与现有已知 Bug 合并去重
+- 分配严重性等级（S1–S4）和优先级
+- 将 S1 项升级给 producer
+- 输出：分类后的 Bug 报告
+
+### 第 5 阶段：签收
+委托给 **qa-lead**：
+- 基于验收标准通过率、Bug 严重性和测试覆盖率进行签收评估
+- **始终将签收作为 QA 签收报告写入** `production/qa/qa-signoff-report-sprint-[N]-[yyyymmdd].md`（对于故事模式，如果故事有多个 Sprint 上下文，sprint 编号可从故事文件 frontmatter 推导，否则使用故事 slug）
+- 团队 QA 报告必须：
+  - 显示发现的总 Bug 数，按严重性分布
+  - 列出所有 S1 和 S2 Bug（严重性、状态、相关故事）
+  - 如果被测试的故事在报告日期 2 天前最后更新，在"风险"下注明数据滞后
+  - 排除除正在审查的故事范围外的任何工作的重复项
+- qa-lead 在判定完成前必须检查"可签收"Bug 的状态。bug-triage 工具的输出可用于此目的，但不是替代。
+- 在签收报告之外输出一个摘要判定：
+  - **APPROVED** — 所有关键标准已满足；无未解决的高严重性问题
+  - **APPROVED WITH CONDITIONS** — 已知低严重性问题未阻止上传；条件已记录
+  - **NOT APPROVED** — 阻塞性问题未解决或验收标准不满足
+
+## 输出
+
+QA 验证报告，包含：
+- 测试覆盖率摘要
+- 自动化测试结果
+- 性能验证指标
+- 手动验证结果，附证据
+- Bug 分类报告
+- 签收判定及条件（如有）
+
+## 错误恢复协议
+
+如果任何生成的 Agent（通过 Task）返回 BLOCKED、出错或无法完成：
+
+1. **立即呈现**：在继续到依赖阶段之前报告"[AgentName]：BLOCKED — [reason]"
+2. **评估依赖**：检查被阻塞 Agent 的输出是否被后续阶段所需。如果是，未经用户输入不得继续超过该依赖点。
+3. **提供选项** 通过 AskUserQuestion 并提供选择：
+   - 跳过此 Agent 并在最终报告中注明缺口
+   - 以更窄范围重试
+   - 在此停止并先解决阻塞项
+4. **始终生成部分报告** — 输出已完成的内容。不要因为一个 Agent 阻塞就丢弃工作。
+
+常见阻塞项：
+- 输入文件缺失（故事未找到、GDD 缺失）→ 重定向到创建它的 Skill
+- ADR 状态为 Proposed → 不要实现；先运行 `/architecture-decision`
+- 范围太大 → 通过 `/create-stories` 拆分为两个故事
+- ADR 与故事之间的指令冲突 → 呈现冲突，不要猜测
+
+## 文件写入协议
+
+所有文件写入（测试计划、测试结果、Bug 报告、签收报告）都委托给通过 Task 生成的子 Agent。每个子 Agent 强制执行"我可以写入 [path] 吗？"协议。此编排器不直接写入文件。
+
+## 后续步骤
+
+- 如果 NOT APPROVED：解决条件，重新运行 `/smoke-check`，然后重新运行 `/team-qa [scope]`
+- 如果 APPROVED WITH CONDITIONS：在下一个 Sprint 中排期修复条件
+- 如果 APPROVED：将故事标记为 DONE（`/story-done`）
+- 如果 APPROVED：运行 `/gate-check` 获取 QA 级别的关卡判定

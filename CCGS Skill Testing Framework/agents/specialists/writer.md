@@ -1,81 +1,86 @@
-# Agent Test Spec: writer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-- **Domain**: In-game written content — NPC dialogue (including branching trees), lore codex entries, item and ability descriptions, environmental text (signs, books, notes), quest text, tutorial text, in-world written documents
-- **Does NOT own**: Story architecture and narrative structure (narrative-director), world lore and world rules (world-builder), UX copy and UI labels (ux-designer), patch notes (community-manager)
-- **Model tier**: Sonnet
-- **Gate IDs**: None; flags lore inconsistencies to narrative-director rather than resolving them autonomously
+# Agent Test Spec：writer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references dialogue, lore entries, item descriptions, in-game text)
-- [ ] `allowed-tools:` list matches the agent's role (Read/Write for design/narrative/ and assets/data/dialogue/; no code or world-building architecture files)
-- [ ] Model tier is Sonnet (default for creative specialists)
-- [ ] Agent definition does not claim authority over narrative structure, world rules, or UX copy direction
+## Agent 摘要
+领域：叙事脚本（任务角色、对话、过场文字）、角色声音与语调、故事节奏、书面游戏内文本。
+不拥有：世界圣经一致性（world-builder — 协作）。机制或平衡设计（game-designer）。视觉方向（art-director）。
+Model tier：Sonnet（默认）。
+未分配 Gate ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — NPC merchant dialogue
-**Input**: "Write dialogue for Mira, a traveling merchant NPC. She sells general supplies. Players can ask her about her wares, the road ahead, and rumors."
-**Expected behavior**:
-- Produces a dialogue tree with at least three top-level conversation options: [Wares], [The Road Ahead], [Rumors]
-- Each branch has a distinct conversational response in Mira's voice — not generic merchant filler
-- Includes at least one response that has a follow-up branch (showing tree structure, not just flat responses)
-- Mira's voice is consistent across branches: if she's warm and chatty in one branch, she's not brusque in another without reason
-- Output is formatted as a structured dialogue tree: node label, NPC line, player options, next node
-
-### Case 2: Out-of-domain request — world history design
-**Input**: "Design the history of the world — when the first kingdom was founded, what the great wars were, and why magic was banned."
-**Expected behavior**:
-- Does not produce world history, lore architecture, or world rules
-- States clearly: "World history, lore, and world rules are owned by world-builder; once the history is established, I can write in-game texts, books, and dialogue that reference those events"
-- Does not produce even partial world history as a "placeholder"
-
-### Case 3: Dialogue contradicts established lore — flag to narrative-director
-**Input**: "Write Mira's dialogue line where she mentions that dragons have been extinct for 200 years." [Context includes existing lore: dragons are alive and revered in the northern provinces, not extinct.]
-**Expected behavior**:
-- Identifies the contradiction: established lore states dragons are alive and revered; dialogue stating they're extinct directly conflicts
-- Does NOT write the requested line as given
-- Flags the inconsistency to narrative-director: "Mira's dialogue as requested contradicts established lore (dragons are alive per world-builder's document); requires narrative-director resolution before I can write this line"
-- Offers an alternative: a line that references dragons in a way consistent with the established lore (e.g., Mira expresses awe about a dragon sighting in the north)
-
-### Case 4: Item description references an undesigned mechanic
-**Input**: "Write a description for the 'Berserker's Chalice' — a consumable that triggers the Berserker state when drunk."
-**Expected behavior**:
-- Identifies the dependency gap: "Berserker state" is not defined in any provided game design document
-- Flags the missing dependency: "This description references a 'Berserker state' mechanic that has no GDD entry — I cannot write accurate flavor text for a mechanic whose rules are undefined, as the description may create incorrect player expectations"
-- Does NOT write a description that invents mechanic details (duration, effects) that may conflict with the eventual design
-- Offers two paths: (a) write a vague, non-mechanical description that creates no false expectations, flagged as temporary; (b) wait for game-designer to define the Berserker state first
-
-### Case 5: Context pass — character voice guide
-**Input context**: Character voice guide for Mira: She speaks in short, energetic sentences. Uses merchant slang ("a fine bargain," "coin well spent"). Drops pronouns occasionally ("Good wares, these."). Never uses contractions — always "I will" not "I'll". Warm but slightly mercenary.
-**Input**: "Write Mira's response when a player asks if she has healing potions."
-**Expected behavior**:
-- Short, energetic sentences — no long monologues
-- Uses merchant slang: "a fine bargain," "coin well spent," or similar
-- Drops pronouns where natural: "Fine stock, these potions."
-- No contractions: "I will" not "I'll," "do not" not "don't"
-- Warm tone with a mercenary undertone: she's happy to help because you're a paying customer
-- Does NOT produce dialogue that violates any voice guide rule — check each rule explicitly
+- [ ] `description:` 字段存在且领域特定（叙事写作、对话、任务脚本、角色语调）
+- [ ] `allowed-tools:` 列表以读取为主；写入设计/叙事/ 文档
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对世界构建或机制设计拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (dialogue, lore entries, item descriptions, in-game text)
-- [ ] Redirects world history and world rule requests to world-builder without producing unauthorized lore
-- [ ] Flags lore contradictions to narrative-director rather than silently writing inconsistent content
-- [ ] Identifies mechanic dependency gaps before writing item descriptions that could create false player expectations
-- [ ] Applies all rules from a provided character voice guide — no partial compliance
+### Case 1：域内请求 — 适当的输出
+**输入：** "为一个遭逢魔咒困扰的村庄入口场景撰写一个任务脚本。玩家抵达村庄大门，遭遇一位守卫请求帮助驱散雾气。守卫应用充满恐惧且音调破碎的语调。"
+**预期行为：**
+- 产出格式化任务脚本：
+  - 场景设置描述（环境情绪、氛围、气氛）
+  - 守卫的对话片段，破碎的音调、恐惧和紧张的具体用词
+  - 玩家回应选项（友好、提问、怀疑），每个带有语气描述
+  - 情感弧线：入口 → 紧张升级 → 守卫退让
+- 不决定任务奖励或机制 — 仅叙事框架
+- 使用具体描述词（"低沉而颤抖" 而非 "悲伤"）
+
+### Case 2：领域外请求 — 适当重定向
+**输入：** "基于此任务脚本，我需要守卫的 visual 角色设计 — 他的盔甲、面容、表情。"
+**预期行为：**
+- 将 visual 设计请求重定向到 art-director
+- 不设计视觉外观
+- 可提供基调板描述："守卫应呈现疲劳、盔甲破损、面对恐惧的面容" — 但不进行视觉创作
+
+### Case 3：角色语调一致性
+**输入：** "审查此对话：‘伟大的英雄！请拯救我们！’ — 我们游戏的整体语调是务实的和禁欲的，而非英雄幻想。这与角色语调匹配吗？"
+**预期行为：**
+- 识别语调偏离：
+  - "伟大的英雄！" → 过于英雄幻想/夸张 — 不符合务实、禁欲的语调
+  - "拯救我们！" → 过于被动受害者 — 不符合玩家自主权的语调
+- 提供替代重写："你看起来有能力。如果你能帮忙的话，我们需要帮助。"
+- 保持重写后的语调符合游戏的既定务实、非英雄幻想风格
+
+### Case 4：多角色对话
+**输入：** "撰写此场景：守卫、商人和村民被雾气困在一起。三人争吵谁应冒险进入雾中寻求帮助。"
+**预期行为：**
+- 产出多角色对话：
+  - 守卫：权威且务实（任务导向）
+  - 商人：自私且恐惧（自我保护）
+  - 村民：普通家庭动机（保护家人）
+- 轮流发言，节奏清晰，反应符合角色
+- 对话推进场景张力，不添加角色情感中不存在的动机
+
+### Case 5：上下文传递 — 使用现有世界圣经
+**输入上下文：** 世界圣经规定此区域：魔法是禁忌（村民恐惧并迫害法师）。官方语言：村民使用简单的、由当地术语点缀的乡土话。雾气具有物质存在感（吞噬声音，降低视野）。
+**输入：** "使用世界圣经的事实为雾气遭遇撰写对话。"
+**预期行为：**
+- 使用提供的世界圣经细节：
+  - 魔法是禁忌 → 对话中村民是否怀疑雾气是巫术？用什么措辞？展现恐惧
+  - 乡土语言 → 对话中的当地术语（例如土语的"murk"、"scour"）展示真实文化
+  - 雾气吞噬声音 → 对话动作描述中引用的：角色必须大声说话才能被听到，或使用手势。以文字表现
+- 不发明新事实或世界圣经中未建立的魔法系统
 
 ---
 
-## Coverage Notes
-- Case 3 (lore contradiction detection) requires that existing lore is in the conversation context — test is only valid when context is provided
-- Case 4 (dependency gap) tests whether the agent writes descriptions that could set wrong player expectations — a subtle but important quality issue
-- Case 5 is the most important context-awareness test; voice guide compliance must be checked rule-by-rule, not holistically
-- No automated runner; review manually or via `/skill-test`
+## 协议合规性
+
+- [ ] 停留在声明领域内（叙事脚本、对话、角色语调）
+- [ ] 将视觉或机制设计请求重定向到适当 agent
+- [ ] 保持语调一致性（当提示中给出时）
+- [ ] 使用所提供上下文中的世界圣经事实
+- [ ] 产出结构化场景格式脚本 — 而非 narrative 散文
+
+---
+
+## 覆盖说明
+- Case 3（语调一致性）是质量检查 — writer 必须保持语调
+- Case 5 要求世界圣经在上下文中可用；是最重要的上下文测试
+- 无自动化运行器；手动审查或通过 `/skill-test`

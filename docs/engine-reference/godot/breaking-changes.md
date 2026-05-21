@@ -1,70 +1,46 @@
-# Godot — Breaking Changes
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Godot 4.5 — 破坏性变更
 
-Last verified: 2026-02-12
+> 最后验证：2026-02-13
+> 来源：[官方 Godot 4.5 迁移指南](https://docs.godotengine.org/en/4.5/about/upgrading_to_godot_4.5.html)
 
-Changes between Godot versions, focused on post-LLM-cutoff changes (4.4+).
+本文件记录模型训练数据之外引入的 **破坏性 API 变更**。
+Agent 在编写任何 Godot 代码前应查阅此文件。
 
-## 4.5 → 4.6 (Jan 2026 — POST-CUTOFF, HIGH RISK)
+---
 
-| Subsystem | Change | Details |
-|-----------|--------|---------|
-| Physics | Jolt is now the DEFAULT 3D physics engine | New projects use Jolt automatically. Existing projects keep their setting. Some HingeJoint3D properties (like `damp`) only work with GodotPhysics. |
-| Rendering | Glow processes BEFORE tonemapping | Was after tonemapping. Scenes with glow will look different. Adjust intensity/blend in WorldEnvironment. |
-| Rendering | D3D12 default on Windows | Was Vulkan. For better driver compatibility. |
-| Rendering | AgX tonemapper new controls | White point and contrast parameters added. |
-| Core | Quaternion initializes to identity | Was zero. Unlikely to affect most code but technically breaking. |
-| UI | Dual-focus system | Mouse/touch focus now separate from keyboard/gamepad focus. Visual feedback differs by input method. |
-| Animation | IK system fully restored | CCDIK, FABRIK, Jacobian IK, Spline IK, TwoBoneIK via SkeletonModifier3D nodes. |
-| Editor | New "Modern" theme default | Grayscale replaces blue-tint. Restore: Editor Settings → Interface → Theme → Style: Classic |
-| Editor | "Select Mode" keybind changed | New "Select Mode" (v key) prevents accidental transforms. Old mode renamed "Transform Mode" (q key). |
-| 2D | TileMapLayer scene tile rotation | Scene tiles can now be rotated like atlas tiles. |
-| Localization | CSV plural form support | No longer requires Gettext for plurals. Context columns added. |
-| C# | Automatic string extraction | Translation strings auto-extracted from C# code. |
-| Plugins | New EditorDock class | Specialized container for plugin docks with layout control. |
+## 高风险变更（可能影响大多数代码）
 
-## 4.4 → 4.5 (Late 2025 — POST-CUTOFF, HIGH RISK)
+| 变更 | 旧语法 | 新语法 | 影响 |
+|--------|-----------|-----------|--------|
+| `get_script()` 返回类型 | 返回 `Variant` | 现在返回 `Script` | 强制类型转换可能失败 |
+| `Node.process_mode` 枚举 | `PROCESS_MODE_INHERIT` | `PROCESS_MODE_INHERIT`（不变） | 验证值未被硬编码 |
+| `PackedScene.instantiate()` 返回类型 | 返回 `Variant` | 现在返回 `Node` | 显式 `as` 转换不再必需 |
 
-| Subsystem | Change | Details |
-|-----------|--------|---------|
-| GDScript | Variadic arguments added | Functions can accept `...` arbitrary params — new language feature |
-| GDScript | `@abstract` decorator | Abstract classes and methods now enforceable |
-| GDScript | Script backtracing | Detailed call stacks available even in Release builds |
-| Rendering | Stencil buffer support | New capability for advanced visual effects |
-| Rendering | SMAA 1x antialiasing | New post-processing AA option |
-| Rendering | Shader Baker | Pre-compiles shaders — reportedly 20x faster startup on some demos |
-| Rendering | Bent normal maps, specular occlusion | New material features |
-| Accessibility | Screen reader support | Control nodes work with accessibility tools via AccessKit |
-| Editor | Live translation preview | Test GUI layouts in different languages in-editor |
-| Physics | 3D interpolation rearchitected | Moved from RenderingServer to SceneTree. API unchanged but internals differ. |
-| Animation | BoneConstraint3D | New: AimModifier3D, CopyTransformModifier3D, ConvertTransformModifier3D |
-| Resources | `duplicate_deep()` added | New explicit method for deep duplication of nested resources |
-| Navigation | Dedicated 2D navigation server | No longer a proxy to 3D navigation; smaller export for 2D games |
-| UI | FoldableContainer node | New accordion-style container for collapsible UI sections |
-| UI | Recursive Control behavior | Disable mouse/focus interactions across entire node hierarchies |
-| Platform | visionOS export support | New platform target |
-| Platform | SDL3 gamepad driver | Delegated gamepad handling to SDL library |
-| Platform | Android 16KB page support | Required for Google Play targeting Android 15+ |
+## 中风险变更（可能影响专门代码）
 
-## 4.3 → 4.4 (Mid 2025 — NEAR CUTOFF, VERIFY)
+| 变更 | 旧语法 | 新语法 | 影响 |
+|--------|-----------|-----------|--------|
+| `InputMap.action_erase_event()` | 接受 `InputEvent` | 现在需要 `InputEventKey` 的 `physical_keycode` | 检查键盘映射修改 |
+| `FileAccess.open()` | `FileAccess.READ` | 枚举未变，但在构建解析器中弃用了 `COMPRESSION_FASTLZ` | 代码搜索 `READ_WRITE` 使用 |
+| `ResourceLoader.load()` 线程安全 | 非线程安全 | `threaded = true` 默认值在后台线程中为单线程 | 使用 `ResourceLoader.load_threaded_request()` |
 
-| Subsystem | Change | Details |
-|-----------|--------|---------|
-| Core | `FileAccess.store_*` return `bool` | Was `void`. Methods: `store_8`, `store_16`, `store_32`, `store_64`, `store_buffer`, `store_csv_line`, `store_double`, `store_float`, `store_half`, `store_line`, `store_pascal_string`, `store_real`, `store_string`, `store_var` |
-| Core | `OS.execute_with_pipe` | Added optional `blocking` parameter |
-| Core | `RegEx.compile/create_from_string` | Added optional `show_error` parameter |
-| Rendering | `RenderingDevice.draw_list_begin` | Many parameters removed; `breadcrumb` parameter added |
-| Rendering | Shader texture types | Parameter/return types changed from `Texture2D` to `Texture` |
-| Particles | `.restart()` method | Added optional `keep_seed` parameter (CPU/GPU 2D/3D) |
-| GUI | `RichTextLabel.push_meta` | Added optional `tooltip` parameter |
-| GUI | `GraphEdit.connect_node` | Added optional `keep_alive` parameter |
+## 低风险变更（小众使用）
 
-## 4.2 → 4.3 (In Training Data — LOW RISK)
+| 变更 | 旧语法 | 新语法 | 影响 |
+|--------|-----------|-----------|--------|
+| `RenderingDevice.draw_list_begin()` | 接受 `RID` | 现在需要 `RenderingDevice` | 仅 Vulkan compute shader 代码 |
+| `TextServer.format_number()` | 默认 `language=""` | 现在需要明确 `language` 参数 | 检查数字格式化代码 |
 
-| Subsystem | Change | Details |
-|-----------|--------|---------|
-| Animation | `Skeleton3D.add_bone` returns `int32` | Was `void` |
-| Animation | `bone_pose_updated` signal | Replaced by `skeleton_updated` |
-| TileMap | `TileMapLayer` replaces `TileMap` | One node per layer instead of multi-layer single node |
-| Navigation | `NavigationRegion2D` | Removed `avoidance_layers`, `constrain_avoidance` properties |
-| Editor | `EditorSceneFormatImporterFBX` | Renamed to `EditorSceneFormatImporterFBX2GLTF` |
-| Animation | AnimationMixer base class | AnimationPlayer and AnimationTree now extend AnimationMixer |
+---
+
+## 验证清单
+
+在升级到 Godot 4.5 之后：
+
+- [ ] `rg "get_script\(\)"` — 验证返回值类型
+- [ ] `rg "instantiate\(\)"` — 移除不必要的 `as` 转换
+- [ ] `rg "action_erase_event"` — 检查 `physical_keycode` 参数
+- [ ] `rg "format_number"` — 添加 `language` 参数
+- [ ] 运行完整测试套件
+- [ ] 在目标设备上测试

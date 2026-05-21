@@ -1,150 +1,152 @@
-# Agent Spec: [agent-name]
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-> **Tier**: [directors | leads | specialists | godot | unity | unreal | operations | creative]
-> **Category**: [director | lead | specialist | engine | operations | creative]
-> **Spec written**: [YYYY-MM-DD]
+# Agent Spec：[agent-name]
 
-## Agent Summary
+> **Tier**：[directors | leads | specialists | godot | unity | unreal | operations | creative]
+> **Category**：[director | lead | specialist | engine | operations | creative]
+> **Spec 编写日期**：[YYYY-MM-DD]
 
-[One paragraph describing this agent's domain, what decisions it owns, and what it
-delegates vs. handles directly. Include which gates it triggers (if any).]
+## Agent 摘要
 
-**Domain**: [files/directories this agent owns]
-**Escalates to**: [parent agent — e.g., creative-director for design conflicts]
-**Delegates to**: [sub-agents this agent typically spawns]
+[一段描述此 agent 的领域、它拥有哪些决策权、以及它转交什么 vs. 直接处理什么。
+包含它触发哪些 gate（如有）。]
 
----
-
-## Static Assertions
-
-- [ ] Agent file exists at `.claude/agents/[name].md`
-- [ ] Frontmatter has `name`, `description`, `model`, `tools` fields
-- [ ] Domain clearly stated
-- [ ] Escalation path documented
-- [ ] Does not make decisions outside its domain
+**领域**：[此 agent 拥有的文件/目录]
+**升级到**：[父级 agent — 例如 creative-director 处理设计冲突]
+**委托给**：[此 agent 通常 spawn 的子 agent]
 
 ---
 
-## Test Cases
+## 静态断言
 
-### Case 1: In-Domain Request — [brief name]
-
-**Scenario**: A request that is clearly within this agent's domain.
-
-**Fixture**:
-- [relevant project state]
-- [input provided to agent]
-
-**Expected behavior**:
-1. Agent accepts the request
-2. Agent produces [specific output type]
-3. Agent asks before writing files (if applicable)
-
-**Assertions**:
-- [ ] Agent handles request within its domain without escalating
-- [ ] Output format matches expected structure
-- [ ] Collaborative protocol followed (ask → draft → approve)
-
-**Case Verdict**: PASS / FAIL / PARTIAL
+- [ ] Agent 文件存在于 `.claude/agents/[name].md`
+- [ ] Frontmatter 包含 `name`, `description`, `model`, `tools` 字段
+- [ ] 领域明确声明
+- [ ] 升级路径已记录
+- [ ] 不做出其领域之外的决策
 
 ---
 
-### Case 2: Out-of-Domain Redirect — [brief name]
+## 测试用例
 
-**Scenario**: A request that falls outside this agent's domain.
+### Case 1：域内请求 — [简短名称]
 
-**Fixture**:
-- [request that belongs to a different agent]
+**Scenario**：一个明确在此 agent 领域内的请求。
 
-**Expected behavior**:
-1. Agent identifies the request is out of domain
-2. Agent redirects to the correct agent
-3. Agent does NOT attempt to handle it
+**Fixture**：
+- [相关项目状态]
+- [提供给 agent 的输入]
 
-**Assertions**:
-- [ ] Agent declines and redirects (does not silently handle cross-domain work)
-- [ ] Correct agent named in redirect
+**预期行为**：
+1. Agent 接受请求
+2. Agent 产出[特定输出类型]
+3. Agent 在写入文件之前询问（如适用）
 
-**Case Verdict**: PASS / FAIL / PARTIAL
+**断言**：
+- [ ] Agent 在其领域内处理请求，无需升级
+- [ ] 输出格式匹配预期结构
+- [ ] 遵循协作协议（ask → draft → approve）
 
----
-
-### Case 3: Gate Verdict — [brief name]
-
-**Scenario**: Agent is invoked as part of a director gate check.
-
-**Fixture**:
-- [project state presented for review]
-- [gate ID: e.g., CD-PHASE-GATE]
-
-**Expected behavior**:
-1. Agent reads the relevant documents
-2. Agent produces a PASS / CONCERNS / FAIL verdict
-3. Agent does not auto-advance on CONCERNS or FAIL
-
-**Assertions**:
-- [ ] Verdict keyword present in output (PASS, CONCERNS, FAIL)
-- [ ] Reasoning provided for verdict
-- [ ] On CONCERNS/FAIL: work is blocked, not silently continued
-
-**Case Verdict**: PASS / FAIL / PARTIAL
+**Case Verdict**：PASS / FAIL / PARTIAL
 
 ---
 
-### Case 4: Conflict Escalation — [brief name]
+### Case 2：领域外重定向 — [简短名称]
 
-**Scenario**: This agent's domain conflicts with another agent's decision.
+**Scenario**：一个在此 agent 领域外的请求。
 
-**Fixture**:
-- [conflicting decisions from two agents at same tier]
+**Fixture**：
+- [属于不同 agent 的请求]
 
-**Expected behavior**:
-1. Agent identifies the conflict
-2. Agent escalates to the shared parent (or creative-director / technical-director)
-3. Agent does NOT unilaterally resolve cross-domain conflicts
+**预期行为**：
+1. Agent 识别该请求超出其领域
+2. Agent 重定向到正确的 agent
+3. Agent 不尝试处理它
 
-**Assertions**:
-- [ ] Conflict surfaced explicitly
-- [ ] Correct escalation path followed
-- [ ] No unilateral cross-domain changes made
+**断言**：
+- [ ] Agent 拒绝并重定向（不静默处理跨领域工作）
+- [ ] 重定向中命名了正确的 agent
 
-**Case Verdict**: PASS / FAIL / PARTIAL
-
----
-
-### Case 5: Context Pass-Through — [brief name]
-
-**Scenario**: Agent receives a task with full context from a parent agent.
-
-**Fixture**:
-- [context block passed from parent]
-- [specific sub-task to execute]
-
-**Expected behavior**:
-1. Agent reads and uses the provided context
-2. Agent completes the sub-task
-3. Agent returns result to parent (does not prompt user unnecessarily)
-
-**Assertions**:
-- [ ] Agent uses provided context rather than re-asking for it
-- [ ] Result is scoped to the sub-task, not expanded beyond it
-- [ ] Output format suitable for parent agent consumption
-
-**Case Verdict**: PASS / FAIL / PARTIAL
+**Case Verdict**：PASS / FAIL / PARTIAL
 
 ---
 
-## Protocol Compliance
+### Case 3：Gate 裁决 — [简短名称]
 
-- [ ] Stays within declared domain — no unilateral cross-domain changes
-- [ ] Escalates conflicts to correct parent
-- [ ] Uses `"May I write"` before file writes (or is read-only)
-- [ ] Presents findings before requesting approval
-- [ ] Does not skip tiers in the delegation hierarchy
+**Scenario**：Agent 作为 director gate 检查的一部分被 invoke。
+
+**Fixture**：
+- [提交审查的项目状态]
+- [gate ID：例如 CD-PHASE-GATE]
+
+**预期行为**：
+1. Agent 读取相关文档
+2. Agent 产出 PASS / CONCERNS / FAIL 裁决
+3. Agent 在 CONCERNS 或 FAIL 上不自动推进
+
+**断言**：
+- [ ] 输出中存在裁决关键词（PASS, CONCERNS, FAIL）
+- [ ] 为裁决提供了推理说明
+- [ ] 在 CONCERNS/FAIL 上：工作被阻止，而非静默继续
+
+**Case Verdict**：PASS / FAIL / PARTIAL
 
 ---
 
-## Coverage Notes
+### Case 4：冲突升级 — [简短名称]
 
-[Any gaps in coverage, known edge cases not tested, or behaviors that require
-a live agent invocation to verify.]
+**Scenario**：此 agent 的领域与另一个 agent 的决策发生冲突。
+
+**Fixture**：
+- [来自同一层级两个 agent 的冲突决策]
+
+**预期行为**：
+1. Agent 识别冲突
+2. Agent 升级到共享父级（或 creative-director / technical-director）
+3. Agent 不单方面解决跨领域冲突
+
+**断言**：
+- [ ] 冲突被明确浮现
+- [ ] 遵循了正确的升级路径
+- [ ] 未做出单方面跨领域变更
+
+**Case Verdict**：PASS / FAIL / PARTIAL
+
+---
+
+### Case 5：上下文传递 — [简短名称]
+
+**Scenario**：Agent 收到一个带有来自父 agent 的完整上下文的任务。
+
+**Fixture**：
+- [从父级传递的上下文块]
+- [要执行的特定子任务]
+
+**预期行为**：
+1. Agent 读取并使用提供的上下文
+2. Agent 完成子任务
+3. Agent 将结果返回给父级（不向用户发出不必要的提示）
+
+**断言**：
+- [ ] Agent 使用提供的上下文，而非重新询问
+- [ ] 结果限定在子任务范围内，不扩展到其外
+- [ ] 输出格式适合父 agent 消费
+
+**Case Verdict**：PASS / FAIL / PARTIAL
+
+---
+
+## 协议合规性
+
+- [ ] 保持在声明领域内 — 不做单方面跨领域变更
+- [ ] 将冲突升级到正确的父级
+- [ ] 在文件写入之前使用`"May I write"`（或为只读类型）
+- [ ] 在请求批准之前呈现发现结果
+- [ ] 不跳过委托层级中的层级
+
+---
+
+## 覆盖说明
+
+[任何覆盖缺口、未测试的已知 edge case，或需要
+live agent 调用才能验证的行为。]

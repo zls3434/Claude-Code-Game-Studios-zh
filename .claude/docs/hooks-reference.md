@@ -1,21 +1,22 @@
-# Active Hooks
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# 活跃 Hook
 
-Hooks are configured in `.claude/settings.json` and fire automatically:
+Hook 在 `.claude/settings.json` 中配置，自动触发：
 
-| Hook | Event | Trigger | Action |
+| Hook | 事件 | 触发条件 | 动作 |
 | ---- | ----- | ------- | ------ |
-| `validate-commit.sh` | PreToolUse (Bash) | `git commit` commands | Validates design doc sections, JSON data files, hardcoded values, TODO format |
-| `validate-push.sh` | PreToolUse (Bash) | `git push` commands | Warns on pushes to protected branches (develop/main) |
-| `validate-assets.sh` | PostToolUse (Write/Edit) | Asset file changes | Checks naming conventions and JSON validity for files in `assets/` |
-| `session-start.sh` | SessionStart | Session begins | Loads sprint context, milestone, git activity; detects and previews active session state file for recovery |
-| `detect-gaps.sh` | SessionStart | Session begins | Detects fresh projects (suggests /start) and missing documentation when code/prototypes exist, suggests /reverse-document or /project-stage-detect |
-| `pre-compact.sh` | PreCompact | Context compression | Dumps session state (active.md, modified files, WIP design docs) into conversation before compaction so it survives summarization |
-| `post-compact.sh` | PostCompact | After compaction | Reminds Claude to restore session state from `active.md` checkpoint |
-| `notify.sh` | Notification | Notification event | Shows Windows toast notification via PowerShell |
-| `session-stop.sh` | Stop | Session ends | Summarizes accomplishments and updates session log |
-| `log-agent.sh` | SubagentStart | Agent spawned | Audit trail start — logs subagent invocation with timestamp |
-| `log-agent-stop.sh` | SubagentStop | Agent stops | Audit trail stop — completes subagent record |
-| `validate-skill-change.sh` | PostToolUse (Write/Edit) | Skill file changes | Advises running `/skill-test` after any `.claude/skills/` file is written or edited |
+| `validate-commit.sh` | PreToolUse (Bash) | `git commit` 命令 | 验证设计文档章节、JSON 数据文件、硬编码值、TODO 格式 |
+| `validate-push.sh` | PreToolUse (Bash) | `git push` 命令 | 对向受保护分支（develop/main）的推送发出警告 |
+| `validate-assets.sh` | PostToolUse (Write/Edit) | 资源文件变更 | 检查 `assets/` 中文件的命名约定和 JSON 有效性 |
+| `session-start.sh` | SessionStart | 会话开始 | 加载 Sprint 上下文、里程碑、Git 活动；检测并预览活跃会话状态文件以支持恢复 |
+| `detect-gaps.sh` | SessionStart | 会话开始 | 检测全新项目（建议运行 /start），以及有代码/原型但缺少文档时建议运行 /reverse-document 或 /project-stage-detect |
+| `pre-compact.sh` | PreCompact | 上下文压缩 | 在压缩前将会话状态（active.md、已修改文件、进行中的设计文档）转储到对话中，确保其在摘要后依然存在 |
+| `post-compact.sh` | PostCompact | 压缩后 | 提醒 Claude 从 `active.md` 检查点恢复会话状态 |
+| `notify.sh` | Notification | 通知事件 | 通过 PowerShell 显示 Windows Toast 通知 |
+| `session-stop.sh` | Stop | 会话结束 | 总结成果并更新会话日志 |
+| `log-agent.sh` | SubagentStart | Agent 启动 | 审计追踪开始 — 记录子 Agent 调用及时间戳 |
+| `log-agent-stop.sh` | SubagentStop | Agent 停止 | 审计追踪结束 — 完成子 Agent 记录 |
+| `validate-skill-change.sh` | PostToolUse (Write/Edit) | 技能文件变更 | 建议在 `.claude/skills/` 文件被写入或编辑后运行 `/skill-test` |
 
-Hook reference documentation: `.claude/docs/hooks-reference/`
-Hook input schema documentation: `.claude/docs/hooks-reference/hook-input-schemas.md`
+Hook 参考文档：`.claude/docs/hooks-reference/`
+Hook 输入 Schema 文档：`.claude/docs/hooks-reference/hook-input-schemas.md`

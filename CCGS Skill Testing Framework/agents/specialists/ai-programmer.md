@@ -1,79 +1,84 @@
-# Agent Test Spec: ai-programmer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: NPC behavior, state machines, pathfinding, perception systems, and AI decision-making.
-Does NOT own: player mechanics (gameplay-programmer), rendering or engine internals (engine-programmer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：ai-programmer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references NPC behavior / AI systems)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over player mechanics or engine rendering
+## Agent 摘要
+- **领域**：AI 行为树、NPC 决策、巡逻/寻路、感知系统、AI 难度缩放、管理 AI 的 LOD 系统
+- **不拥有**：游戏机制设计（game-designer）、视觉设计（art-director）、功能实现（gameplay-programmer）、关卡布局（level-designer）
+- **Model tier**：Sonnet（单个系统的实现）
+- **Gate ID**：无
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Implement a patrol-and-alert behavior tree for a guard NPC: patrol between waypoints, detect the player within 10 units, then enter an alert state and pursue."
-**Expected behavior:**
-- Produces a behavior tree spec (nodes: Selector, Sequence, Leaf actions) plus corresponding code scaffold
-- Defines clearly named states: Patrol, Alert, Pursue
-- Uses a perception/detection check as a condition node, not inline in movement code
-- Waypoints are data-driven (passed as a resource or export), not hardcoded positions
-- Output includes doc comments on public API
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Implement player input handling for the WASD movement and dash ability."
-**Expected behavior:**
-- Does NOT produce player input or movement code
-- Explicitly states this is outside its domain (player mechanics belong to gameplay-programmer)
-- Redirects the request to `gameplay-programmer`
-- May note that once player position is available via API, AI perception can reference it
-
-### Case 3: Cross-domain coordination — level constraints
-**Input:** "Design pathfinding for the warehouse level, but the level has narrow corridors that confuse the navmesh."
-**Expected behavior:**
-- Does NOT unilaterally modify level layout or navmesh assets
-- Coordinates with `level-designer` to clarify navmesh requirements and corridor dimensions
-- Proposes a pathfinding approach (e.g., navmesh with agent radius tuning, flow fields) conditional on level geometry
-- Documents assumptions and flags blockers clearly
-
-### Case 4: Performance escalation — custom data structures
-**Input:** "The pathfinding priority queue is the bottleneck; I need a custom binary heap implementation for performance."
-**Expected behavior:**
-- Recognizes that a low-level, engine-integrated data structure is within engine-programmer's domain
-- Escalates to `engine-programmer` with a clear description of the bottleneck and required interface
-- May provide the algorithmic spec (binary heap interface, expected operations) to guide the engine-programmer
-- Does NOT implement the low-level structure unilaterally if it requires engine memory management
-
-### Case 5: Context pass — uses level layout for pathfinding design
-**Input:** Level layout document provided in context showing two choke points: a doorway at (12, 0) and a bridge at (40, 5). Request: "Design the patrol route and threat response for enemies in this level."
-**Expected behavior:**
-- References the specific choke point coordinates from the provided context
-- Designs patrol routes that leverage the choke points as tactical positions
-- Specifies alert state transitions that funnel NPCs toward identified choke points during pursuit
-- Does not invent geometry not present in the provided layout document
+- [ ] `description:` 字段存在且领域特定
+- [ ] `allowed-tools:` 列表匹配 agent 角色（实现 AI 代码、集成寻路等）
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对游戏设计或关卡布局拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (NPC behavior, pathfinding, perception, state machines)
-- [ ] Redirects out-of-domain requests to correct agent (gameplay-programmer, engine-programmer, level-designer)
-- [ ] Returns structured findings (behavior tree specs, state machine diagrams, code scaffolds)
-- [ ] Does not modify player mechanics files without explicit delegation
-- [ ] Escalates performance-critical low-level structures to engine-programmer
-- [ ] Uses data-driven NPC configuration (waypoints, detection radii) not hardcoded values
+### Case 1：域内请求 — 敌方行为树
+**输入：** "为地牢守卫设计行为树。他巡逻 5 个路径点、如果听到角色声音则调查声音、在检测到角色时追逐玩家、如果在 10 秒内未命中角色 3 次则撤退。"
+**预期行为：**
+- 产出结构化行为树设计：
+  - 根节点：Selector（决定巡逻 → 调查 → 追逐 → 撤退的优先级）
+  - 巡逻子节点：序列 → 移动到路径点（循环）
+  - 调查子节点：条件（听到声音？）→ 移动到声音位置 → 等待
+  - 追逐子节点：条件（检测到玩家？）→ 移动到玩家位置 → 攻击
+  - 撤退子节点：条件（3 次未命中在 10s 内？）→ 移动到安全位置
+- 产出节点图（使用 Mermaid 或文本表示法）
+- 不设计具体路径点位置（属于 level-designer）
+
+### Case 2：领域外请求 — 适当重定向
+**输入：** "为我行为树中的地牢守卫设计视觉资产 — 需要敌人模型、动画和视觉特效。"
+**预期行为：**
+- 将资产请求重定向到 art-director
+- 不设计或指定视觉资产
+- 可提及对 AI 系统重要的视觉参数（例如动画速度影响行为时机），但不创建资产
+
+### Case 3：AI 性能 — LOD 管理
+**输入：** "场景中有 200 个 NPC。全部全行为树运行 — 30 FPS 下降到 15。"
+**预期行为：**
+- 诊断 CPU 成本：200 个 NPC 每帧运行完整行为树更新成本过高
+- 提出 LOD 解决方案：为 200 个 NPC 使用 AI LOD 层级（例如 LOD0：完整行为；LOD1：简化行为；LOD2：无行为，仅动画）
+- 估计按距离的 LOD 分布的实际节省
+- 修改行为树以包含简单的'待机'模式，并回退到无行为的远距离 NPC
+
+### Case 4：AI 冲突 — 两个守卫的追逐优先级
+**输入：** "两个守卫都看到玩家并开始追逐，但他们在狭窄走廊中互相阻挡。"
+**预期行为：**
+- 识别互斥冲突：两个守卫不能同时占据相同空间
+- 解决：
+  - 分配优先级：最近守卫获得追逐（更高优先级），其他守卫协调（退后为远程攻击支持或寻找侧翼路径）
+  - 在行为树中添加协调检查：一个守卫检查另一个守卫是否已在追逐；如果是，进入支持模式
+- 不静默让一个守卫穿过另一个 — 这违反了物理
+
+### Case 5：上下文传递 — 使用引擎工具
+**输入上下文：** 引擎具有导航网格和避障。提供的路径查找 API：`NavMesh.find_path(start, end)` 返回路径点数组。`Agent.set_velocity()` 进行移动。`Agent.avoidance_enabled` 是动态避障。
+**输入：** "设计守卫巡逻系统，使多个守卫不相互碰撞。"
+**预期行为：**
+- 使用提供的 API 上下文：`NavMesh.find_path` 用于路径查找，`Agent.avoidance_enabled` 用于动态避障
+- 不依赖非上下文中未提供的其他工具或 API
+- 产出模式检查：如果避障启用，守卫会自动彼此分开 — 在行为树中包含检查以确保不会发生冲突
+- 测试路径的动态重计算（例如如果一个守卫阻塞路径点）
 
 ---
 
-## Coverage Notes
-- Behavior tree output (Case 1) should be validated by a unit test in `tests/unit/ai/`
-- Level-layout context (Case 5) verifies the agent reads and applies provided documents rather than inventing
-- Performance escalation (Case 4) confirms the agent recognizes the engine-programmer boundary
+## 协议合规性
+
+- [ ] 停留在声明领域内（AI 行为树、巡逻、寻路、LOD）
+- [ ] 将视觉资产请求重定向到 art-director
+- [ ] 将具体路径点位置请求重定向到 level-designer
+- [ ] 使用上下文提供的 API；不发明不存在的方法
+- [ ] 为逐帧行为在 AI 中使用带适当 LOD 的逐 AI 模型
+
+---
+
+## 覆盖说明
+- Case 3（AI LOD）是可量化测试 — agent 必须估计节省
+- Case 5 要求上下文 API 在运行前可用；是上下文测试中最重要的
+- 无自动化运行器；手动审查或通过 `/skill-test`

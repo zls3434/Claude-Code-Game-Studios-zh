@@ -1,85 +1,87 @@
-# Agent Test Spec: level-designer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-**Domain owned:** Level layouts, encounter design, pacing and tension arc, environmental storytelling, spatial puzzles.
-**Does NOT own:** Narrative dialogue (writer / narrative-director), visual art style (art-director), code implementation (lead-programmer / ai-programmer), enemy AI behavior logic (ai-programmer / gameplay-programmer).
-**Model tier:** Sonnet (individual system analysis — level design review and encounter assessment).
-**Gate IDs handled:** Level design review verdicts (uses APPROVED / REVISION NEEDED vocabulary).
+# Agent Test Spec：level-designer
 
----
-
-## Static Assertions (Structural)
-
-Verified by reading the agent's `.claude/agents/level-designer.md` frontmatter:
-
-- [ ] `description:` field is present and domain-specific (references level layout, encounter design, pacing, environmental storytelling — not generic)
-- [ ] `allowed-tools:` list is read-focused; includes Read for level design documents and GDDs; no Bash unless level tooling requires it
-- [ ] Model tier is `claude-sonnet-4-6` per coordination-rules.md
-- [ ] Agent definition does not claim authority over narrative dialogue, AI behavior code, or visual art style
+## Agent 摘要
+**拥有的领域：** 关卡布局、遭遇战设计、节奏和张力弧线、环境叙事、空间谜题。
+**不拥有：** 叙事对话（writer / narrative-director）、视觉艺术风格（art-director）、代码实现（lead-programmer / ai-programmer）、敌人 AI 行为逻辑（ai-programmer / gameplay-programmer）。
+**Model tier：** Sonnet（单个系统分析 — 关卡设计审查和遭遇战评估）。
+**处理的 Gate ID：** 关卡设计审查裁决（使用 APPROVED / REVISION NEEDED 词汇）。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output format
-**Scenario:** A level layout document for "The Flooded Tunnels" is submitted for review. The layout includes: a low-intensity exploration opening section, two mid-intensity encounters with visible escape routes, a tension-building narrow passage with environmental hazards, and a high-intensity final encounter room followed by a release/reward area. The pacing follows a classic tension-arc structure.
-**Expected:** Returns `APPROVED` with rationale confirming the pacing follows the tension arc, encounters are varied in intensity, and spatial readability supports player navigation.
-**Assertions:**
-- [ ] Verdict is exactly one of APPROVED / REVISION NEEDED
-- [ ] Rationale references specific pacing arc elements (opening, escalation, climax, release)
-- [ ] Output stays within level design scope — does not comment on visual art style or enemy AI code behavior
-- [ ] Verdict is clearly labeled with context (e.g., "Level Design Review: APPROVED")
+通过阅读 agent 的 `.claude/agents/level-designer.md` frontmatter 验证：
 
-### Case 2: Out-of-domain request — redirects or escalates
-**Scenario:** A team member asks level-designer to write the behavior tree code for an enemy patrol AI that navigates the level layout.
-**Expected:** Agent declines to write AI behavior code and redirects to ai-programmer or gameplay-programmer.
-**Assertions:**
-- [ ] Does not write or specify code for AI behavior logic
-- [ ] Explicitly names `ai-programmer` or `gameplay-programmer` as the correct handler
-- [ ] May specify the desired patrol behavior from a level design perspective (e.g., "patrol should cover both chokepoints and create pressure in this zone"), but defers all code implementation to the programmer
-
-### Case 3: Gate verdict — correct vocabulary
-**Scenario:** A level layout for "The Ancient Forge" is submitted. Section 3 of the level introduces a dramatically harder enemy encounter (elite enemy with new attack patterns) with no preceding tutorial moment, no environmental readability cues (no visible cover or safe zones), and no checkpoint nearby. Players are likely to die repeatedly with no clear signal of what to do differently.
-**Expected:** Returns `REVISION NEEDED` with specific identification of the difficulty spike in section 3, the missing readability cue, and the absence of a nearby checkpoint to reduce frustration from repeated deaths.
-**Assertions:**
-- [ ] Verdict is exactly one of APPROVED / REVISION NEEDED — not freeform text
-- [ ] Rationale identifies section 3 specifically as the location of the issue
-- [ ] Identifies the three specific problems: difficulty spike, missing readability cue, missing checkpoint
-- [ ] Provides actionable revision guidance (e.g., "add a visible safe zone, pre-encounter cue object, or reduce elite's health for first introduction")
-
-### Case 4: Conflict escalation — correct parent
-**Scenario:** game-designer wants higher encounter density throughout the level (more enemies in each room) to increase combat challenge. level-designer believes this density undermines the pacing arc by eliminating rest periods and making the level feel relentless without reward.
-**Expected:** level-designer clearly articulates the pacing concern (eliminating rest periods removes the tension-release rhythm), acknowledges game-designer's challenge goal, and escalates to creative-director for a design arbiter ruling on whether challenge density or pacing rhythm takes precedence for this level.
-**Assertions:**
-- [ ] Articulates the specific pacing impact of increased encounter density
-- [ ] Escalates to `creative-director` as the design arbiter
-- [ ] Does not unilaterally override game-designer's challenge density request
-- [ ] Frames the conflict clearly: "challenge density vs. pacing rhythm — which takes precedence here?"
-
-### Case 5: Context pass — uses provided context
-**Scenario:** Agent receives a gate context block that includes game-feel notes specifying: "exploration sections should feel vast and lonely," "combat sections should feel urgent and claustrophobic," and "reward rooms should feel safe and visually distinct." A new level layout is submitted for review.
-**Expected:** Assessment evaluates each section type (exploration, combat, reward) against the specific feel targets from the provided context. Uses the exact vocabulary from the feel notes ("vast and lonely," "urgent and claustrophobic," "safe and visually distinct") in the rationale.
-**Assertions:**
-- [ ] References all three feel targets from the provided context by their exact vocabulary
-- [ ] Evaluates each relevant section of the submitted layout against its corresponding feel target
-- [ ] Does not generate generic pacing advice — all feedback is tied to the provided feel targets
-- [ ] Identifies any section where the layout conflicts with its assigned feel target
+- [ ] `description:` 字段存在且领域特定（引用关卡布局、遭遇战设计、节奏、环境叙事 — 非泛化描述）
+- [ ] `allowed-tools:` 列表以读取为主；包含 Read 用于关卡设计文件和 GDD；除非关卡工具需要，不包含 Bash
+- [ ] Model tier 按 coordination-rules.md 为 `claude-sonnet-4-6`
+- [ ] Agent 定义不声称对叙事对话、AI 行为代码或视觉艺术风格拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Returns verdicts using APPROVED / REVISION NEEDED vocabulary only
-- [ ] Stays within declared level design domain
-- [ ] Escalates challenge-density vs. pacing conflicts to creative-director
-- [ ] Does not make binding narrative dialogue, AI code implementation, or visual art style decisions
-- [ ] Provides actionable level design feedback with spatial specifics, not abstract design opinions
+### Case 1：域内请求 — 适当的输出格式
+**Scenario：** 一份关于「淹没隧道」的关卡布局文件被提交审查。布局包括：一个低强度探索开场区域、两个具有可见逃生路线的中强度遭遇战、一个带环境危险的紧张积累狭窄通道、一个高强度最终遭遇战房间及其后的释放/奖励区域。节奏遵循经典张力弧线结构。
+**预期：** 返回 `APPROVED`，附理由确认节奏遵循张力弧线，遭遇战强度变化多样，空间可读性支持玩家导航。
+**断言：**
+- [ ] 裁决恰好为 APPROVED / REVISION NEEDED 之一
+- [ ] 理由引用具体节奏弧线元素（开场、升级、高潮、释放）
+- [ ] 输出保持在关卡设计范围内 — 不评论视觉艺术风格或敌人 AI 代码行为
+- [ ] 裁决清晰标有上下文（例如"Level Design Review: APPROVED"）
+
+### Case 2：领域外请求 — 重定向或升级
+**Scenario：** 团队成员请 level-designer 编写在关卡布局中导航的敌人巡逻 AI 的行为树代码。
+**预期：** Agent 拒绝编写 AI 行为代码，并重定向到 ai-programmer 或 gameplay-programmer。
+**断言：**
+- [ ] 不编写或指定 AI 行为逻辑代码
+- [ ] 明确命名 `ai-programmer` 或 `gameplay-programmer` 为正确的处理者
+- [ ] 可从关卡设计角度指定期望的巡逻行为（例如"巡逻应覆盖两个关键通道并在该区域制造压力"），但将所有代码实现转交程序员
+
+### Case 3：Gate 裁决 — 正确的词汇
+**Scenario：** 一份关于「古代熔炉」的关卡布局被提交。关卡的 Section 3 引入了一个难度显著提升的敌人遭遇战（具有新攻击模式的精英敌人），没有前置教程时刻、没有环境可读性线索（无可视掩体或安全区域）、附近没有检查点。玩家很可能反复死亡，且不清楚该做什么不同的应对。
+**预期：** 返回 `REVISION NEEDED`，具体识别 section 3 中的难度突增、缺失的可读性线索以及附近无检查点以减少重复死亡带来的挫败感。
+**断言：**
+- [ ] 裁决恰好为 APPROVED / REVISION NEEDED 之一 — 非自由文本
+- [ ] 理由具体识别 section 3 为问题位置
+- [ ] 识别三个具体问题：难度突增、缺失可读性线索、缺失检查点
+- [ ] 提供可操作的修改指导（例如"添加可见的安全区域、遭遇前线索物体或减少精英首次引入时的血量"）
+
+### Case 4：冲突升级 — 正确的父级
+**Scenario：** game-designer 希望整个关卡的遭遇战密度更高（每个房间更多敌人）以增加战斗挑战。level-designer 认为此密度通过消除休息期并使关卡感觉不断施压而无回报，破坏了节奏弧线。
+**预期：** level-designer 清晰阐述节奏顾虑（消除休息期移除了紧张-释放节律）、承认 game-designer 的挑战目标，并升级到 creative-director 进行设计仲裁裁决，即该关卡应以挑战密度还是节奏节律为先。
+**断言：**
+- [ ] 阐述增加遭遇战密度的具体节奏影响
+- [ ] 升级到 `creative-director` 作为设计仲裁者
+- [ ] 不单方面推翻 game-designer 的挑战密度请求
+- [ ] 清晰框定冲突："挑战密度 vs. 节奏节律 — 此处何者优先？"
+
+### Case 5：上下文传递 — 使用提供的上下文
+**Scenario：** Agent 收到一个 gate 上下文块，其中包含游戏感受说明，指定：「探索区域应感觉广阔而孤独」「战斗区域应感觉紧迫和幽闭」「奖励房间应感觉安全和视觉上独特」。一份新的关卡布局被提交审查。
+**预期：** 评估将每种区域类型（探索、战斗、奖励）与提供的上下文中的具体感受目标进行对比评估。在理由中使用感受说明中的精确词汇（「广阔而孤独」「紧迫和幽闭」「安全和视觉上独特」）。
+**断言：**
+- [ ] 以精确词汇引用所提供上下文中的所有三个感受目标
+- [ ] 将提交布局的每个相关区域与其对应感受目标对比评估
+- [ ] 不生成泛化节奏建议 — 所有反馈都与提供的感受目标相关联
+- [ ] 识别布局中有任何区域与其分配的感受目标冲突并标记
 
 ---
 
-## Coverage Notes
-- Environmental storytelling review (using spatial elements to convey narrative without dialogue) could benefit from a dedicated case.
-- Spatial puzzle design review is not covered — a dedicated case should be added when puzzle mechanics are defined.
-- Multi-level pacing review (arc across an entire act or world map) is not covered — deferred to milestone-level design review.
-- Interaction between level-designer and narrative-director for environmental lore placement is not covered.
-- Accessibility review of level layouts (colorblind indicators, difficulty options for spatial challenges) is not covered.
+## 协议合规性
+
+- [ ] 仅使用 APPROVED / REVISION NEEDED 词汇返回裁决
+- [ ] 停留在声明的关卡设计领域内
+- [ ] 将挑战密度 vs. 节奏冲突升级到 creative-director
+- [ ] 不做出有约束力的叙事对话、AI 代码实现或视觉艺术风格决策
+- [ ] 提供带空间具体性的可操作关卡设计反馈，而非抽象设计意见
+
+---
+
+## 覆盖说明
+- 环境叙事审查（使用空间元素在不使用对话的情况下传达叙事）可受益于专用案例。
+- 空间谜题设计审查未涵盖 — 当谜题机制定义后应添加专用案例。
+- 多关卡节奏审查（跨整个 act 或世界地图的弧线）未涵盖 — 推迟到 milestone 级别的设计审查。
+- level-designer 与 narrative-director 在环境叙事设定放置上的交互未涵盖。
+- 关卡布局的可访问性审查（色盲指示器、空间挑战的难度选项）未涵盖。

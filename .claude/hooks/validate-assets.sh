@@ -1,47 +1,48 @@
+# 翻译修改：2026-05-20, 修改人: zls3434
 #!/bin/bash
-# Claude Code PostToolUse hook: Validates asset files after Write/Edit
-# Checks naming conventions for files in assets/ directory
+# Claude Code PostToolUse hook：在 Write/Edit 之后验证资产文件
+# 检查 assets/ 目录中文件的命名规范
 #
-# Exit behavior:
-#   exit 0 = success or advisory warnings only (non-blocking)
-#   exit 1 = blocking error (build-breaking issues: invalid JSON, missing required fields)
+# 退出行为：
+#   exit 0 = 成功或仅建议性警告（非阻塞）
+#   exit 1 = 阻塞性错误（构建中断问题：无效 JSON、缺少必需字段）
 #
-# Input schema (PostToolUse for Write/Edit):
+# 输入 schema（Write/Edit 的 PostToolUse）：
 # { "tool_name": "Write", "tool_input": { "file_path": "assets/data/foo.json", "content": "..." } }
 
 INPUT=$(cat)
 
-# Parse file path -- use jq if available, fall back to grep
+# 解析文件路径 —— 优先使用 jq，备用 grep
 if command -v jq >/dev/null 2>&1; then
     FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 else
     FILE_PATH=$(echo "$INPUT" | grep -oE '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/"file_path"[[:space:]]*:[[:space:]]*"//;s/"$//')
 fi
 
-# Normalize path separators (Windows backslash to forward slash)
+# 规范化路径分隔符（Windows 反斜杠转正斜杠）
 FILE_PATH=$(echo "$FILE_PATH" | sed 's|\\|/|g')
 
-# Only check files in assets/
+# 仅检查 assets/ 中的文件
 if ! echo "$FILE_PATH" | grep -qE '(^|/)assets/'; then
     exit 0
 fi
 
 FILENAME=$(basename "$FILE_PATH")
-WARNINGS=""   # Style/convention issues -- exit 0 with advisory message
-ERRORS=""     # Build-breaking issues -- exit 1 to block the operation
+WARNINGS=""   # 风格/规范问题 —— exit 0 附带建议消息
+ERRORS=""     # 构建中断问题 —— exit 1 阻止操作
 
-# ADVISORY: Check naming convention (lowercase with underscores only)
-# Naming issues are style violations -- warn but do not block
-# Uses grep -E (POSIX) not grep -P (Perl) for Windows Git Bash compatibility
+# 建议：检查命名规范（仅小写字母和下划线）
+# 命名问题是风格违规 —— 警告但不阻止
+# 使用 grep -E（POSIX）而非 grep -P（Perl），以兼容 Windows Git Bash
 if echo "$FILENAME" | grep -qE '[A-Z[:space:]-]'; then
-    WARNINGS="$WARNINGS\n  NAMING: $FILE_PATH must be lowercase with underscores (got: $FILENAME)"
+    WARNINGS="$WARNINGS\n  命名：$FILE_PATH 必须使用小写字母和下划线（当前为：$FILENAME）"
 fi
 
-# BLOCKING: Check JSON validity for data files
-# Invalid JSON will break runtime loading -- this is a build-breaking error
+# 阻塞：检查数据文件的 JSON 有效性
+# 无效 JSON 将导致运行时加载失败 —— 这是构建中断错误
 if echo "$FILE_PATH" | grep -qE '(^|/)assets/data/.*\.json$'; then
     if [ -f "$FILE_PATH" ]; then
-        # Find a working Python command
+        # 查找可用的 Python 命令
         PYTHON_CMD=""
         for cmd in python python3 py; do
             if command -v "$cmd" >/dev/null 2>&1; then
@@ -52,20 +53,20 @@ if echo "$FILE_PATH" | grep -qE '(^|/)assets/data/.*\.json$'; then
 
         if [ -n "$PYTHON_CMD" ]; then
             if ! "$PYTHON_CMD" -m json.tool "$FILE_PATH" > /dev/null 2>&1; then
-                ERRORS="$ERRORS\n  FORMAT: $FILE_PATH is not valid JSON — fix syntax errors before continuing"
+                ERRORS="$ERRORS\n  格式：$FILE_PATH 不是有效的 JSON —— 请修复语法错误再继续"
             fi
         fi
     fi
 fi
 
-# Report warnings (advisory -- non-blocking)
+# 报告警告（建议性 —— 非阻塞）
 if [ -n "$WARNINGS" ]; then
-    echo -e "=== Asset Validation: Warnings ===$WARNINGS\n==================================\n(Warnings are advisory. Fix before final commit.)" >&2
+    echo -e "=== 资产验证：警告 ===$WARNINGS\n==================================\n（警告为建议性。请在最终提交前修复。）" >&2
 fi
 
-# Report errors and block if any build-breaking issues found
+# 报告错误，如发现构建中断问题则阻止
 if [ -n "$ERRORS" ]; then
-    echo -e "=== Asset Validation: ERRORS (Blocking) ===$ERRORS\n===========================================\nFix these errors before proceeding." >&2
+    echo -e "=== 资产验证：错误（阻塞） ===$ERRORS\n===========================================\n请修复这些错误再继续。" >&2
     exit 1
 fi
 

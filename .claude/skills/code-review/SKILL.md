@@ -1,185 +1,186 @@
 ---
 name: code-review
-description: "Performs an architectural and quality code review on a specified file or set of files. Checks for coding standard compliance, architectural pattern adherence, SOLID principles, testability, and performance concerns."
-argument-hint: "[path-to-file-or-directory]"
+description: "对指定文件或文件集执行架构和质量代码审查。检查编码标准合规性、架构模式遵守情况、SOLID 原则、可测试性和性能问题。"
+argument-hint: "[文件或目录路径]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Bash, Task, AskUserQuestion
 model: sonnet
 agent: lead-programmer
 ---
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Phase 1: Load Target Files
+## 阶段 1：加载目标文件
 
-Read the target file(s) in full. Read CLAUDE.md for project coding standards.
-
----
-
-## Phase 2: Identify Engine Specialists
-
-Read `.claude/docs/technical-preferences.md`, section `## Engine Specialists`. Note:
-
-- The **Primary** specialist (used for architecture and broad engine concerns)
-- The **Language/Code Specialist** (used when reviewing the project's primary language files)
-- The **Shader Specialist** (used when reviewing shader files)
-- The **UI Specialist** (used when reviewing UI code)
-
-If the section reads `[TO BE CONFIGURED]`, no engine is pinned — skip engine specialist steps.
+完整读取目标文件。读取 CLAUDE.md 了解项目编码标准。
 
 ---
 
-## Phase 3: ADR Compliance Check
+## 阶段 2：识别引擎专家
 
-**Argument:** `/code-review [file(s)]` may optionally include a story file path as the last argument (e.g., `/code-review src/combat/attack.gd production/epics/combat/story-001.md`). If a story path is provided, read it to extract the governing ADR reference.
+读取 `.claude/docs/technical-preferences.md`，`## Engine Specialists` 部分。记录：
 
-Search for ADR references in, in priority order:
-1. The story file (if provided as argument)
-2. Header comments at the top of the implementation files
-3. Commit messages referencing these files (`git log --oneline -- [file]`)
+- **主**专家（用于架构和广泛的引擎问题）
+- **语言/代码**专家（用于审查项目主语言文件）
+- **着色器**专家（用于审查着色器文件）
+- **UI**专家（用于审查 UI 代码）
 
-Look for patterns like `ADR-NNN` or `docs/architecture/ADR-`.
-
-If no ADR references found, note: "No ADR references found — ADR compliance check skipped. For full ADR compliance review, provide the story path: `/code-review [files] [story-path]`."
-
-For each referenced ADR: read the file, extract the **Decision** and **Consequences** sections, then classify any deviation:
-
-- **ARCHITECTURAL VIOLATION** (BLOCKING): Uses a pattern explicitly rejected in the ADR
-- **ADR DRIFT** (WARNING): Meaningfully diverges from the chosen approach without using a forbidden pattern
-- **MINOR DEVIATION** (INFO): Small difference from ADR guidance that doesn't affect overall architecture
+如果该部分显示 `[TO BE CONFIGURED]`，则未固定引擎——跳过引擎专家步骤。
 
 ---
 
-## Phase 4: Standards Compliance
+## 阶段 3：ADR 合规性检查
 
-Identify the system category (engine, gameplay, AI, networking, UI, tools) and evaluate:
+**参数：** `/code-review [文件]` 可以可选地将故事文件路径作为最后一个参数（例如 `/code-review src/combat/attack.gd production/epics/combat/story-001.md`）。如果提供了故事路径，读取它以提取管理层 ADR 引用。
 
-- [ ] Public methods and classes have doc comments
-- [ ] Cyclomatic complexity under 10 per method
-- [ ] No method exceeds 40 lines (excluding data declarations)
-- [ ] Dependencies are injected (no static singletons for game state)
-- [ ] Configuration values loaded from data files
-- [ ] Systems expose interfaces (not concrete class dependencies)
+按优先级顺序搜索 ADR 引用：
+1. 故事文件（如果作为参数提供）
+2. 实现文件顶部的头部注释
+3. 引用这些文件的提交信息（`git log --oneline -- [file]`）
 
----
+查找类似 `ADR-NNN` 或 `docs/architecture/ADR-` 的模式。
 
-## Phase 5: Architecture and SOLID
+如果未找到 ADR 引用，注明："未找到 ADR 引用 —— ADR 合规性检查已跳过。如需完整的 ADR 合规性审查，请提供故事路径：`/code-review [文件] [故事路径]`。"
 
-**Architecture:**
-- [ ] Correct dependency direction (engine <- gameplay, not reverse)
-- [ ] No circular dependencies between modules
-- [ ] Proper layer separation (UI does not own game state)
-- [ ] Events/signals used for cross-system communication
-- [ ] Consistent with established patterns in the codebase
+对于每个引用的 ADR：读取文件，提取 **Decision** 和 **Consequences** 部分，然后对任何偏离进行分类：
 
-**SOLID:**
-- [ ] Single Responsibility: Each class has one reason to change
-- [ ] Open/Closed: Extendable without modification
-- [ ] Liskov Substitution: Subtypes substitutable for base types
-- [ ] Interface Segregation: No fat interfaces
-- [ ] Dependency Inversion: Depends on abstractions, not concretions
+- **架构违规**（阻塞）：使用了 ADR 中明确拒绝的模式
+- **ADR 偏离**（警告）：有意义地偏离了所选方法但未使用禁止的模式
+- **轻微偏差**（信息）：与 ADR 指导的小差异，不影响整体架构
 
 ---
 
-## Phase 6: Game-Specific Concerns
+## 阶段 4：标准合规性
 
-- [ ] Frame-rate independence (delta time usage)
-- [ ] No allocations in hot paths (update loops)
-- [ ] Proper null/empty state handling
-- [ ] Thread safety where required
-- [ ] Resource cleanup (no leaks)
+识别系统类别（引擎、游戏玩法、AI、网络、UI、工具）并评估：
 
----
-
-## Phase 7: Specialist Reviews (Parallel)
-
-Spawn all applicable specialists simultaneously via Task — do not wait for one before starting the next.
-
-### Engine Specialists
-
-If an engine is configured, determine which specialist applies to each file and spawn in parallel:
-
-- Primary language files (`.gd`, `.cs`, `.cpp`) → Language/Code Specialist
-- Shader files (`.gdshader`, `.hlsl`, shader graph) → Shader Specialist
-- UI screen/widget code → UI Specialist
-- Cross-cutting or unclear → Primary Specialist
-
-Also spawn the **Primary Specialist** for any file touching engine architecture (scene structure, node hierarchy, lifecycle hooks).
-
-### QA Testability Review
-
-For Logic and Integration stories, also spawn `qa-tester` via Task in parallel with the engine specialists. Pass:
-- The implementation files being reviewed
-- The story's `## QA Test Cases` section (the pre-written test specs from qa-lead)
-- The story's `## Acceptance Criteria`
-
-Ask the qa-tester to evaluate:
-- [ ] Are all test hooks and interfaces exposed (not hidden behind private/internal access)?
-- [ ] Do the QA test cases from the story's `## QA Test Cases` section map to testable code paths?
-- [ ] Are any acceptance criteria untestable as implemented (e.g., hardcoded values, no seam for injection)?
-- [ ] Does the implementation introduce any new edge cases not covered by the existing QA test cases?
-- [ ] Are there any observable side effects that should have a test but don't?
-
-For Visual/Feel and UI stories: qa-tester reviews whether the manual verification steps in `## QA Test Cases` are achievable with the implementation as written — e.g., "is the state the manual checker needs to reach actually reachable?"
-
-Collect all specialist findings before producing output.
+- [ ] 公共方法和类具有文档注释
+- [ ] 每个方法的圈复杂度低于 10
+- [ ] 没有方法超过 40 行（不包括数据声明）
+- [ ] 依赖通过注入（游戏状态不使用静态单例）
+- [ ] 配置值从数据文件加载
+- [ ] 系统暴露接口（非具体类依赖）
 
 ---
 
-## Phase 8: Output Review
+## 阶段 5：架构与 SOLID
+
+**架构：**
+- [ ] 正确的依赖方向（引擎 <- 游戏玩法，而非反向）
+- [ ] 模块间无循环依赖
+- [ ] 适当的层分离（UI 不拥有游戏状态）
+- [ ] 使用事件/信号进行跨系统通信
+- [ ] 与代码库中既定模式一致
+
+**SOLID：**
+- [ ] 单一职责：每个类只有一个变更原因
+- [ ] 开闭原则：无需修改即可扩展
+- [ ] 里氏替换：子类型可替换基类型
+- [ ] 接口隔离：没有臃肿接口
+- [ ] 依赖倒置：依赖抽象而非具体实现
+
+---
+
+## 阶段 6：游戏特定关注点
+
+- [ ] 帧率无关性（使用 delta time）
+- [ ] 热路径中无分配（update 循环）
+- [ ] 正确处理 null/空状态
+- [ ] 需要时保证线程安全
+- [ ] 资源清理（无泄漏）
+
+---
+
+## 阶段 7：专家审查（并行）
+
+同时生成所有适用的专家——不要等待一个完成再开始下一个。
+
+### 引擎专家
+
+如果已配置引擎，确定每个文件适用的专家并并行生成：
+
+- 主语言文件（`.gd`、`.cs`、`.cpp`）→ 语言/代码专家
+- 着色器文件（`.gdshader`、`.hlsl`、着色器图）→ 着色器专家
+- UI 屏幕/控件代码 → UI 专家
+- 跨领域或不明确 → 主专家
+
+对于任何涉及引擎架构的文件（场景结构、节点层次、生命周期钩子），也生成**主专家**。
+
+### QA 可测试性审查
+
+对于逻辑和集成故事，也通过 Task 与引擎专家并行生成 `qa-tester`。传入：
+- 正在审查的实现文件
+- 故事的 `## QA 测试用例` 部分（来自 qa-lead 的预编写测试规格）
+- 故事的 `## 验收条件`
+
+要求 qa-tester 评估：
+- [ ] 所有测试钩子和接口是否暴露（未隐藏在 private/internal 访问之后）？
+- [ ] 故事 `## QA 测试用例` 部分中的 QA 测试用例是否映射到可测试的代码路径？
+- [ ] 是否有任何验收条件按当前实现无法测试（例如硬编码值、无 seam 注入）？
+- [ ] 实现是否引入了现有 QA 测试用例未覆盖的任何新边缘情况？
+- [ ] 是否有应该测试但尚未测试的可观察副作用？
+
+对于视觉/手感和 UI 故事：qa-tester 审查 `## QA 测试用例` 中的手动验证步骤是否可以用当前实现达成——例如，"手动检查者需要达到的状态是否实际可达？"
+
+收集所有专家发现后再生成输出。
+
+---
+
+## 阶段 8：输出审查
 
 ```
-## Code Review: [File/System Name]
+## 代码审查：[文件/系统名称]
 
-### Engine Specialist Findings: [N/A — no engine configured / CLEAN / ISSUES FOUND]
-[Findings from engine specialist(s), or "No engine configured." if skipped]
+### 引擎专家发现：[不适用——未配置引擎 / 干净 / 已发现问题]
+[引擎专家的发现，或如果跳过则为"未配置引擎。"]
 
-### Testability: [N/A — Visual/Feel or Config story / TESTABLE / GAPS / BLOCKING]
-[qa-tester findings: test hooks, coverage gaps, untestable paths, new edge cases]
-[If BLOCKING: implementation must expose [X] before tests in ## QA Test Cases can run]
+### 可测试性：[不适用——视觉/手感或配置故事 / 可测试 / 有缺口 / 阻塞]
+[qa-tester 发现：测试钩子、覆盖缺口、不可测试路径、新边缘情况]
+[如果阻塞：实现必须暴露 [X] 才能运行 ## QA 测试用例 中的测试]
 
-### ADR Compliance: [NO ADRS FOUND / COMPLIANT / DRIFT / VIOLATION]
-[List each ADR checked, result, and any deviations with severity]
+### ADR 合规性：[未找到 ADR / 合规 / 偏离 / 违规]
+[列出检查的每个 ADR、结果及附带严重程度的任何偏差]
 
-### Standards Compliance: [X/6 passing]
-[List failures with line references]
+### 标准合规性：[X/6 通过]
+[列出不通过项及行引用]
 
-### Architecture: [CLEAN / MINOR ISSUES / VIOLATIONS FOUND]
-[List specific architectural concerns]
+### 架构：[干净 / 小问题 / 发现违规]
+[列出具体的架构关注点]
 
-### SOLID: [COMPLIANT / ISSUES FOUND]
-[List specific violations]
+### SOLID：[合规 / 发现问题]
+[列出具体违规]
 
-### Game-Specific Concerns
-[List game development specific issues]
+### 游戏特定关注点
+[列出游戏开发特定的问题]
 
-### Positive Observations
-[What is done well -- always include this section]
+### 正面观察
+[做得好的地方——始终包含此部分]
 
-### Required Changes
-[Must-fix items before approval — ARCHITECTURAL VIOLATIONs always appear here]
+### 必需修改
+[审批前必须修复的项目——架构违规始终出现在此处]
 
-### Suggestions
-[Nice-to-have improvements]
+### 建议
+[锦上添花的改进]
 
-### Verdict: [APPROVED / APPROVED WITH SUGGESTIONS / CHANGES REQUIRED]
+### 裁决：[批准 / 有建议批准 / 需要修改]
 ```
 
-This skill is read-only — no files are written.
+本 Skill 为只读——不写入文件。
 
 ---
 
-## Phase 9: Next Steps
+## 阶段 9：下一步
 
-Use `AskUserQuestion`:
-- Prompt: "Code review complete — verdict: [APPROVED / CHANGES REQUIRED / MAJOR REVISION]. How would you like to proceed?"
-- Options (adjust based on verdict):
-  - If APPROVED:
-    - `[A] Run /story-done to mark the story complete`
-    - `[B] Stop here`
-  - If CHANGES REQUIRED or MAJOR REVISION:
-    - `[A] Fix the issues and re-run /code-review`
-    - `[B] Run /story-done anyway with noted exceptions`
-    - `[C] Stop here`
+使用 `AskUserQuestion`：
+- 提示语："代码审查完成——裁决：[批准 / 需要修改 / 重大修订]。你想如何继续？"
+- 选项（根据裁决调整）：
+  - 如果批准：
+    - `[A] 运行 /story-done 将故事标记为完成`
+    - `[B] 在此停止`
+  - 如果需要修改或重大修订：
+    - `[A] 修复问题并重新运行 /code-review`
+    - `[B] 无论如何运行 /story-done，标注已知例外`
+    - `[C] 在此停止`
 
-If an ARCHITECTURAL VIOLATION is found:
-- If the violation contradicts an **existing ADR**: fix the implementation to comply with `docs/architecture/[adr-file].md`. If the design has legitimately changed, run `/architecture-decision` to formally *revise* the existing ADR — do not create a competing one.
-- If **no ADR exists** for the pattern that was violated: run `/architecture-decision` to document the correct approach before fixing the code.
+如果发现架构违规：
+- 如果违规与**已有 ADR** 矛盾：修改实现以符合 `docs/architecture/[adr-file].md`。如果设计确实已变更，运行 `/architecture-decision` 正式*修订*已有的 ADR——不要创建竞争性的 ADR。
+- 如果**不存在 ADR** 用于被违反的模式：在修复代码之前运行 `/architecture-decision` 记录正确的方法。

@@ -1,114 +1,113 @@
-# Concept Prototype Report: [Concept Name]
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-> **Date**: [YYYY-MM-DD]
-> **Prototype Path**: [HTML / Engine / Paper]
-> **Concept File**: design/gdd/game-concept.md (if exists)
+# 概念原型报告：[概念名称]
 
----
-
-## Hypothesis
-
-[The falsifiable hypothesis this prototype set out to test:
-"If the player [does X], they will feel [Y] — evidenced by [measurable signal Z]."]
+> **日期**：[YYYY-MM-DD]
+> **原型路径**：[HTML / 引擎 / 纸上]
+> **概念文件**：design/gdd/game-concept.md（如存在）
 
 ---
 
-## Riskiest Assumption Tested
+## 假设
 
-[What was identified as the biggest risk in the concept, and whether it proved out.]
-
----
-
-## Approach
-
-[What was built, how long it took, what shortcuts were taken deliberately.]
-
-**Path chosen:** [HTML / Engine / Paper]
-**Reason for path:** [Why this path was appropriate for this hypothesis]
-
-**Shortcuts taken (intentional):**
-- [e.g., hardcoded values, placeholder art, no menus, etc.]
+[此原型旨在测试的可证伪假设：
+"如果玩家 [做X]，他们会感到 [Y] — 通过 [可衡量的信号Z] 证明。"]
 
 ---
 
-## Result
+## 测试的最风险假设
 
-[What actually happened — specific observations, not opinions. Quote playtesters
-directly where possible.]
+[在概念中被识别为最大风险的是什么，以及它是否被证实。]
 
 ---
 
-## Metrics
+## 方法
 
-| Metric | Value |
+[构建了什么，花了多长时间，有意采取了哪些捷径。]
+
+**选择的路径：**[HTML / 引擎 / 纸上]
+**选择此路径的理由：**[为什么此路径适合此假设]
+
+**有意采取的捷径：**
+- [例如，硬编码数值、占位美术、无菜单等]
+
+---
+
+## 结果
+
+[实际发生了什么 — 具体的观察，而非观点。如可能直接引用试玩者的原话。]
+
+---
+
+## 指标
+
+| 指标 | 值 |
 |--------|-------|
-| Path used | [HTML / Engine / Paper] |
-| Iterations to playable | [N — Engine path only; N/A otherwise] |
-| Prototype duration | [e.g., 4 hours] |
-| Playtesters | [N internal / N external] |
-| Feel assessment | [Specific — "response felt sluggish at 200ms" not "felt bad"] |
-| Hypothesis verdict | [CONFIRMED / PARTIALLY CONFIRMED / REFUTED] |
+| 使用的路径 | [HTML / 引擎 / 纸上] |
+| 达到可玩状态的迭代次数 | [N — 仅引擎路径；否则N/A] |
+| 原型持续时间 | [例如，4小时] |
+| 试玩者 | [N名内部 / N名外部] |
+| 感受评估 | [具体 — "200ms时响应感觉迟钝"而非"感觉不好"] |
+| 假设裁定 | [已确认 / 部分确认 / 已驳斥] |
 
 ---
 
-## Recommendation: [PROCEED / PIVOT / KILL]
+## 建议：[继续 / 调整方向 / 终止]
 
-[One paragraph explaining the recommendation with evidence from the result above.]
+[一段话解释建议，附上来自上述结果的证据。]
 
 ---
 
-## If Proceeding
+## 如果继续
 
-[What the prototype revealed that should directly inform GDD writing:]
+[原型揭示了什么应直接指导GDD撰写：]
 
-- **Core tuning values discovered:** [e.g., "jump height of 3.5 units felt best"]
-- **Assumptions confirmed:** [What the concept doc assumed that proved true]
-- **Assumptions disproved:** [What the concept doc assumed that proved wrong]
-- **Emergent mechanics:** [Behaviors that appeared during testing worth formalizing]
+- **发现的核心调优值：**[例如，"跳跃高度3.5个单位感觉最佳"]
+- **已确认的假设：**[概念文档假设的哪些被证明正确]
+- **已被推翻的假设：**[概念文档假设的哪些被证明错误]
+- **涌现的机制：**[在测试中出现的值得正式化的行为]
 
-> Note: If HTML path was used and feel is uncertain, consider an engine prototype
-> targeting feel specifically before committing to GDDs.
+> 注意：如果使用了HTML路径且感觉不确定，在投入GDD之前考虑制作一个专门针对感觉的引擎原型。
 
-**Next steps:**
+**后续步骤：**
 1. `/design-review design/gdd/game-concept.md`
 2. `/gate-check`
 3. `/map-systems`
-4. `/design-system [mechanic]` (use learnings in Tuning Knobs and Formulas sections)
+4. `/design-system [mechanic]`（在调优旋钮和公式部分使用学到的经验）
 
 ---
 
-## If Pivoting
+## 如果调整方向
 
-[What alternative direction the results suggest — what felt almost right and what
-to adjust. Be specific about what to change, not just that something needs changing.]
+[结果建议了什么替代方向 — 什么感觉几乎对了以及调整什么。要具体说明改变什么，而不仅仅是需要改变什么。]
 
-**Pivot direction:** [What to try differently]
-**What to keep:** [What worked and should be preserved]
-**Next step:** `/prototype [revised-concept]`
-
----
-
-## If Killing
-
-[Why this concept does not work — what specific signal led to this verdict.
-This report is the deliverable; no further action needed on this concept.]
-
-**Next step:** `/brainstorm [new-direction]`
+**调整方向：**[尝试什么不同的]
+**保留什么：**[什么有效且应保留]
+**下一步：**`/prototype [revised-concept]`
 
 ---
 
-## Lessons Learned
+## 如果终止
 
-- **What assumptions were broken by actually building this?**
+[为什么这个概念行不通 — 什么具体信号导致了这个裁定。
+此报告即为交付物；此概念无需进一步行动。]
+
+**下一步：**`/brainstorm [new-direction]`
+
+---
+
+## 经验教训
+
+- **实际构建打破了哪些假设？**
   [...]
 
-- **What surprised us that didn't show up in the brainstorm?**
+- **有什么让我们惊讶但没有在头脑风暴中体现的？**
   [...]
 
-- **What would we test differently next time?**
+- **下次我们会有什么不同的测试方式？**
   [...]
 
 ---
 
-> *Prototype code location: `prototypes/[concept-name]-concept/`*
-> *This code is throwaway. Never refactor into production.*
+> *原型代码位置：`prototypes/[concept-name]-concept/`*
+> *此代码为一次性代码。绝不要重构到生产中。*

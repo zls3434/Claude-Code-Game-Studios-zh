@@ -1,80 +1,81 @@
-# Agent Test Spec: gameplay-programmer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: Game mechanics code, player systems, combat implementation, and interactive features.
-Does NOT own: UI implementation (ui-programmer), AI behavior trees (ai-programmer), engine/rendering systems (engine-programmer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：gameplay-programmer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references game mechanics / player systems)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep — excludes tools only needed by orchestration agents
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over UI, AI behavior, or engine/rendering code
+## Agent 摘要
+- **领域**：Gameplay 系统实现（移动、战斗、背包等）、机制代码、玩家控制器、物理交互代码
+- **不拥有**：动画 asset 实现（与 technical-artist 合作）、AI 决策逻辑（ai-programmer）、游戏设计（game-designer）、UI 布局（ui-programmer）
+- **Model tier**：Sonnet（单个系统的实现）
+- **Gate ID**：无
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Implement a melee combo system where three consecutive light attacks chain into a finisher."
-**Expected behavior:**
-- Produces code or a code scaffold following the project's language (GDScript/C#) and coding standards
-- Defines combo state tracking, input window timing, and finisher trigger logic as separate, testable methods
-- References the relevant GDD section if one is provided in context
-- Does NOT implement UI feedback (delegates to ui-programmer) or AI reaction (delegates to ai-programmer)
-- Output includes doc comments on all public methods per coding standards
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Build the main menu screen with pause and settings panels."
-**Expected behavior:**
-- Does NOT produce menu implementation code
-- Explicitly states this is outside its domain
-- Redirects the request to `ui-programmer`
-- May note that if the pause menu requires reading gameplay state it can provide the state API surface
-
-### Case 3: Domain boundary — threading flag
-**Input:** "The combo system is causing frame stutters; can you add threading to spread the input processing?"
-**Expected behavior:**
-- Does NOT unilaterally implement threading or async systems
-- Flags the threading concern to `engine-programmer` with a clear description of the hot path
-- May produce a non-threaded refactor to reduce work per frame as a safe interim step
-- Documents the escalation so lead-programmer is aware
-
-### Case 4: Conflict with an Accepted ADR
-**Input:** "Change the damage calculation to use floating-point accumulation directly instead of the fixed-point formula in ADR-003."
-**Expected behavior:**
-- Identifies that the proposed change violates ADR-003 (Accepted status)
-- Does NOT silently implement the violation
-- Flags the conflict to `lead-programmer` with the ADR reference and the trade-off described
-- Will implement only after explicit override decision from lead-programmer or technical-director
-
-### Case 5: Context pass — implements to GDD spec
-**Input:** GDD for "PlayerCombat" provided in context. Request: "Implement the stamina drain formula from the combat GDD."
-**Expected behavior:**
-- Reads the formula section of the provided GDD
-- Implements the exact formula as written — does NOT invent new variables or adjust coefficients
-- Makes stamina drain a data-driven value (external config), not a hardcoded constant
-- Notes any edge cases from the GDD's edge-cases section and handles them in code
+- [ ] `description:` 字段存在且领域特定（gameplay 系统、机制实现）
+- [ ] `allowed-tools:` 列表匹配 agent 角色（实现源代码、逻辑等）
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对 UI、AI 行为或网络代码拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (mechanics, player systems, combat)
-- [ ] Redirects out-of-domain requests to correct agent (ui-programmer, ai-programmer, engine-programmer)
-- [ ] Returns structured findings (code scaffold, method signatures, inline comments) not freeform opinions
-- [ ] Does not modify files outside `src/gameplay/` or `src/core/` without explicit delegation
-- [ ] Flags ADR violations rather than overriding them silently
-- [ ] Makes gameplay values data-driven, never hardcoded
+### Case 1：域内请求 — 移动控制器
+**输入：** "实现一个为基于物理的角色使用 Input.get_vector() 的移动控制器。必须支持键盘/鼠标和手柄。角色应对输入响应灵敏，并有平滑加速。"
+**预期行为：**
+- 产出带有适当物理交互的移动控制器代码
+- 使用 Input.get_vector()（或引擎等效）读取输入
+- 应用加速度（lerp 或 move_toward）以获得平滑移动
+- 不使用瞬时速度— 使用基于 delta 的运动
+- 包含对控制器死区的处理
+
+### Case 2：领域外请求 — AI 行为
+**输入：** "为我们的敌人编写 AI 行为。敌人应搜索玩家，靠近时攻击，低血量时逃跑。"
+**预期行为：**
+- 将 AI 请求重定向到 ai-programmer
+- 不实现 AI 行为
+- 可提供 gameplay 接口（例如如何对战斗系统 API 调用进行攻击），但不设计 AI 逻辑本身
+
+### Case 3：物理响应系统
+**输入：** "实现一个角色可以按下按键时在地上进行 dash 移动的系统。Dash 应有固定的持续时间、距离，并且如果连续使用 3 次，有短暂的冷却时间。Dash 期间应忽略摩擦且角色不碰撞。"
+**预期行为：**
+- 实现 dash 状态机：开始 → 持续 → 结束 → 冷却
+- 管理冷却计时器、固定持续时间和距离
+- 当 dash 处于活动状态时，忽略物理摩擦并管理碰撞（碰撞层切换或碰撞忽略）
+- 实现无活动 dash 时恢复
+
+### Case 4：战斗系统 — 伤害计算
+**输入：** "实现一个伤害系统，当角色进入伤害区域时使用碰撞进行伤害检测，并在伤害被应用时播放伤害动画。"
+**预期行为：**
+- 实现碰撞检测以进入危险区域
+- 应用 damage 变量，并与防御/护盾/抗性计算交互
+- 管理伤害动画状态（播放、分层、无打断）
+- 不硬编码伤害值 — 使用可配置字段
+
+### Case 5：上下文传递 — 使用引擎特定 API
+**输入上下文：** 引擎为 Unity。有 `CharacterController`、`Input System`、`Animator` 可用。
+**输入：** "实现一个玩家跳跃系统：按下跳跃键，角色以初始速度发射，在空中下降，落地。如果按两次则允许二段跳。"
+**预期行为：**
+- 使用提供的 API：`characterController.Move()` 进行物理移动，`InputSystem` 读取输入，`Animator` 进行动画状态
+- 管理跳跃状态：地面 → 跳跃上升 → 二段跳上升 → 下落 → 着地
+- 在动画曲线中管理可配置参数（跳跃高度、重力倍增器、二段跳力）
+- 使用向上速度发射但将重力应用于垂直移动
 
 ---
 
-## Coverage Notes
-- Combo system test (Case 1) should be validated with a unit test in `tests/unit/gameplay/`
-- Threading escalation (Case 3) verifies the agent does not over-reach into engine territory
-- ADR conflict (Case 4) confirms the agent respects the architecture governance process
-- Cases 1 and 5 together verify the agent implements to spec rather than improvising
+## 协议合规性
+
+- [ ] 停留在声明领域内（gameplay 系统、机制代码）
+- [ ] 将 AI 行为请求重定向到 ai-programmer
+- [ ] 将 UI 请求重定向到 ui-programmer
+- [ ] 根据上下文使用提供的引擎特定 API
+- [ ] 产出正确应用物理原理的有状态代码
+
+---
+
+## 覆盖说明
+- Case 3（dash 系统）是可量化测试 — 固定持续时间、距离、冷却要求可测量
+- Case 5 要求引擎上下文在运行前可用；是上下文测试中最重要的
+- 所有案例均提供实现代码以便以自动化单元测试或手动测试进行验证
+- 无自动化运行器；手动审查或通过 `/skill-test`

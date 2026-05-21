@@ -1,80 +1,81 @@
-# Agent Test Spec: release-manager
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-- **Domain**: Release pipeline management, platform certification checklists (Nintendo, Sony, Microsoft, Apple, Google), store submission workflows, platform technical requirements compliance, semantic version numbering, release branch management
-- **Does NOT own**: Game design decisions, QA test strategy or test case design (qa-lead), QA test execution (qa-tester), build infrastructure (devops-engineer)
-- **Model tier**: Sonnet
-- **Gate IDs**: May be invoked by `/gate-check` during Release phase; LAUNCH BLOCKED verdict is release-manager's primary escalation output
+# Agent Test Spec：release-manager
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references release pipeline, certification, store submission)
-- [ ] `allowed-tools:` list matches the agent's role (Read/Write for production/releases/ directory; no game source or test tools)
-- [ ] Model tier is Sonnet (default for operations specialists)
-- [ ] Agent definition does not claim authority over QA strategy, game design, or build infrastructure
+## Agent 摘要
+- **领域**：发布周期管理、构建部署调度、发布说明编制、发布质量 gate（RM-RELEASE-READY）、回滚决策、商店发布提交、符合平台政策
+- **不拥有**：功能开发、设计决策、QA 测试设计（qa-lead）、补丁说明的叙事内容（community-manager）、发布管道基础设施（devops-engineer）
+- **Model tier**：Sonnet
+- **Gate ID**：RM-RELEASE-READY（发布准备就绪），在 Full | Lean 模式下运行
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — platform certification checklist for Nintendo Switch
-**Input**: "Generate the certification checklist for our Nintendo Switch submission."
-**Expected behavior**:
-- Produces a structured checklist covering Nintendo Lotcheck requirements relevant to the game type
-- Includes categories: content rating (CERO/PEGI/ESRB as applicable), save data handling, offline mode compliance, error handling (lost connectivity, storage full), controller requirement (Joy-Con, Pro Controller support), sleep/wake behavior, screenshot/video capture compliance
-- Formats output as a numbered checklist with pass/fail columns
-- Notes that Nintendo's full Lotcheck guidelines require a licensed developer account to access and flags any items that require manual verification against the current guidelines document
-- Does NOT produce fabricated requirement IDs — uses known public requirements or clearly marks uncertainty
-
-### Case 2: Out-of-domain request — design test cases
-**Input**: "Write test cases for our save system to make sure it passes certification."
-**Expected behavior**:
-- Does not produce test case specifications
-- States clearly: "Test case design is owned by qa-lead (strategy) and qa-tester (execution); I can provide the certification requirements that the save system must meet, which qa-lead can then use to design tests"
-- Optionally offers to list the save-system-relevant certification requirements
-
-### Case 3: Domain boundary — certification failure (rating issue)
-**Input**: "Our build was rejected by the ESRB. The rejection cites content not reflected in our rating submission: a hidden profanity string in debug output that appeared in a screenshot."
-**Expected behavior**:
-- Issues a LAUNCH BLOCKED verdict with the specific platform requirement referenced (ESRB submission accuracy requirement)
-- Identifies the immediate action required: locate and remove all debug output containing inappropriate content before resubmission
-- Notes the resubmission process: corrected build must be resubmitted with updated content descriptor if needed
-- Does NOT minimize the issue — a certification rejection is a blocking event, not an advisory
-- Escalates to producer: documents the delay impact on release timeline
-
-### Case 4: Version numbering conflict — hotfix vs. release branch
-**Input**: "Our release branch is at v1.2.0. A hotfix was applied directly on main and tagged v1.2.1. Now the release branch also has changes that need to ship as v1.2.1 but they're different changes."
-**Expected behavior**:
-- Identifies the conflict: two different changesets have been assigned the same version tag
-- Applies semantic versioning resolution: one must be re-tagged — the release branch changes should become v1.2.2 if v1.2.1 is already published; if v1.2.1 is not yet published, coordinate with devops-engineer to merge or re-tag
-- Does NOT accept a state where the same version number refers to two different builds
-- Notes that once a version is submitted to a store, it cannot be reused — flags this as a potential store submission blocker
-
-### Case 5: Context pass — release date constraint and certification lead time
-**Input context**: Target release date is 2026-06-01. Current date is 2026-04-06. Nintendo Lotcheck typically takes 4-6 weeks.
-**Input**: "What should we prioritize on the certification checklist given our timeline?"
-**Expected behavior**:
-- Calculates the available window: ~8 weeks to release date; Nintendo Lotcheck at 4-6 weeks means submission must be ready by approximately 2026-04-20 to 2026-05-04 to allow for a potential resubmission cycle
-- Flags that a single rejection cycle would consume the buffer — prioritizes items historically associated with Lotcheck rejections (save data, offline mode, error handling)
-- Orders the checklist by certification lead time impact, not by perceived difficulty
-- Does NOT produce a checklist that assumes first-pass certification — builds in resubmission time
+- [ ] `description:` 字段存在且领域特定（引用发布管理、部署、商店提交、回滚）
+- [ ] `allowed-tools:` 列表匹配 agent 角色（Read/Write 用于 release docs、changelogs；对平台工具命令使用 Bash；无游戏源代码）
+- [ ] Model tier 为 Sonnet（operations specialist 默认）
+- [ ] Agent 定义不声称对功能开发、设计或 QA 策略拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (release pipeline, certification checklists, version numbering, store submission)
-- [ ] Redirects test case design requests to qa-lead/qa-tester without producing test specs
-- [ ] Issues LAUNCH BLOCKED verdicts for certification failures — does not downgrade to advisory
-- [ ] Applies semantic versioning correctly and flags version conflicts as store-blocking issues
-- [ ] Uses provided timeline data to prioritize checklist items by certification lead time
+### Case 1：域内请求 — 发布准备就绪检查
+**输入**："我们在 milestone 2 的发布日。对于标记为 v1.2 的发布，我们已经运行并通过了所有测试、编译了构建变化日志，审核并批准了版本说明。检查我们是否准备就绪可发布。"
+**预期行为**：
+- 运行 RM-RELEASE-READY gate：评估是否所有发布条件已满足（测试通过、变化日志已编制、版本说明已审核、构建已验证、无未解决的阻塞 bug）
+- 返回 RM-RELEASE-READY: READY 或 NOT READY，附有每个条件的通过/失败状态
+- 使用结构化检查清单，而非叙述性段落
+- 如果任何条件失败，确切识别缺少什么
+
+### Case 2：领域外请求 — 修复失败的构建
+**输入**："发布构建刚刚在 CI 中失败 — 你能修复编译错误吗？"
+**预期行为**：
+- 不调试或修改源代码
+- 路由到适当的 specialists：源码变更 → lead-programmer 或具体程序员；CI 管道问题 → devops-engineer
+- 作为 release-manager 的角色：阻止发布（如果发布当前标记为准备就绪），路由修复，并保持发布状态跟踪
+- 不进入'修复模式'
+
+### Case 3：紧急发布回滚
+**输入**："我们刚刚发布的 v1.2 在 4% 的玩家中导致崩溃。这是一个 P0 严重性；需要立即回滚。"
+**预期行为**：
+- 立即确认 P0 严重性：这是发布阻塞 — 阻止所有进度的后续发布
+- 在当前平台所有已分发存储上启动回滚（恢复到 v1.1 或上一个已知良好版本）
+- 产出流程：标记当前构建为回滚、通知社区团队 state、回滚商店提交、启动事后分析
+- 不继续推进任何其他发布活动，直到此问题解决
+
+### Case 4：平台政策合规
+**输入**："我们的 Nintendo Switch 构建有一个启用在线多人匹配的系统。我们需要确保其符合任天堂平台要求。"
+**预期行为**：
+- 识别平台特定合规性检查：任天堂有特定多人匹配数据使用、儿童在线隐私保护 (COPPA/GDPR-K) 以及 Switch Online 身份验证的用户要求
+- 不假设合规性在不知情的情况下 — 产出平台提交检查清单
+- 标记未知项供安全工程师（GDPR 合规性）和程序员审查
+- 明确标记作为发布阻塞的任何合规性缺口
+
+### Case 5：上下文传递 — 多平台发布协调
+**输入上下文**：项目发布平台包括 Steam、Nintendo Switch 和 PlayStation 5。Steam 允许即时推送；Control 提交需要 3-5 个工作日审批。
+**输入**："协调 v1.3 的发布，使其在所有平台上同时上线。"
+**预期行为**：
+- 使用提供的上下文计算实际发布计划：Steam（即时 = 在启动日构建）、Switch（3-5 天审查 = 启动前 5 个工作日提交）、PS5（3-5 天审查 = 启动前 5 个工作日提交）
+- 产出交互式发布计划表：T-5 天提交到 Control、T-5 天构建验证、T 日 10:00 UTC Steam 上线、Control 已上线（在成功审查后已上线）
+- 不假设平台审批时间 — 仅使用提供的数字
+- 不输出时序而不引用所提供的数据
 
 ---
 
-## Coverage Notes
-- Case 3 (LAUNCH BLOCKED verdict) is the most critical test — this agent's primary safety output is blocking bad launches
-- Case 5 requires current date and release date context; verify the agent uses actual dates, not placeholder estimates
-- Certification requirements change over time — flag if the agent produces specific requirement IDs that may be outdated
-- No automated runner; review manually or via `/skill-test`
+## 协议合规性
+
+- [ ] 停留在声明领域内（发布管理、调度、商店部署、质量 gate）
+- [ ] 不调试或修复源代码
+- [ ] 为所有发布就绪决定使用决策 gate 逻辑（仅当所有条件通过时返回 READY）
+- [ ] 将回滚视为紧急 P0 并以阻塞所有后续发布的方式进行处理
+- [ ] 使用上下文中的具体平台审批时间 — 不假设或概括
+
+---
+
+## 覆盖说明
+- Case 3（紧急回滚）是最关键的测试 — release-manager 在处理灾难性发布时必须立即且正确地行动
+- Case 4 要求平台政策在上下文中有文档记录；如果缺乏文档，则标记合规性缺口
+- Case 5 是最重要的上下文感知测试；agent 必须使用提供的具体平台时间，而非占位值
+- 无自动化运行器；手动审查或通过 `/skill-test`

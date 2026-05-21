@@ -1,49 +1,34 @@
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 ---
-name: Bug Report
-about: Something isn't working as expected
-title: "[Bug] "
+name: Bug Report（Bug 报告）
+about: 创建一个报告以帮助我们改进
+title: '[BUG] '
 labels: bug
 assignees: ''
 ---
 
-## Description
+# Bug 报告
 
-A clear description of what the bug is.
+## 🐛 描述
+<!-- 清晰简洁地描述该 Bug -->
 
-## Steps to Reproduce
+## 🔍 复现步骤
+1. （进入 '...'）
+2. （点击 '...'）
+3. （滚动到 '...'）
+4. （观察错误）
 
-1. Open Claude Code in a project using this template
-2. Run `/<skill>` or trigger `<agent>`
-3. ...
-4. See error
+## ✅ 预期行为
+<!-- 清晰简洁地描述你预期发生什么 -->
 
-## Expected Behavior
+## 📸 截图/日志
+<!-- 如适用，添加截图或日志 -->
 
-What you expected to happen.
+## 🖥 环境
+- 引擎：[Godot / Unity / Unreal] 及版本
+- 操作系统：[Windows / macOS / Linux]
+- 分支：[e.g., main, develop]
+- 提交：[提交 SHA]
 
-## Actual Behavior
-
-What actually happened. Include any error messages or unexpected output.
-
-## Environment
-
-- **OS**: (e.g., Windows 10, macOS 14, Ubuntu 24.04)
-- **Shell**: (e.g., Git Bash, zsh, bash)
-- **Claude Code version**: (run `claude --version`)
-- **Node.js version**: (run `node --version`)
-- **jq installed?**: Yes / No
-- **Python installed?**: Yes / No
-
-## Affected Component
-
-- [ ] Agent (which one?):
-- [ ] Skill (which one?):
-- [ ] Hook (which one?):
-- [ ] Rule (which one?):
-- [ ] Template
-- [ ] Documentation
-- [ ] Other:
-
-## Additional Context
-
-Any other context — screenshots, terminal output, or the session log if relevant.
+## 📋 附加信息
+<!-- 在此处添加任何其他信息 -->

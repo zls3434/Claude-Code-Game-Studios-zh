@@ -1,56 +1,57 @@
+# 翻译修改：2026-05-20, 修改人: zls3434
 #!/bin/bash
-# Claude Code PreCompact hook: Dump session state before context compression
-# This output appears in the conversation right before compaction, ensuring
-# critical state survives the summarization process.
+# Claude Code PreCompact hook：在上下文压缩前导出会话状态
+# 该输出在压缩前显示在对话中，确保
+# 关键状态在摘要过程中得以保留。
 
-echo "=== SESSION STATE BEFORE COMPACTION ==="
-echo "Timestamp: $(date)"
+echo "=== 压缩前会话状态 ==="
+echo "时间戳：$(date)"
 
-# --- Active session state file ---
+# --- 活跃会话状态文件 ---
 STATE_FILE="production/session-state/active.md"
 if [ -f "$STATE_FILE" ]; then
     echo ""
-    echo "## Active Session State (from $STATE_FILE)"
+    echo "## 活跃会话状态（来自 $STATE_FILE）"
     STATE_LINES=$(wc -l < "$STATE_FILE" 2>/dev/null | tr -d ' ')
     if [ "$STATE_LINES" -gt 100 ] 2>/dev/null; then
         head -n 100 "$STATE_FILE"
-        echo "... (truncated — $STATE_LINES total lines, showing first 100)"
+        echo "... （已截断 —— 共 $STATE_LINES 行，显示前 100 行）"
     else
         cat "$STATE_FILE"
     fi
 else
     echo ""
-    echo "## No active session state file found"
-    echo "Consider maintaining production/session-state/active.md for better recovery."
+    echo "## 未找到活跃会话状态文件"
+    echo "建议维护 production/session-state/active.md 以获得更好的恢复体验。"
 fi
 
-# --- Files modified this session (unstaged + staged + untracked) ---
+# --- 本次会话修改的文件（未暂存 + 已暂存 + 未跟踪）---
 echo ""
-echo "## Files Modified (git working tree)"
+echo "## 已修改文件（git 工作树）"
 
 CHANGED=$(git diff --name-only 2>/dev/null)
 STAGED=$(git diff --staged --name-only 2>/dev/null)
 UNTRACKED=$(git ls-files --others --exclude-standard 2>/dev/null)
 
 if [ -n "$CHANGED" ]; then
-    echo "Unstaged changes:"
+    echo "未暂存更改："
     echo "$CHANGED" | while read -r f; do echo "  - $f"; done
 fi
 if [ -n "$STAGED" ]; then
-    echo "Staged changes:"
+    echo "已暂存更改："
     echo "$STAGED" | while read -r f; do echo "  - $f"; done
 fi
 if [ -n "$UNTRACKED" ]; then
-    echo "New untracked files:"
+    echo "新增未跟踪文件："
     echo "$UNTRACKED" | while read -r f; do echo "  - $f"; done
 fi
 if [ -z "$CHANGED" ] && [ -z "$STAGED" ] && [ -z "$UNTRACKED" ]; then
-    echo "  (no uncommitted changes)"
+    echo "  （无未提交的更改）"
 fi
 
-# --- Work-in-progress design docs ---
+# --- 进行中的设计文档 ---
 echo ""
-echo "## Design Docs — Work In Progress"
+echo "## 设计文档 — 进行中"
 
 WIP_FOUND=false
 for f in design/gdd/*.md; do
@@ -64,19 +65,19 @@ for f in design/gdd/*.md; do
 done
 
 if [ "$WIP_FOUND" = false ]; then
-    echo "  (no WIP markers found in design docs)"
+    echo "  （设计文档中未找到进行中标记）"
 fi
 
-# --- Log compaction event ---
+# --- 记录压缩事件 ---
 SESSION_LOG_DIR="production/session-logs"
 mkdir -p "$SESSION_LOG_DIR" 2>/dev/null
-echo "Context compaction occurred at $(date)." \
+echo "上下文压缩发生于 $(date)。" \
     >> "$SESSION_LOG_DIR/compaction-log.txt" 2>/dev/null
 
 echo ""
-echo "## Recovery Instructions"
-echo "After compaction, read $STATE_FILE to recover full working context."
-echo "Then read any files listed above that are being actively worked on."
-echo "=== END SESSION STATE ==="
+echo "## 恢复指引"
+echo "压缩后，读取 $STATE_FILE 以恢复完整工作上下文。"
+echo "然后读取上述列表中正在活跃处理的文件。"
+echo "=== 会话状态结束 ==="
 
 exit 0

@@ -1,43 +1,61 @@
-# Godot — Deprecated APIs
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Godot 4.5 — 已弃用 API 速查表
 
-Last verified: 2026-02-12
+> 最后验证：2026-02-13
 
-If an agent suggests any API in the "Deprecated" column, it MUST be replaced
-with the "Use Instead" column.
+此表列出了已弃用的 GDScript API，以及你应该使用的替代方案。
+**Agent：在编写任何 GDScript 代码时检查此表。**
 
-## Nodes & Classes
+---
 
-| Deprecated | Use Instead | Since | Notes |
-|------------|-------------|-------|-------|
-| `TileMap` | `TileMapLayer` | 4.3 | One node per layer instead of multi-layer node |
-| `VisibilityNotifier2D` | `VisibleOnScreenNotifier2D` | 4.0 | Renamed for clarity |
-| `VisibilityNotifier3D` | `VisibleOnScreenNotifier3D` | 4.0 | Renamed for clarity |
-| `YSort` | `Node2D.y_sort_enabled` | 4.0 | Property on Node2D, not a separate node |
-| `Navigation2D` / `Navigation3D` | `NavigationServer2D` / `NavigationServer3D` | 4.0 | Server-based API |
-| `EditorSceneFormatImporterFBX` | `EditorSceneFormatImporterFBX2GLTF` | 4.3 | Renamed |
+## 节点操作
 
-## Methods & Properties
+| 弃用 API | 替代方案 | 备注 |
+|---------------|--------------|-------|
+| `Node.set_name()` | `Node.name =` | 直接属性赋值 |
+| `Node.get_name()` | `Node.name` | 直接属性访问 |
+| `Node.is_a_parent_of()` | `Node.is_ancestor_of()` | 重命名更清晰 |
+| `Node.remove_and_skip()` | 手动重新父节点逻辑 | 在 4.5 中移除 |
+| `Node.get_child_count()` | `Node.get_child_count()`（保留） | 未弃用，仅验证用法 |
 
-| Deprecated | Use Instead | Since | Notes |
-|------------|-------------|-------|-------|
-| `yield()` | `await signal` | 4.0 | GDScript 2.0 coroutine syntax |
-| `connect("signal", obj, "method")` | `signal.connect(callable)` | 4.0 | Callable-based connections |
-| `instance()` | `instantiate()` | 4.0 | Renamed |
-| `PackedScene.instance()` | `PackedScene.instantiate()` | 4.0 | Renamed |
-| `get_world()` | `get_world_3d()` | 4.0 | Explicit 2D/3D split |
-| `OS.get_ticks_msec()` | `Time.get_ticks_msec()` | 4.0 | Time singleton preferred |
-| `duplicate()` for nested resources | `duplicate_deep()` | 4.5 | Explicit deep copy control |
-| `Skeleton3D` signal `bone_pose_updated` | `skeleton_updated` | 4.3 | Renamed |
-| `AnimationPlayer.method_call_mode` | `AnimationMixer.callback_mode_method` | 4.3 | Moved to base class |
-| `AnimationPlayer.playback_active` | `AnimationMixer.active` | 4.3 | Moved to base class |
+## 场景和资源加载
 
-## Patterns (Not Just APIs)
+| 弃用 API | 替代方案 | 备注 |
+|---------------|--------------|-------|
+| `ResourceLoader.load_interactive()` | `ResourceLoader.load_threaded_request()` | 异步加载 |
+| `ResourceLoader.exists()` | `ResourceLoader.has_cached()` | 检查已加载资源缓存 |
+| `PackedScene.instance()` | `PackedScene.instantiate()` | 在 Godot 4.0 中重命名 |
+| `ResourceSaver.save()` | `ResourceSaver.save()`（保留，签名已更改） | 路径现在是 `file_path` |
 
-| Deprecated Pattern | Use Instead | Why |
-|--------------------|-------------|-----|
-| String-based `connect()` | Typed signal connections | Type-safe, refactor-friendly |
-| `$NodePath` in `_process()` | `@onready var` cached reference | Performance: path lookup every frame |
-| Untyped `Array` / `Dictionary` | `Array[Type]`, typed variables | GDScript compiler optimizations |
-| `Texture2D` in shader parameters | `Texture` base type | Changed in 4.4 |
-| Manual post-process viewport chains | `Compositor` + `CompositorEffect` | Structured post-processing (4.3+) |
-| GodotPhysics3D for new projects | Jolt Physics 3D | Default since 4.6; better stability |
+## 输入
+
+| 弃用 API | 替代方案 | 备注 |
+|---------------|--------------|-------|
+| `Input.is_key_pressed()` | `Input.is_physical_key_pressed()` 或 `Input.is_key_pressed()` | 现在在 4.5 中同时存在 |
+| `InputEventWithModifiers.mod` | `InputEventWithModifiers.modifiers` | 避免 Alt/Ctrl/Shift 掩码错误 |
+
+## 数学和工具
+
+| 弃用 API | 替代方案 | 备注 |
+|---------------|--------------|-------|
+| `Vector2.clamped()` | `Vector2.limit_length()` | 新方法 |
+| `Vector3.clamped()` | `Vector3.limit_length()` | 新方法 |
+| `AABB.has_no_surface()` | `AABB.has_volume()` | 反转语义 |
+| `Transform3D.xform(Vector3)` | `Transform3D * Vector3` | 运算符重载 |
+| `randi() % N` | `randi_range(0, N-1)` | 避免模偏差 |
+
+## 信号
+
+| 弃用 API | 替代方案 | 备注 |
+|---------------|--------------|-------|
+| `Object.connect(signal, callable)` | `signal.connect(callable)` | 新语法 |
+| `Object.emit_signal(signal, args)` | `signal.emit(args)` | 新语法 |
+| `Object.is_connected(signal, callable)` | `signal.is_connected(callable)` | 新语法 |
+
+## 动画
+
+| 弃用 API | 替代方案 | 备注 |
+|---------------|--------------|-------|
+| `AnimationPlayer.playback_speed` | `AnimationPlayer.speed_scale` | 已重命名 |
+| `AnimationPlayer.is_playing()` | `AnimationPlayer.is_playing()`（保留） | 未弃用，仅验证用法 |
+| `AnimationNodeBlendTree.connect_node()` | 使用 `AnimationNodeBlendTree.add_node()` 并手动连接 | API 简化 |

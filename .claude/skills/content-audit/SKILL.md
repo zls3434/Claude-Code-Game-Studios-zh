@@ -1,205 +1,206 @@
 ---
 name: content-audit
-description: "Audit GDD-specified content counts against implemented content. Identifies what's planned vs built."
-argument-hint: "[system-name | --summary | (no arg = full audit)]"
+description: "将 GDD 中指定的内容数量与实际实现的内容进行审计。识别计划内容与已构建内容的差异。"
+argument-hint: "[系统名称 | --summary | (无参数 = 全面审计)]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write
 model: sonnet
 agent: producer
 ---
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-When this skill is invoked:
+调用此 Skill 时：
 
-Parse the argument:
-- No argument → full audit across all systems
-- `[system-name]` → audit that single system only
-- `--summary` → summary table only, no file write
+解析参数：
+- 无参数 → 针对所有系统进行全面审计
+- `[系统名称]` → 仅审计单个系统
+- `--summary` → 仅摘要表，不写入文件
 
 ---
 
-## Phase 1 — Context Gathering
+## 阶段 1 —— 上下文收集
 
-1. **Read `design/gdd/systems-index.md`** for the full list of systems, their
-   categories, and MVP/priority tier.
+1. **读取 `design/gdd/systems-index.md`** 获取完整的系统列表、它们
+   的分类和 MVP/优先级层级。
 
-2. **L0 pre-scan**: Before full-reading any GDDs, Grep all GDD files for
-   `## Summary` sections plus common content-count keywords:
+2. **L0 预扫描**：在完整读取任何 GDD 之前，对所有 GDD 文件 Grep 搜索
+   `## Summary` 部分以及常见的内容数量关键词：
    ```
    Grep pattern="(## Summary|N enemies|N levels|N items|N abilities|enemy types|item types)" glob="design/gdd/*.md" output_mode="files_with_matches"
    ```
-   For a single-system audit: skip this step and go straight to full-read.
-   For a full audit: full-read only the GDDs that matched content-count keywords.
-   GDDs with no content-count language (pure mechanics GDDs) are noted as
-   "No auditable content counts" without a full read.
+   对于单系统审计：跳过此步骤，直接进行完整读取。
+   对于全面审计：仅完整读取匹配内容数量关键词的 GDD。
+   不含内容数量语言的 GDD（纯机制 GDD）标记为
+   "无可审计的内容数量"，无需完整读取。
 
-3. **Full-read in-scope GDD files** (or the single system GDD if a system
-   name was given).
+3. **完整读取范围内的 GDD 文件**（如果给出了系统
+   名称，则为单个系统 GDD）。
 
-4. **For each GDD, extract explicit content counts or lists.** Look for patterns
-   like:
-   - "N enemies" / "enemy types:" / list of named enemies
-   - "N levels" / "N areas" / "N maps" / "N stages"
-   - "N items" / "N weapons" / "N equipment pieces"
-   - "N abilities" / "N skills" / "N spells"
-   - "N dialogue scenes" / "N conversations" / "N cutscenes"
-   - "N quests" / "N missions" / "N objectives"
-   - Any explicit enumerated list (bullet list of named content pieces)
+4. **对于每个 GDD，提取明确的内容数量或列表。** 查找类似
+   以下模式：
+   - "N 个敌人" / "敌人类型：" / 命名敌人列表
+   - "N 个关卡" / "N 个区域" / "N 张地图" / "N 个阶段"
+   - "N 个物品" / "N 把武器" / "N 件装备"
+   - "N 个技能" / "N 个法术"
+   - "N 段对话场景" / "N 段对话" / "N 段过场动画"
+   - "N 个任务" / "N 个目标"
+   - 任何明确的枚举列表（命名内容条的子弹列表）
 
-4. **Build a content inventory table** from the extracted data:
+4. **从提取的数据构建内容清单表**：
 
-   | System | Content Type | Specified Count/List | Source GDD |
+   | 系统 | 内容类型 | 指定数量/列表 | 来源 GDD |
    |--------|-------------|---------------------|------------|
 
-   Note: If a GDD describes content qualitatively but gives no count, record
-   "Unspecified" and flag it — unspecified counts are a design gap worth noting.
+   注意：如果 GDD 对内容进行了定性描述但未给出数量，记录
+   "未指定"并标记——未指定的数量是值得注意的设计缺口。
 
 ---
 
-## Phase 2 — Implementation Scan
+## 阶段 2 —— 实现扫描
 
-For each content type found in Phase 1, scan the relevant directories to count
-what has been implemented. Use Glob and Grep to locate files.
+对于阶段 1 中找到的每种内容类型，扫描相关目录以统计
+已实现的内容。使用 Glob 和 Grep 定位文件。
 
-**Levels / Areas / Maps:**
-- Glob `assets/**/*.tscn`, `assets/**/*.unity`, `assets/**/*.umap`
-- Glob `src/**/*.tscn`, `src/**/*.unity`
-- Look for scene files in subdirectories named `levels/`, `areas/`, `maps/`,
-  `worlds/`, `stages/`
-- Count unique files that appear to be level/scene definitions (not UI scenes)
+**关卡 / 区域 / 地图：**
+- Glob `assets/**/*.tscn`、`assets/**/*.unity`、`assets/**/*.umap`
+- Glob `src/**/*.tscn`、`src/**/*.unity`
+- 在名为 `levels/`、`areas/`、`maps/`、
+  `worlds/`、`stages/` 的子目录中查找场景文件
+- 统计看起来是关卡/场景定义（非 UI 场景）的独立文件
 
-**Enemies / Characters / NPCs:**
-- Glob `assets/data/**/enemies/**`, `assets/data/**/characters/**`
-- Glob `src/**/enemies/**`, `src/**/characters/**`
-- Look for `.json`, `.tres`, `.asset`, `.yaml` data files defining entity stats
-- Look for scene/prefab files in character subdirectories
+**敌人 / 角色 / NPC：**
+- Glob `assets/data/**/enemies/**`、`assets/data/**/characters/**`
+- Glob `src/**/enemies/**`、`src/**/characters/**`
+- 查找定义实体属性的 `.json`、`.tres`、`.asset`、`.yaml` 数据文件
+- 查找角色子目录中的场景/prefab 文件
 
-**Items / Equipment / Loot:**
-- Glob `assets/data/**/items/**`, `assets/data/**/equipment/**`,
+**物品 / 装备 / 掉落：**
+- Glob `assets/data/**/items/**`、`assets/data/**/equipment/**`、
   `assets/data/**/loot/**`
-- Look for `.json`, `.tres`, `.asset` data files
+- 查找 `.json`、`.tres`、`.asset` 数据文件
 
-**Abilities / Skills / Spells:**
-- Glob `assets/data/**/abilities/**`, `assets/data/**/skills/**`,
+**技能 / 法术：**
+- Glob `assets/data/**/abilities/**`、`assets/data/**/skills/**`、
   `assets/data/**/spells/**`
-- Look for `.json`, `.tres`, `.asset` data files
+- 查找 `.json`、`.tres`、`.asset` 数据文件
 
-**Dialogue / Conversations / Cutscenes:**
-- Glob `assets/**/*.dialogue`, `assets/**/*.csv`, `assets/**/*.ink`
-- Grep for dialogue data files in `assets/data/`
+**对话 / 对话/ 过场动画：**
+- Glob `assets/**/*.dialogue`、`assets/**/*.csv`、`assets/**/*.ink`
+- 在 `assets/data/` 中 Grep 搜索对话数据文件
 
-**Quests / Missions:**
-- Glob `assets/data/**/quests/**`, `assets/data/**/missions/**`
-- Look for `.json`, `.yaml` definition files
+**任务 / 使命：**
+- Glob `assets/data/**/quests/**`、`assets/data/**/missions/**`
+- 查找 `.json`、`.yaml` 定义文件
 
-**Engine-specific notes (acknowledge in the report):**
-- Counts are approximations — the skill cannot perfectly parse every engine
-  format or distinguish editor-only files from shipped content
-- Scene files may include both gameplay content and system/UI scenes; the scan
-  counts all matches and notes this caveat
+**引擎特定说明（在报告中注明）：**
+- 统计数是近似值——本 Skill 无法完美解析每种引擎
+  格式或区分仅编辑器文件和发布内容
+- 场景文件可能同时包含游戏内容和系统/UI 场景；扫描
+  统计所有匹配项并注明此注意事项
 
 ---
 
-## Phase 3 — Gap Report
+## 阶段 3 —— 差异报告
 
-Produce the gap table:
+生成差异表：
 
 ```
-| System | Content Type | Specified | Found | Gap | Status |
+| 系统 | 内容类型 | 指定数 | 已发现数 | 差异 | 状态 |
 |--------|-------------|-----------|-------|-----|--------|
 ```
 
-**Status categories:**
-- `COMPLETE` — Found ≥ Specified (100%+)
-- `IN PROGRESS` — Found is 50–99% of Specified
-- `EARLY` — Found is 1–49% of Specified
-- `NOT STARTED` — Found is 0
+**状态分类：**
+- `完成` —— 已发现 ≥ 指定数（100%+）
+- `进行中` —— 已发现数为指定数的 50–99%
+- `早期` —— 已发现数为指定数的 1–49%
+- `未开始` —— 已发现数为 0
 
-**Priority flags:**
-Flag a system as `HIGH PRIORITY` in the report if:
-- Status is `NOT STARTED` or `EARLY`, AND
-- The system is tagged MVP or Vertical Slice in the systems index, OR
-- The systems index shows the system is blocking downstream systems
+**优先级标记：**
+在报告中将系统标记为 `高优先级`，如果：
+- 状态为 `未开始` 或 `早期`，且
+- 该系统在系统索引中标记为 MVP 或垂直切片，或
+- 系统索引显示该系统阻塞了下游系统
 
-**Summary line:**
-- Total content items specified (sum of all Specified column values)
-- Total content items found (sum of all Found column values)
-- Overall gap percentage: `(Specified - Found) / Specified * 100`
+**摘要行：**
+- 指定的总内容条数（所有指定数列值的总和）
+- 已发现的总内容条数（所有已发现数列值的总和）
+- 总体差异百分比：`(指定数 - 已发现数) / 指定数 * 100`
 
 ---
 
-## Phase 4 — Output
+## 阶段 4 —— 输出
 
-### Full audit and single-system modes
+### 全面审计和单系统模式
 
-Present the gap table and summary to the user. Ask: "May I write the full report to `docs/content-audit-[YYYY-MM-DD].md`?"
+向用户呈现差异表和摘要。询问："我可以将完整报告写入 `docs/content-audit-[YYYY-MM-DD].md` 吗？"
 
-If yes, write the file:
+如果同意，写入文件：
 
 ```markdown
-# Content Audit — [Date]
+# 内容审计 —— [日期]
 
-## Summary
-- **Total specified**: [N] content items across [M] systems
-- **Total found**: [N]
-- **Gap**: [N] items ([X%] unimplemented)
-- **Scope**: [Full audit | System: name]
+## 摘要
+- **指定总数**：[N] 个内容条，跨 [M] 个系统
+- **已发现总数**：[N]
+- **差异**：[N] 个条（[X%] 未实现）
+- **范围**：[全面审计 | 系统：名称]
 
-> Note: Counts are approximations based on file scanning.
-> The audit cannot distinguish shipped content from editor/test assets.
-> Manual verification is recommended for any HIGH PRIORITY gaps.
+> 注意：统计数基于文件扫描的近似值。
+> 审计无法区分发布内容与编辑器/测试资产。
+> 对于任何高优先级差异，建议进行人工验证。
 
-## Gap Table
+## 差异表
 
-| System | Content Type | Specified | Found | Gap | Status |
+| 系统 | 内容类型 | 指定数 | 已发现数 | 差异 | 状态 |
 |--------|-------------|-----------|-------|-----|--------|
 
-## HIGH PRIORITY Gaps
+## 高优先级差异
 
-[List systems flagged HIGH PRIORITY with rationale]
+[列出标记为高优先级的系统及理由]
 
-## Per-System Breakdown
+## 逐系统分解
 
-### [System Name]
-- **GDD**: `design/gdd/[file].md`
-- **Content types audited**: [list]
-- **Notes**: [any caveats about scan accuracy for this system]
+### [系统名称]
+- **GDD**：`design/gdd/[文件].md`
+- **已审计的内容类型**：[列表]
+- **备注**：[此系统扫描准确性的任何注意事项]
 
-## Recommendation
+## 建议
 
-Focus implementation effort on:
-1. [Highest-gap HIGH PRIORITY system]
-2. [Second system]
-3. [Third system]
+集中实现精力于：
+1. [差异最大的高优先级系统]
+2. [第二个系统]
+3. [第三个系统]
 
-## Unspecified Content Counts
+## 未指定内容数量
 
-The following GDDs describe content without giving explicit counts.
-Consider adding counts to improve auditability:
-[List of GDDs and content types with "Unspecified"]
+以下 GDD 描述了内容但未给出明确数量。
+考虑添加数量以提高可审计性：
+[列出具有"未指定"的 GDD 和内容类型]
 ```
 
-After writing the report, ask:
+写入报告后，询问：
 
-> "Would you like to create backlog stories for any of the content gaps?"
+> "是否要为任何内容差异创建积压故事？"
 
-If yes: for each system the user selects, suggest a story title and point them
-to `/create-stories [epic-slug]` or `/quick-design` depending on the size of the gap.
+如果同意：为用户选择的每个系统建议一个故事标题，并引导他们
+使用 `/create-stories [epic-slug]` 或 `/quick-design`（取决于差异的大小）。
 
-### --summary mode
+### --summary 模式
 
-Print the Gap Table and Summary directly to conversation. Do not write a file.
-End with: "Run `/content-audit` without `--summary` to write the full report."
+仅将差异表和摘要输出到对话中。不写入文件。
+以："运行 `/content-audit`（不带 `--summary`）写入完整报告。" 结束。
 
 ---
 
-## Phase 5 — Next Steps
+## 阶段 5 —— 下一步
 
-After the audit, recommend the highest-value follow-up actions:
+审计后，推荐最高价值的后续行动：
 
-- If any system is `NOT STARTED` and MVP-tagged → "Run `/design-system [name]` to
-  add missing content counts to the GDD before implementation begins."
-- If total gap is >50% → "Run `/sprint-plan` to allocate content work across upcoming sprints."
-- If backlog stories are needed → "Run `/create-stories [epic-slug]` for each HIGH PRIORITY gap."
-- If `--summary` was used → "Run `/content-audit` (no flag) to write the full report to `docs/`."
+- 如果任何系统为 `未开始` 且标记为 MVP → "运行 `/design-system [名称]` 在
+  实现开始之前向 GDD 添加缺少的内容数量。"
+- 如果总差异 >50% → "运行 `/sprint-plan` 将内容工作分配到即将到来的 Sprint 中。"
+- 如果需要积压故事 → "运行 `/create-stories [epic-slug]` 为每个高优先级差异创建故事。"
+- 如果使用了 `--summary` → "运行 `/content-audit`（无标志）将完整报告写入 `docs/`。"
 
-Verdict: **COMPLETE** — content audit finished.
+判定：**完成** —— 内容审计完成。

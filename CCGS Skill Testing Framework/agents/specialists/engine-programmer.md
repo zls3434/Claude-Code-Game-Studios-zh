@@ -1,79 +1,81 @@
-# Agent Test Spec: engine-programmer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: Rendering pipeline, physics integration, memory management, resource loading, and core engine framework.
-Does NOT own: gameplay mechanics (gameplay-programmer), editor/debug tool UI (tools-programmer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：engine-programmer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references rendering / memory / engine core)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over gameplay mechanics or tool UI
+## Agent 摘要
+- **领域**：引擎核心系统 — 渲染、低级系统、效能优化、引擎升级/迁移、平台特定问题
+- **不拥有**：游戏逻辑（gameplay-programmer）、AI 系统（ai-programmer）、UI（ui-programmer）
+- **Model tier**：Sonnet（单个系统的实现）
+- **Gate ID**：无
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Implement a custom object pool for projectiles to avoid per-frame allocation."
-**Expected behavior:**
-- Produces an engine-level object pool implementation with acquire/release interface
-- Pool is typed to the projectile object type, uses pre-allocated fixed-size storage
-- Provides thread-safety notes (or clearly marks as single-threaded-only with rationale)
-- Includes doc comments on the public API per coding standards
-- Output is compatible with the project's configured engine and language
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Add a pause menu screen with volume sliders and a 'back to main menu' button."
-**Expected behavior:**
-- Does NOT produce UI screen code
-- Explicitly states that menu screens belong to `ui-programmer`
-- Redirects the request to `ui-programmer`
-- May note it can provide engine-level audio volume API endpoints for the ui-programmer to call
-
-### Case 3: Memory leak diagnosis
-**Input:** "Memory usage grows by ~50MB per level load and never releases. We suspect the resource loading system."
-**Expected behavior:**
-- Produces a systematic diagnosis approach: reference counting audit, resource handle lifecycle check, cache invalidation review
-- Identifies likely causes (orphaned resource handles, circular references, cache that never evicts)
-- Produces a concrete fix for the identified leak pattern
-- Provides a test to verify the fix (memory baseline before load, measure after unload, confirm return to baseline)
-
-### Case 4: Cross-domain coordination — shared system optimization
-**Input:** "I need to optimize the physics broadphase, but the gameplay system is tightly coupled to the physics query API."
-**Expected behavior:**
-- Does NOT unilaterally change the physics query API surface (would break gameplay-programmer's code)
-- Coordinates with `lead-programmer` to plan the change safely
-- Proposes a migration path: new optimized API alongside old API, with a deprecation period
-- Documents the coordination requirement before proceeding
-
-### Case 5: Context pass — checks engine version reference
-**Input:** Engine version reference (Godot 4.6) provided in context. Request: "Set up the default physics engine for the project."
-**Expected behavior:**
-- Reads the engine version reference and notes Godot 4.6 change: Jolt physics is now the default
-- Produces configuration guidance that accounts for the Jolt-as-default change (4.6 migration note)
-- Flags any API differences between GodotPhysics and Jolt that could affect existing code
-- Does NOT suggest deprecated or pre-4.6 physics setup steps without noting they apply to older versions
+- [ ] `description:` 字段存在且领域特定（引擎系统、渲染、低级）
+- [ ] `allowed-tools:` 列表匹配 agent 角色（引擎代码，Bash — 如必要）
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对游戏机制拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (rendering, physics, memory, resource loading, core framework)
-- [ ] Redirects UI/menu requests to ui-programmer
-- [ ] Returns structured findings (implementation code, diagnosis steps, migration plans)
-- [ ] Coordinates with lead-programmer before changing shared API surfaces
-- [ ] Checks engine version reference before suggesting engine-specific APIs
-- [ ] Provides test evidence for fixes (memory before/after, performance measurements)
+### Case 1：域内请求 — 适当的输出
+**输入：** "我们的 GPU 在移动端做 particle 渲染很慢。粒子使用每个粒子的透明度混合，50 个粒子。优化。"
+**预期预期：
+- 分析 GPU 粒子瓶颈：透明混合 + overdraw 在移动 GPU 上很昂贵
+- 提出优化：
+  - 减少粒子数（如果可能）或合并到更少、更大的粒子
+  - 从透明度混合切换到加法混合（降低混合复杂度）
+  - 如果支持，使用 GPU 实例化批量渲染粒子
+- 不触及 gameplay 代码 (gameplay-programmer)
+
+### Case 2：领域外请求 — 适当重定向
+**输入：** "编写使用新渲染管线的 gameplay 用法代码。"
+**预期行为：**
+- 重定向到 gameplay-programmer
+- 不编写 gameplay 逻辑
+- 可提供引擎端 API 文档供 gameplay-programmer 使用
+
+### Case 3：平台特定优化
+**输入：** "我们在 Nintendo Switch 上看到 draw call 瓶颈 — 2000 个 draw call 在帧中。必须降到 500。"
+**预期行为：**
+- 分析 draw call 问题：
+  - 2000 draw call 对于 Switch 过高 — 移动 GPU 对每个 DC 的开销很高
+  - 使用 SRP Batcher、Static Batching 或 GPU Instancing 减少到 500
+  - 为移动 GPU 批处理动态对象
+
+### Case 4：引擎升级 — 破坏性 API 变更
+**输入：** "我们正在从 Unity 2022 迁移到 2023。渲染管线 API 有 deprecation：`OnRenderImage` → `RenderPipelineManager.endCameraRendering`。"
+**预期行为：**
+- 产出受影响的渲染代码的迁移脚本或修改
+  - 扫描所有 `OnRenderImage` 引用
+  - 替换为 `RenderPipelineManager.endCameraRendering` 订阅
+  - 包含测试清单：验证场景渲染后表现不退化
+
+### Case 5：上下文传递 — 引擎 API
+**输入上下文：** 引擎 = Unity 2023。可用渲染 API：`CommandBuffer`、`RenderPipelineManager`、`ScriptableRenderContext`。
+**输入：** "实现一个自定义渲染 pass，在 HDR 颜色校正之前添加一个屏幕空间轮廓效果。"
+**预期行为：**
+- 使用提供的 API 上下文：
+  - 创建 `CommandBuffer` 执行后处理
+  - 将 pass 注入到 `RenderPipelineManager.endCameraRendering` 之前的正确位置
+  - 不假设 Unity 2023 中不存在的 API
+- 产出渲染功能代码
 
 ---
 
-## Coverage Notes
-- Object pool (Case 1) must include a unit test in `tests/unit/engine/`
-- Memory leak diagnosis (Case 3) should produce evidence artifacts in `production/qa/evidence/`
-- Engine version check (Case 5) confirms the agent treats VERSION.md as authoritative, not LLM training data
+## 协议合规性
+
+- [ ] 停留在声明领域内（引擎系统、渲染、低级）
+- [ ] 将 gameplay 代码重定向到 gameplay-programmer
+- [ ] 使用引擎上下文中的特定 API
+- [ ] 为平台约束做优化
+
+---
+
+## 覆盖说明
+- Case 3 (Switch draw call) 是可量化测试 — agent 必须从 2000→500 产生具体步骤
+- Case 5 要求引擎上下文在运行前可用；是最重要的上下文测试
+- 无自动化运行器；手动审查或通过 `/skill-test`

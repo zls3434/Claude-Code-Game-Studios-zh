@@ -1,76 +1,103 @@
-# Godot Networking — Quick Reference
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Godot 4.5 — 网络参考
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+> 最后验证：2026-02-13
+> Godot 文档 — [High-level multiplayer](https://docs.godotengine.org/en/4.5/tutorials/networking/high_level_multiplayer.html)
 
-## What Changed Since ~4.3 (LLM Cutoff)
+## ENetMultiplayerPeer
 
-### 4.6 Changes
-- **Networking section in breaking changes**: See the official migration guide for
-  specifics at the 4.5→4.6 level
+Godot 4.5 中默认的高层网络方案。
 
-### 4.5 Changes
-- **No major networking API breaks** — core multiplayer API remains stable
+| 方法 | 用途 | 备注 |
+|--------|---------|-------|
+| `create_server(port, max_clients, max_channels, in_bandwidth, out_bandwidth)` | 主机游戏 | 返回错误码 |
+| `create_client(address, port, channel_count, in_bandwidth, out_bandwidth, local_port)` | 加入游戏 | 连接到服务器 |
+| `close()` | 断开连接 | 关闭对等体连接 |
+| `get_peer(peer_id)` | 获取对等体信息 | 返回 `ENetPacketPeer` |
+| `set_bind_ip(ip)` | 绑定到特定 IP | 多宿主时有用 |
 
-## Current API Patterns
+## MultiplayerAPI
 
-### High-Level Multiplayer
+通过 `SceneTree` 或 `Node` 访问。
+
+| 属性/方法 | 用途 | 备注 |
+|---------------|---------|-------|
+| `multiplayer_peer` | 设置活动 `MultiplayerPeer` | 分配 `ENetMultiplayerPeer` |
+| `multiplayer.multiplayer_peer = peer` | 在节点上设置 | 通过 `Node.multiplayer` 访问 |
+| `peer_connected` | 对等体加入信号 | `signal peer_connected(id: int)` |
+| `peer_disconnected` | 对等体离开信号 | `signal peer_disconnected(id: int)` |
+| `connected_to_server` | 连接成功信号 | 客户端事件 |
+| `connection_failed` | 连接失败信号 | 重试或通知错误 |
+| `server_disconnected` | 被服务器踢出信号 | 清理并返回菜单 |
+| `get_peers()` | 返回已连接的对等体 ID | 整数数组 |
+| `get_unique_id()` | 本地对等体 ID | 服务器为 1，客户端为大于 1 |
+
+## RPC（远程过程调用）
+
+Godot 4.5 使用 `@rpc` 注释，而非旧的 `rpc()` / `rset()` 函数。
+
 ```gdscript
-# Server
-func host_game(port: int = 9999) -> void:
-    var peer := ENetMultiplayerPeer.new()
-    peer.create_server(port)
-    multiplayer.multiplayer_peer = peer
-    multiplayer.peer_connected.connect(_on_peer_connected)
-    multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+# 服务器宣告的 RPC（在所有客户端上调用）
+@rpc("authority", "call_remote", "reliable")
+func spawn_enemy(type: String, position: Vector3) -> void:
+    var enemy := ENEMY_SCENES[type].instantiate()
+    enemy.position = position
+    add_child(enemy)
 
-# Client
-func join_game(address: String, port: int = 9999) -> void:
-    var peer := ENetMultiplayerPeer.new()
-    peer.create_client(address, port)
-    multiplayer.multiplayer_peer = peer
-```
+# 服务器调用：
+func _on_enemy_spawn_request(type: String, pos: Vector3) -> void:
+    spawn_enemy.rpc(type, pos)
 
-### RPCs
-```gdscript
-# Server-authoritative pattern
+# 客户端调用服务器：
 @rpc("any_peer", "call_local", "reliable")
-func request_action(action_data: Dictionary) -> void:
+func request_shoot(weapon_id: int) -> void:
     if not multiplayer.is_server():
         return
-    # Validate on server, then broadcast
-    _execute_action.rpc(action_data)
-
-@rpc("authority", "call_local", "reliable")
-func _execute_action(action_data: Dictionary) -> void:
-    # All peers execute the validated action
-    pass
+    _process_shoot(weapon_id)
 ```
 
-### MultiplayerSpawner and MultiplayerSynchronizer
+## MultiplayerSpawner / MultiplayerSynchronizer
+
+自动生成/同步机制。
+
+| 方法 | 用途 |
+|--------|---------|
+| `MultiplayerSpawner.spawn(path)` | 在所有客户端上实例化场景 |
+| `MultiplayerSpawner.spawn_function` | 自定义生成函数 |
+| `MultiplayerSynchronizer` | 自动同步节点属性 |
+
+## 权威模型
+
+- **服务器权威** — 服务器处理逻辑，客户端发送输入（默认，安全）
+- **客户端权威** — 客户端负责行为（仅限可信环境）
+
 ```gdscript
-# Use MultiplayerSpawner for automatic node replication
-# Use MultiplayerSynchronizer for property synchronization
+# 设置节点权威
+$Player.set_multiplayer_authority(sender_id)
 
-# MultiplayerSynchronizer setup:
-# 1. Add as child of the node to sync
-# 2. Configure replication properties in editor
-# 3. Set visibility filters for relevancy
+# 检查权威
+func _process(delta: float) -> void:
+    if is_multiplayer_authority():
+        _handle_input()
 ```
 
-### SceneMultiplayer Configuration
+## 常见模式
+
 ```gdscript
-func _ready() -> void:
-    var scene_mp := multiplayer as SceneMultiplayer
-    scene_mp.auth_callback = _authenticate_peer
-    scene_mp.server_relay = false  # Direct peer connections
+# 服务器设置
+func host_game(port: int = 4567) -> void:
+    var peer := ENetMultiplayerPeer.new()
+    var err := peer.create_server(port, 4)
+    if err != OK:
+        return
+    multiplayer.multiplayer_peer = peer
+    multiplayer.peer_connected.connect(_on_peer_connected)
 
-func _authenticate_peer(id: int, data: PackedByteArray) -> void:
-    # Custom authentication logic
-    pass
+# 客户端设置
+func join_game(address: String = "127.0.0.1", port: int = 4567) -> void:
+    var peer := ENetMultiplayerPeer.new()
+    var err := peer.create_client(address, port)
+    if err != OK:
+        return
+    multiplayer.multiplayer_peer = peer
 ```
-
-## Common Mistakes
-- Not using `"any_peer"` for client-to-server RPCs (defaults to authority only)
-- Trusting client data without server-side validation
-- Using `"unreliable"` for game state changes (use for position updates only)
-- Not setting multiplayer authority (`set_multiplayer_authority()`) on spawned nodes

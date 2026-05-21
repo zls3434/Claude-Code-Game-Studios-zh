@@ -1,84 +1,86 @@
-# Agent Test Spec: technical-director
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-**Domain owned:** System architecture decisions, technical feasibility assessment, ADR oversight and approval, engine risk evaluation, technical phase gate.
-**Does NOT own:** Game design decisions (creative-director / game-designer), creative direction, visual art style, production scheduling (producer).
-**Model tier:** Opus (multi-document synthesis, high-stakes architecture and phase gate verdicts).
-**Gate IDs handled:** TD-SYSTEM-BOUNDARY, TD-FEASIBILITY, TD-ARCHITECTURE, TD-ADR, TD-ENGINE-RISK, TD-PHASE-GATE.
+# Agent Test Spec：technical-director
 
----
-
-## Static Assertions (Structural)
-
-Verified by reading the agent's `.claude/agents/technical-director.md` frontmatter:
-
-- [ ] `description:` field is present and domain-specific (references architecture, feasibility, ADR — not generic)
-- [ ] `allowed-tools:` list may include Read for architecture documents; Bash only if required for technical checks
-- [ ] Model tier is `claude-opus-4-6` per coordination-rules.md (directors with gate synthesis = Opus)
-- [ ] Agent definition does not claim authority over game design decisions or creative direction
+## Agent 摘要
+**拥有的领域：** 系统架构决策、技术可行性评估、ADR 监督与批准、引擎风险评估、技术 phase gate。
+**不拥有：** 游戏设计决策（creative-director / game-designer）、创意方向、视觉艺术风格、生产排期（producer）。
+**Model tier：** Opus（多文档综合、高风险架构和 phase gate 裁决）。
+**处理的 Gate ID：** TD-SYSTEM-BOUNDARY、TD-FEASIBILITY、TD-ARCHITECTURE、TD-ADR、TD-ENGINE-RISK、TD-PHASE-GATE。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output format
-**Scenario:** An architecture document for the "Combat System" is submitted. It describes a layered design: input layer → game logic layer → presentation layer, with clearly defined interfaces between each. Request is tagged TD-ARCHITECTURE.
-**Expected:** Returns `TD-ARCHITECTURE: APPROVE` with rationale confirming that system boundaries are correctly separated and interfaces are well-defined.
-**Assertions:**
-- [ ] Verdict is exactly one of APPROVE / CONCERNS / REJECT
-- [ ] Verdict token is formatted as `TD-ARCHITECTURE: APPROVE`
-- [ ] Rationale specifically references the layered structure and interface definitions — not generic architecture advice
-- [ ] Output stays within technical scope — does not comment on whether the mechanic is fun or fits the creative vision
+通过阅读 agent 的 `.claude/agents/technical-director.md` frontmatter 验证：
 
-### Case 2: Out-of-domain request — redirects or escalates
-**Scenario:** Writer asks technical-director to review and approve the dialogue scripts for the game's opening cutscene.
-**Expected:** Agent declines to evaluate dialogue quality and redirects to narrative-director.
-**Assertions:**
-- [ ] Does not make any binding decision about the dialogue content or structure
-- [ ] Explicitly names `narrative-director` as the correct handler
-- [ ] May note technical constraints that affect dialogue (e.g., localization string limits, data format), but defers all content decisions
-
-### Case 3: Gate verdict — correct vocabulary
-**Scenario:** A proposed multiplayer mechanic requires raycasting against all active entities every frame to detect line-of-sight. At expected player counts (1000 entities in a large zone), this is O(n²) per frame. Request is tagged TD-FEASIBILITY.
-**Expected:** Returns `TD-FEASIBILITY: CONCERNS` with specific citation of the O(n²) complexity and the entity count that makes this infeasible at target framerate.
-**Assertions:**
-- [ ] Verdict is exactly one of APPROVE / CONCERNS / REJECT — not freeform text
-- [ ] Verdict token is formatted as `TD-FEASIBILITY: CONCERNS`
-- [ ] Rationale includes the specific algorithmic complexity concern and the entity count threshold
-- [ ] Suggests at least one alternative approach (e.g., spatial partitioning, interest management) without mandating which to choose
-
-### Case 4: Conflict escalation — correct parent
-**Scenario:** game-designer wants to add a real-time physics simulation for every inventory item (hundreds of items on screen simultaneously). technical-director assesses this as technically expensive and proposes simplifying the simulation. game-designer disagrees, arguing it is essential to the game feel.
-**Expected:** technical-director clearly states the technical cost and constraints, proposes alternative implementation approaches that could achieve a similar feel, but explicitly defers the final design priority decision to creative-director as the arbiter of player experience trade-offs.
-**Assertions:**
-- [ ] Expresses the technical concern with specifics (e.g., performance budget, estimated cost)
-- [ ] Proposes at least one alternative that could reduce cost while preserving intent
-- [ ] Explicitly defers the "is this worth the cost" decision to creative-director — does not unilaterally cut the feature
-- [ ] Does not claim authority to override game-designer's design intent
-
-### Case 5: Context pass — uses provided context
-**Scenario:** Agent receives a gate context block that includes the target platform constraints: mobile, 60fps target, 2GB RAM ceiling, no compute shaders. A proposed architecture includes a GPU-driven rendering pipeline.
-**Expected:** Assessment references the specific hardware constraints from the context, identifies the compute shader dependency as incompatible with the stated platform constraints, and returns a CONCERNS or REJECT verdict with those specifics cited.
-**Assertions:**
-- [ ] References the specific platform constraints provided (mobile, 2GB RAM, no compute shaders)
-- [ ] Does not give generic performance advice disconnected from the supplied constraints
-- [ ] Correctly identifies the architectural component that conflicts with the platform constraint
-- [ ] Verdict includes rationale tied to the provided context, not boilerplate warnings
+- [ ] `description:` 字段存在且领域特定（引用架构、可行性、ADR — 非泛化描述）
+- [ ] `allowed-tools:` 列表可包含 Read 用于架构文档；仅当技术检查需要时才包含 Bash
+- [ ] Model tier 为 `claude-opus-4-6`（按 coordination-rules.md — 负责 gate 综合的 director = Opus）
+- [ ] Agent 定义不声称对游戏设计决策或创意方向拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Returns verdicts using APPROVE / CONCERNS / REJECT vocabulary only
-- [ ] Stays within declared technical domain
-- [ ] Defers design priority conflicts to creative-director
-- [ ] Uses gate IDs in output (e.g., `TD-FEASIBILITY: CONCERNS`) not inline prose verdicts
-- [ ] Does not make binding game design or creative direction decisions
+### Case 1：域内请求 — 适当的输出格式
+**Scenario：** “战斗系统”的架构文档被提交。它描述了一个分层设计：输入层 → 游戏逻辑层 → 表现层，各层之间具有明确定义的接口。请求标记为 TD-ARCHITECTURE。
+**预期：** 返回 `TD-ARCHITECTURE: APPROVE`，附理由确认系统边界正确分离且接口定义清晰。
+**断言：**
+- [ ] 裁决恰好为 APPROVE / CONCERNS / REJECT 之一
+- [ ] 裁决 token 格式为 `TD-ARCHITECTURE: APPROVE`
+- [ ] 理由具体引用分层结构和接口定义 — 非泛化架构建议
+- [ ] 输出保持在技术范围内 — 不评论该机制是否有趣或是否符合创意愿景
+
+### Case 2：领域外请求 — 重定向或升级
+**Scenario：** 编剧请 technical-director 审查并批准游戏开场过场的对话脚本。
+**预期：** Agent 拒绝评估对话质量，并重定向到 narrative-director。
+**断言：**
+- [ ] 不就对话内容或结构做出任何有约束力的决策
+- [ ] 明确将 `narrative-director` 命名为正确的处理者
+- [ ] 可备注影响对话的技术约束（例如本地化字符串长度限制、数据格式），但完全转交内容决策
+
+### Case 3：Gate 裁决 — 正确的词汇
+**Scenario：** 一个提议的多人机制需要每帧对所有活跃实体执行射线检测以计算视线。在预期的玩家数量下（一个大区域中 1000 个实体），每帧的复杂度为 O(n²)。请求标记为 TD-FEASIBILITY。
+**预期：** 返回 `TD-FEASIBILITY: CONCERNS`，具体引用 O(n²) 复杂度以及在目标帧率下使这不可行的实体数量。
+**断言：**
+- [ ] 裁决恰好为 APPROVE / CONCERNS / REJECT 之一 — 非自由文本
+- [ ] 裁决 token 格式为 `TD-FEASIBILITY: CONCERNS`
+- [ ] 理由包含具体的算法复杂度顾虑和实体数量阈值
+- [ ] 建议至少一种替代方案（例如空间分区、兴趣管理），而不强制指定选择哪种
+
+### Case 4：冲突升级 — 正确的父级
+**Scenario：** game-designer 希望为每个背包物品添加实时物理模拟（屏幕上同时有数百物品）。technical-director 评估这技术成本很高，提议简化模拟。game-designer 不同意，认为这对游戏手感至关重要。
+**预期：** technical-director 清晰陈述技术成本和约束，提出可实现类似感觉的替代实现方案，但明确将最终设计优先级决策转交 creative-director 作为玩家体验权衡的仲裁者。
+**断言：**
+- [ ] 以具体细节表达技术顾虑（例如性能预算、估计成本）
+- [ ] 至少提出一种可降低成本同时保留意图的替代方案
+- [ ] 明确将「是否值得此成本」的决策转交 creative-director — 不单方面砍掉功能
+- [ ] 不声称有否决 game-designer 设计意图的权限
+
+### Case 5：上下文传递 — 使用提供的上下文
+**Scenario：** Agent 收到一个 gate 上下文块，其中包含目标平台约束：移动端、60fps 目标、2GB RAM 上限、无 compute shader。提议的架构包含一个 GPU 驱动的渲染管线。
+**预期：** 评估引用上下文中的具体硬件约束，识别 compute shader 依赖与所述平台约束的不兼容性，并返回引用这些细节的 CONCERNS 或 REJECT 裁决。
+**断言：**
+- [ ] 引用所提供上下文中的具体平台约束（移动端、2GB RAM、无 compute shader）
+- [ ] 不给出与所提供约束无关的泛化性能建议
+- [ ] 正确识别与平台约束冲突的架构组件
+- [ ] 裁决包含与所提供上下文相关联的理由，而非模板化警告
 
 ---
 
-## Coverage Notes
-- TD-ADR (Architecture Decision Record approval) is not covered — a dedicated case should be added when the /architecture-decision skill produces ADR documents.
-- TD-ENGINE-RISK assessment for specific engine versions (e.g., Godot 4.6 post-cutoff APIs) is not covered — deferred to engine-specialist integration tests.
-- TD-PHASE-GATE (full technical phase advancement) involving synthesis of multiple sub-gate results is deferred.
-- Multi-domain architecture reviews (e.g., touching both TD-ARCHITECTURE and TD-ENGINE-RISK simultaneously) are not covered here.
+## 协议合规性
+
+- [ ] 仅使用 APPROVE / CONCERNS / REJECT 词汇返回裁决
+- [ ] 停留在声明的技术领域内
+- [ ] 将设计优先级冲突转交 creative-director
+- [ ] 在输出中使用 gate ID（例如 `TD-FEASIBILITY: CONCERNS`），而非内联散文式裁决
+- [ ] 不做出有约束力的游戏设计或创意方向决策
+
+---
+
+## 覆盖说明
+- TD-ADR（架构决策记录批准）未涵盖 — 应在 /architecture-decision skill 产出 ADR 文档时添加专用案例。
+- TD-ENGINE-RISK 对特定引擎版本的评估（例如 Godot 4.6 截止后 API）未涵盖 — 推迟到引擎 specialist 集成测试。
+- TD-PHASE-GATE（完整技术 phase 推进）涉及综合多个子 gate 结果，被推迟。
+- 多领域架构审查（例如同时涉及 TD-ARCHITECTURE 和 TD-ENGINE-RISK）未涵盖。

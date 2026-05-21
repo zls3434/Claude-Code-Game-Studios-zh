@@ -1,40 +1,44 @@
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 ---
 paths:
   - "prototypes/**"
 ---
 
-# Prototype Code Standards (Relaxed)
+# 原型代码标准（宽松）
 
-Prototypes are throwaway code for validating ideas. Standards are intentionally
-relaxed to maximize iteration speed. The goal is learning, not production quality.
+原型是用于验证想法的抛弃式代码。标准有意放宽以最大化迭代速度。目标是学习，不是产品质量。
 
-## What's Allowed in Prototypes
-- Hardcoded values (no need for data-driven config)
-- Minimal or no doc comments
-- Simple architecture (no dependency injection required)
-- Singletons and global state
-- Copy-pasted code (no need for abstraction)
-- Debug output left in place
-- Placeholder art and audio
-- Quick-and-dirty solutions
+## 原型中允许的
 
-## What's Still Required
-- Each prototype lives in its own subdirectory: `prototypes/[name]/`
-- Every prototype MUST have a `README.md` with:
-  - What hypothesis is being tested
-  - How to run the prototype
-  - Current status (in-progress / concluded)
-  - Findings (updated when prototype concludes)
-- No production code may reference or import from `prototypes/`
-- Prototypes must not modify files outside `prototypes/`
-- Prototypes must not be deployed or shipped
+- 硬编码值（无需数据驱动配置）
+- 最少的文档注释或无注释
+- 简单的架构（无需依赖注入）
+- 单例和全局状态
+- 复制粘贴代码（无需抽象）
+- 保留的调试输出
+- 占位美术和音频
+- 快速且不完美的解决方案
 
-## When a Prototype Succeeds
-If a prototype validates a concept and the feature moves to production:
-1. The prototype code is NOT migrated directly — it is rewritten to production standards
-2. The prototype `README.md` findings inform the production design document
-3. The prototype directory is preserved for reference but never extended
+## 仍需遵守的
 
-## Cleanup
-Concluded prototypes should be archived or deleted after findings are captured.
-Never let prototype code grow into production code through incremental "cleanup."
+- 每个原型位于自己的子目录：`prototypes/[名称]/`
+- 每个原型必须有 `README.md`，包含：
+  - 正在测试什么假设
+  - 如何运行原型
+  - 当前状态（进行中 / 已完成）
+  - 发现成果（原型结束时更新）
+- 生产代码不得引用或导入 `prototypes/` 中的内容
+- 原型不得修改 `prototypes/` 目录之外的文件
+- 原型不得部署或发布
+
+## 原型成功后的处理
+
+如果原型验证了某个概念，且该功能将进入生产阶段：
+1. 原型代码不直接迁移 —— 按生产标准重新编写
+2. 原型的 `README.md` 发现成果为生产设计文档提供参考
+3. 原型目录保存以供参考，但永不扩展
+
+## 清理
+
+已完成的原型在捕获发现成果后应归档或删除。
+绝不要让原型代码通过增量"清理"逐渐演变成生产代码。

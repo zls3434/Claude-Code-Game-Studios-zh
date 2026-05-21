@@ -1,359 +1,352 @@
 ---
 name: brainstorm
-description: "Guided game concept ideation — from zero idea to a structured game concept document. Uses professional studio ideation techniques, player psychology frameworks, and structured creative exploration."
-argument-hint: "[genre or theme hint, or 'open'] [--review full|lean|solo]"
+description: "引导式游戏概念创意构思——从零想法到结构化的游戏概念文档。使用专业工作室的创意构思技法、玩家心理学框架和结构化创意探索。"
+argument-hint: "[流派或主题提示，或 'open'] [--review full|lean|solo]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, WebSearch, Task, AskUserQuestion
 model: sonnet
 ---
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-When this skill is invoked:
+调用此 Skill 时：
 
-1. **Parse the argument** for an optional genre/theme hint (e.g., `roguelike`,
-   `space survival`, `cozy farming`). If `open` or no argument, start from
-   scratch. Also resolve the review mode (once, store for all gate spawns this run):
-   1. If `--review [full|lean|solo]` was passed → use that
-   2. Else read `production/review-mode.txt` → use that value
-   3. Else → default to `lean`
+1. **解析参数**中的可选流派/主题提示（例如 `roguelike`、
+   `太空生存`，`舒适农场`）。如果是 `open` 或无参数，从零开始。
+   同时解析审核模式（仅一次，本次运行中的所有 gate 生成均使用该值）：
+   1. 如果传入了 `--review [full|lean|solo]` → 使用该值
+   2. 否则读取 `production/review-mode.txt` → 使用该值
+   3. 否则 → 默认为 `lean`
 
-   See `.claude/docs/director-gates.md` for the full check pattern.
+   完整检查模式参见 `.claude/docs/director-gates.md`。
 
-2. **Check for existing concept work**:
-   - Read `design/gdd/game-concept.md` if it exists (resume, don't restart)
-   - Read `design/gdd/game-pillars.md` if it exists (build on established pillars)
+2. **检查已有的概念工作**：
+   - 如果存在则读取 `design/gdd/game-concept.md`（恢复，不重启）
+   - 如果存在则读取 `design/gdd/game-pillars.md`（在已有支柱上构建）
 
-3. **Run through ideation phases** interactively, asking the user questions at
-   each phase. Do NOT generate everything silently — the goal is **collaborative
-   exploration** where the AI acts as a creative facilitator, not a replacement
-   for the human's vision.
+3. **交互式运行创意构思各阶段**，在每个阶段向用户提问。不要静默生成一切——目标是 **协作探索**，AI 作为创意引导者，而非人类愿景的替代者。
 
-   **Use `AskUserQuestion`** at key decision points throughout brainstorming:
-   - Constrained taste questions (genre preferences, scope, team size)
-   - Concept selection ("Which 2-3 concepts resonate?") after presenting options
-   - Direction choices ("Develop further, explore more, or prototype?")
-   - Pillar ranking after concepts are refined
-   Write full creative analysis in conversation text first, then use
-   `AskUserQuestion` to capture the decision with concise labels.
+   在头脑风暴的关键决策点使用 **`AskUserQuestion`**：
+   - 有约束的品味问题（流派偏好、范围、团队规模）
+   - 在呈现选项后的概念选择（"哪 2-3 个概念让你有共鸣？"）
+   - 方向选择（"继续深化、探索更多，还是做原型？"）
+   - 概念细化后的支柱排序
+   先在对话文字中写出完整的创意分析，然后使用
+   `AskUserQuestion` 以简洁的标签捕获决策。
 
-   Professional studio brainstorming principles to follow:
-   - Withhold judgment — no idea is bad during exploration
-   - Encourage unusual ideas — outside-the-box thinking sparks better concepts
-   - Build on each other — "yes, and..." responses, not "but..."
-   - Use constraints as creative fuel — limitations often produce the best ideas
-   - Time-box each phase — keep momentum, don't over-deliberate early
+   遵循专业工作室头脑风暴原则：
+   - 暂缓评判——探索阶段没有坏想法
+   - 鼓励不寻常的想法——跳出框框的思维能激发更好的概念
+   - 互相建设——用"是的，而且……"回应，而非"但是……"
+   - 以约束为创意燃料——限制往往催生最好的想法
+   - 为每个阶段设定时间盒——保持前进节奏，不要过早过度斟酌
 
 ---
 
-### Phase 1: Creative Discovery
+### 阶段 1：创意发现
 
-Start by understanding the person, not the game. Ask these questions
-conversationally (not as a checklist):
+首先了解人，而非游戏。以对话方式询问以下问题（不是清单式）：
 
-**Emotional anchors**:
-- What's a moment in a game that genuinely moved you, thrilled you, or made
-  you lose track of time? What specifically created that feeling?
-- Is there a fantasy or power trip you've always wanted in a game but never
-  quite found?
+**情感锚点**：
+- 哪个游戏中的某个时刻曾真正打动你、让你兴奋、或让你忘我沉浸？具体是什么创造了那种感觉？
+- 你是否有一个一直想在游戏中体验却从未找到的幻想或主角光环？
 
-**Taste profile**:
-- What 3 games have you spent the most time with? What kept you coming back?
-  *(Ask this as plain text — the user must be able to type specific game names freely.
-  Do NOT put this in an AskUserQuestion with preset options.)*
-- Are there genres you love? Genres you avoid? Why?
-- Do you prefer games that challenge you, relax you, tell you stories,
-  or let you express yourself? *(Use `AskUserQuestion` for this — constrained choice.)*
+**品味画像**：
+- 你在哪 3 款游戏中投入时间最多？是什么让你一直回流？
+  *（以纯文本方式提问——用户必须能够自由输入具体游戏名称。
+  不要将其放入预设选项的 AskUserQuestion 中。）*
+- 有你喜欢的流派吗？有你回避的流派吗？为什么？
+- 你更喜欢挑战你的游戏、放松你的游戏、给你讲故事的、
+  还是让你自我表达的游戏？*（使用 `AskUserQuestion`——有约束的选择。）*
 
-**Practical constraints** (shape the sandbox before brainstorming).
-Bundle these into a single multi-tab `AskUserQuestion` with these exact tab labels:
-- Tab "Experience" — "What kind of experience do you most want players to have?" (Challenge & Mastery / Story & Discovery / Expression & Creativity / Relaxation & Flow)
-- Tab "Timeline" — "What's your realistic development timeline?" (Weeks / Months / 1-2 years / Multi-year)
-- Tab "Dev level" — "Where are you in your dev journey?" (First game / Shipped before / Professional background)
+**实际约束**（在进行头脑风暴之前先界定沙盒范围）。
+将这些打包到单个多标签页的 `AskUserQuestion` 中，使用以下确切标签名称：
+- 标签页 "体验" —— "你最希望玩家获得什么样的体验？"（挑战与精通 / 故事与发现 / 表达与创造 / 放松与心流）
+- 标签页 "时间线" —— "你实际的开发时间线是怎样的？"（几周 / 几个月 / 1-2 年 / 多年）
+- 标签页 "开发水平" —— "你在开发旅程的哪个阶段？"（第一款游戏 / 曾发布过产品 / 专业背景）
 
-Use exactly these tab names — do not rename or duplicate them.
+使用这些确切的标签页名称——不要重命名或重复。
 
-**Synthesize** the answers into a **Creative Brief** — a 3-5 sentence
-summary of the person's emotional goals, taste profile, and constraints.
-Read the brief back and confirm it captures their intent.
+**综合**答案，形成 **创意简报**——一个 3-5 句的摘要，
+总结此人的情感目标、品味画像和约束条件。
+读出简报并确认它准确表达了他们的意图。
 
 ---
 
-### Phase 2: Concept Generation
+### 阶段 2：概念生成
 
-Using the creative brief as a foundation, generate **3 distinct concepts**
-that each take a different creative direction. Use these ideation techniques:
+以创意简报为基础，生成 **3 个截然不同的概念**，
+每个概念采用不同的创意方向。使用以下创意构思技法：
 
-**Technique 1: Verb-First Design**
-Start with the core player verb (build, fight, explore, solve, survive,
-create, manage, discover) and build outward from there. The verb IS the game.
+**技法 1：动词优先设计**
+从核心玩家动词出发（建造、战斗、探索、解谜、生存、
+创造、管理、发现），并从那里向外构建。动词就是游戏本身。
 
-**Technique 2: Mashup Method**
-Combine two unexpected elements: [Genre A] + [Theme B]. The tension between
-the two creates the unique hook. (e.g., "farming sim + cosmic horror",
-"roguelike + dating sim", "city builder + real-time combat")
+**技法 2：混搭法**
+结合两个意想不到的元素：[流派 A] + [主题 B]。两者之间的
+张力创造了独特的钩子。（例如："农场模拟 + 宇宙恐怖"，
+"Roguelike + 约会模拟"，"城市建造 + 实时战斗"）
 
-**Technique 3: Experience-First Design (MDA Backward)**
-Start from the desired player emotion (aesthetic goal from MDA framework:
-sensation, fantasy, narrative, challenge, fellowship, discovery, expression,
-submission) and work backward to the dynamics and mechanics that produce it.
+**技法 3：体验优先设计（MDA 逆向）**
+从期望的玩家情感出发（MDA 框架中的美学目标：
+感官、幻想、叙事、挑战、社交、发现、表达、
+服从），逆向推导产生其的动态和机制。
 
-For each concept, present:
-- **Working Title**
-- **Elevator Pitch** (1-2 sentences — must pass the "10-second test")
-- **Core Verb** (the single most common player action)
-- **Core Fantasy** (the emotional promise)
-- **Unique Hook** (passes the "and also" test: "Like X, AND ALSO Y")
-- **Primary MDA Aesthetic** (which emotion dominates?)
-- **Estimated Scope** (small / medium / large)
-- **Why It Could Work** (1 sentence on market/audience fit)
-- **Biggest Risk** (1 sentence on the hardest unanswered question)
+对每个概念，呈现：
+- **暂定标题**
+- **电梯演讲**（1-2 句——必须通过"10 秒测试"）
+- **核心动词**（最常见的单一玩家行为）
+- **核心幻想**（情感承诺）
+- **独特钩子**（通过"以及"测试："像 X，同时也像 Y"）
+- **主要 MDA 美学**（哪个情感占主导？）
+- **预估范围**（小型 / 中型 / 大型）
+- **为什么它可能成功**（1 句关于市场/受众契合度）
+- **最大风险**（1 句关于最棘手的未解答问题）
 
-Present all three. Then use `AskUserQuestion` to capture the selection.
+呈现全部三个概念。然后使用 `AskUserQuestion` 捕获选择。
 
-**CRITICAL**: This MUST be a plain list call — no tabs, no form fields. Use exactly this structure:
+**关键**：这必须是一个纯列表调用——无标签页，无表单字段。使用以下确切结构：
 
 ```
 AskUserQuestion(
-  prompt: "Which concept resonates with you? You can pick one, combine elements, or ask for fresh directions.",
+  prompt: "哪个概念让你有共鸣？你可以选择一个，组合元素，或请求新的方向。",
   options: [
-    "Concept 1 — [Title]",
-    "Concept 2 — [Title]",
-    "Concept 3 — [Title]",
-    "Combine elements across concepts",
-    "Generate fresh directions"
+    "概念 1 —— [标题]",
+    "概念 2 —— [标题]",
+    "概念 3 —— [标题]",
+    "跨概念组合元素",
+    "生成新方向"
   ]
 )
 ```
 
-Do NOT use a `tabs` field here. The `tabs` form is for multi-field input only — using it here causes an "Invalid tool parameters" error. This is a plain `prompt` + `options` call.
+这里不要使用 `tabs` 字段。`tabs` 表单仅用于多字段输入——在这里使用会导致 "无效工具参数" 错误。这是一个纯 `prompt` + `options` 调用。
 
-Never pressure toward a choice — let them sit with it.
-
----
-
-### Phase 3: Core Loop Design
-
-For the chosen concept, use structured questioning to build the core loop.
-The core loop is the beating heart of the game — if it isn't fun in
-isolation, no amount of content or polish will save the game.
-
-**30-Second Loop** (moment-to-moment):
-
-Ask these as `AskUserQuestion` calls — derive the options from the chosen concept, don't hardcode them:
-
-1. **Core action feel** — prompt: "What's the primary feel of the core action?" Generate 3-4 options that fit the concept's genre and tone, plus a free-text escape (`I'll describe it`).
-
-2. **Key design dimension** — identify the most important design variable for this specific concept (e.g., world reactivity, pacing, player agency) and ask about it. Generate options that match the concept. Always include a free-text escape.
-
-After capturing answers, analyze: Is this action intrinsically satisfying? What makes it feel good? (Audio feedback, visual juice, timing satisfaction, tactical depth?)
-
-**5-Minute Loop** (short-term goals):
-- What structures the moment-to-moment play into cycles?
-- Where does "one more turn" / "one more run" psychology kick in?
-- What choices does the player make at this level?
-
-**Session Loop** (30-120 minutes):
-- What does a complete session look like?
-- Where are the natural stopping points?
-- What's the "hook" that makes them think about the game when not playing?
-
-**Progression Loop** (days/weeks):
-- How does the player grow? (Power? Knowledge? Options? Story?)
-- What's the long-term goal? When is the game "done"?
-
-**Player Motivation Analysis** (based on Self-Determination Theory):
-- **Autonomy**: How much meaningful choice does the player have?
-- **Competence**: How does the player feel their skill growing?
-- **Relatedness**: How does the player feel connected (to characters,
-  other players, or the world)?
+永远不要催促用户做选择——让他们慢慢考虑。
 
 ---
 
-### Phase 4: Pillars and Boundaries
+### 阶段 3：核心循环设计
 
-Game pillars are used by real AAA studios (God of War, Hades, The Last of
-Us) to keep hundreds of team members making decisions that all point the
-same direction. Even for solo developers, pillars prevent scope creep and
-keep the vision sharp.
+对选定的概念，使用结构化提问构建核心循环。
+核心循环是游戏跳动的心脏——如果它在孤立状态下不好玩，
+再多的内容或打磨也救不了游戏。
 
-Collaboratively define **3-5 pillars**:
-- Each pillar has a **name** and **one-sentence definition**
-- Each pillar has a **design test**: "If we're debating between X and Y,
-  this pillar says we choose __"
-- Pillars should feel like they create tension with each other — if all
-  pillars point the same way, they're not doing enough work
+**30 秒循环**（即时操作）：
 
-Then define **3+ anti-pillars** (what this game is NOT):
-- Anti-pillars prevent the most common form of scope creep: "wouldn't it
-  be cool if..." features that don't serve the core vision
-- Frame as: "We will NOT do [thing] because it would compromise [pillar]"
+将这些作为 `AskUserQuestion` 调用提问——选项应从所选概念推导，不要硬编码：
 
-**Pillar confirmation**: After presenting the full pillar set, use `AskUserQuestion`:
-- Prompt: "Do these pillars feel right for your game?"
-- Options: `[A] Lock these in` / `[B] Rename or reframe one` / `[C] Swap a pillar out` / `[D] Something else`
+1. **核心操作手感** —— 提示语："核心操作的主要手感是什么？"生成 3-4 个符合概念流派和基调的选项，加上一个自由文本出口（`我来描述`）。
 
-If the user selects B, C, or D, make the revision, then use `AskUserQuestion` again:
-- Prompt: "Pillars updated. Ready to lock these in?"
-- Options: `[A] Lock these in` / `[B] Revise another pillar` / `[C] Something else`
+2. **关键设计维度** —— 确定此特定概念最重要的设计变量（例如：世界响应性、节奏、玩家自主权）并就此提问。生成与概念匹配的选项。始终包含一个自由文本出口。
 
-Repeat until the user selects [A] Lock these in.
+捕获答案后，分析：这个操作本身是否内在令人满意？是什么让它感觉好？（音频反馈、视觉特效、时机满足感、战术深度？）
 
-**Review mode check** — apply before spawning CD-PILLARS and AD-CONCEPT-VISUAL:
-- `solo` → skip both. Note: "CD-PILLARS skipped — Solo mode. AD-CONCEPT-VISUAL skipped — Solo mode." Proceed to Phase 5.
-- `lean` → skip both (not PHASE-GATEs). Note: "CD-PILLARS skipped — Lean mode. AD-CONCEPT-VISUAL skipped — Lean mode." Proceed to Phase 5.
-- `full` → spawn as normal.
+**5 分钟循环**（短期目标）：
+- 什么将即时操作结构化地组织成周期？
+- "再来一回合"/"再来一局"的心理在哪里触发？
+- 玩家在此层面做出什么选择？
 
-**After pillars and anti-pillars are agreed, spawn BOTH `creative-director` AND `art-director` via Task in parallel before moving to Phase 5. Issue both Task calls simultaneously — do not wait for one before starting the other.**
+**会话循环**（30-120 分钟）：
+- 一个完整的游戏会话是什么样的？
+- 自然的停止点在哪里？
+- 什么"钩子"让他们在不玩时还想着游戏？
 
-- **`creative-director`** — gate **CD-PILLARS** (`.claude/docs/director-gates.md`)
-  Pass: full pillar set with design tests, anti-pillars, core fantasy, unique hook.
+**进度循环**（天/周）：
+- 玩家如何成长？（力量？知识？选项？故事？）
+- 长期目标是什么？游戏何时算"完成"？
 
-- **`art-director`** — gate **AD-CONCEPT-VISUAL** (`.claude/docs/director-gates.md`)
-  Pass: game concept elevator pitch, full pillar set with design tests, target platform (if known), any reference games or visual touchstones the user mentioned.
-
-Collect both verdicts, then present them together using a two-tab `AskUserQuestion`:
-- Tab **"Pillars"**: present creative-director feedback. Options mirror the standard CD-PILLARS handling — `Lock in as-is` / `Revise [specific pillar]` / `Discuss further`.
-- Tab **"Visual anchor"**: present the art-director's 2-3 named visual direction options. Options: each named direction (one per option) + `Combine elements across directions` + `Describe my own direction`.
-
-The user's selected visual anchor (the named direction or their custom description) is stored as the **Visual Identity Anchor** — it will be written into the game-concept document and becomes the foundation of the art bible.
-
-If the creative-director returns CONCERNS or REJECT on pillars, resolve pillar issues before asking for the visual anchor selection — visual direction should flow from confirmed pillars.
+**玩家动机分析**（基于自我决定理论）：
+- **自主性**：玩家有多少有意义的选择？
+- **胜任感**：玩家如何感受到自己的技能在增长？
+- **关联感**：玩家如何感到连接（与角色、
+  其他玩家或世界）？
 
 ---
 
-### Phase 5: Player Type Validation
+### 阶段 4：支柱与边界
 
-Using the Bartle taxonomy and Quantic Foundry motivation model, validate
-who this game is actually for:
+游戏支柱被真正的 AAA 工作室（God of War、Hades、The Last of
+Us）用于让数百名团队成员做出的决策都指向同一方向。
+即使是独立开发者，支柱也能防止范围蔓延并保持愿景清晰。
 
-- **Primary player type**: Who will LOVE this game? (Achievers, Explorers,
-  Socializers, Competitors, Creators, Storytellers)
-- **Secondary appeal**: Who else might enjoy it?
-- **Who is this NOT for**: Being clear about who won't like this game is as
-  important as knowing who will
-- **Market validation**: Are there successful games that serve a similar
-  player type? What can we learn from their audience size?
+协作定义 **3-5 个支柱**：
+- 每个支柱有一个 **名称** 和 **一句话定义**
+- 每个支柱有一个 **设计测试**："如果我们在 X 和 Y 之间辩论，
+  此支柱要求我们选择 __"
+- 支柱之间应该感觉存在张力——如果所有
+  支柱都指向同一方向，它们没有起到足够的作用
 
----
+然后定义 **3+ 个反支柱**（本游戏不是什么）：
+- 反支柱防止最常见的范围蔓延形式："如果……会不会很酷"
+  这类不服务于核心愿景的功能
+- 表述为："我们不会做 [某事]，因为它会损害 [支柱]"
 
-### Phase 6: Scope and Feasibility
+**支柱确认**：在呈现完整的支柱集后，使用 `AskUserQuestion`：
+- 提示语："这些支柱对你的游戏来说感觉对吗？"
+- 选项：`[A] 锁定这些` / `[B] 重命名或重新表述一个` / `[C] 更换一个支柱` / `[D] 其他`
 
-Ground the concept in reality:
+如果用户选择了 B、C 或 D，进行修改，然后再次使用 `AskUserQuestion`：
+- 提示语："支柱已更新。准备好锁定这些了吗？"
+- 选项：`[A] 锁定这些` / `[B] 修改另一个支柱` / `[C] 其他`
 
-- **Target platform**: Use `AskUserQuestion` — "What platforms are you targeting for this game?"
-  Options: `PC (Steam / Epic)` / `Mobile (iOS / Android)` / `Console` / `Web / Browser` / `Multiple platforms`
-  Record the answer — it directly shapes the engine recommendation and will be passed to `/setup-engine`.
-  Note platform implications if relevant (e.g., mobile means Unity is strongly preferred; console means Godot has limitations; web means Godot exports cleanly).
+重复直到用户选择了 [A] 锁定这些。
 
-- **Engine experience**: Use `AskUserQuestion` — "Do you already have an engine you work in?"
-  Options: `Godot` / `Unity` / `Unreal Engine 5` / `No preference — help me decide`
-  - If they pick an engine → record it as their preference and move on. Do NOT second-guess it.
-  - If "No preference" → tell them: "Run `/setup-engine` after this session — it will walk you through the full decision based on your concept and platform target." Do not make a recommendation here.
-- **Art pipeline**: What's the art style and how labor-intensive is it?
-- **Content scope**: Estimate level/area count, item count, gameplay hours
-- **MVP definition**: What's the absolute minimum build that tests "is the
-  core loop fun?"
-- **Biggest risks**: Technical risks, design risks, market risks
-- **Scope tiers**: What's the full vision vs. what ships if time runs out?
+**审核模式检查** —— 在生成 CD-PILLARS 和 AD-CONCEPT-VISUAL 之前应用：
+- `solo` → 两个都跳过。注明："CD-PILLARS 已跳过——单人模式。AD-CONCEPT-VISUAL 已跳过——单人模式。" 继续阶段 5。
+- `lean` → 两个都跳过（不是 PHASE-GATE）。注明："CD-PILLARS 已跳过——精简模式。AD-CONCEPT-VISUAL 已跳过——精简模式。" 继续阶段 5。
+- `full` → 正常生成。
 
-**Review mode check** — apply before spawning TD-FEASIBILITY:
-- `solo` → skip. Note: "TD-FEASIBILITY skipped — Solo mode." Proceed directly to scope tier definition.
-- `lean` → skip (not a PHASE-GATE). Note: "TD-FEASIBILITY skipped — Lean mode." Proceed directly to scope tier definition.
-- `full` → spawn as normal.
+**在支柱和反支柱达成一致后，通过 Task 并行生成 `creative-director` 和 `art-director`，然后再进入阶段 5。同时发出两个 Task 调用——不要等待一个完成再开始另一个。**
 
-**After identifying biggest technical risks, spawn `technical-director` via Task using gate TD-FEASIBILITY (`.claude/docs/director-gates.md`) before scope tiers are defined.**
+- **`creative-director`** — gate **CD-PILLARS**（`.claude/docs/director-gates.md`）
+  传入：完整的支柱集及设计测试、反支柱、核心幻想、独特钩子。
 
-Pass: core loop description, platform target, engine choice (or "undecided"), list of identified technical risks.
+- **`art-director`** — gate **AD-CONCEPT-VISUAL**（`.claude/docs/director-gates.md`）
+  传入：游戏概念电梯演讲、完整的支柱集及设计测试、目标平台（如已知）、用户提到的任何参考游戏或视觉触点。
 
-Present the assessment to the user. If HIGH RISK, offer to revisit scope before finalising. If CONCERNS, note them and continue.
+收集两个裁决，然后使用两标签页 `AskUserQuestion` 一起呈现：
+- 标签页 **"支柱"**：呈现创意指导的反馈。选项对应标准 CD-PILLARS 处理方式——`按原样锁定` / `修改 [具体支柱]` / `进一步讨论`。
+- 标签页 **"视觉锚点"**：呈现艺术指导的 2-3 个命名视觉方向选项。选项：每个命名方向（每个方向一个选项）+ `跨方向组合元素` + `描述我自己的方向`。
 
-**Review mode check** — apply before spawning PR-SCOPE:
-- `solo` → skip. Note: "PR-SCOPE skipped — Solo mode." Proceed to document generation.
-- `lean` → skip (not a PHASE-GATE). Note: "PR-SCOPE skipped — Lean mode." Proceed to document generation.
-- `full` → spawn as normal.
+用户选择的视觉锚点（命名的方向或他们的自定义描述）存储为**视觉识别锚点**——它将被写入游戏概念文档，并成为艺术宝典的基础。
 
-**After scope tiers are defined, spawn `producer` via Task using gate PR-SCOPE (`.claude/docs/director-gates.md`).**
-
-Pass: full vision scope, MVP definition, timeline estimate, team size.
-
-Present the assessment to the user. If UNREALISTIC, offer to adjust the MVP definition or scope tiers before writing the document.
+如果 creative-director 对支柱返回 CONCERNS 或 REJECT，在询问视觉锚点选择之前先解决支柱问题——视觉方向应从已确认的支柱出发。
 
 ---
 
-4. **Generate the game concept document** using the template at
-   `.claude/docs/templates/game-concept.md`. Fill in ALL sections from the
-   brainstorm conversation, including the MDA analysis, player motivation
-   profile, and flow state design sections.
+### 阶段 5：玩家类型验证
 
-   **Include a Visual Identity Anchor section** in the game concept document with:
-   - The selected visual direction name
-   - The one-line visual rule
-   - The 2-3 supporting visual principles with their design tests
-   - The color philosophy summary
+使用 Bartle 分类法和 Quantic Foundry 动机模型，验证
+这个游戏真正面向的玩家群体：
 
-   This section is the seed of the art bible — it captures the "everything must
-   move" decision before it can be forgotten between sessions.
-
-5. Use `AskUserQuestion` for write approval:
-- Prompt: "Game concept is ready. May I write it to `design/gdd/game-concept.md`?"
-- Options: `[A] Yes — write it` / `[B] Not yet — revise a section first`
-
-If [B]: ask which section to revise using `AskUserQuestion` with options: `Elevator Pitch` / `Core Fantasy & Unique Hook` / `Pillars` / `Core Loop` / `MVP Definition` / `Scope Tiers` / `Risks` / `Something else — I'll describe`
-
-After revising, show the updated section as a diff or clear before/after, then use `AskUserQuestion` — "Ready to write the updated concept document?"
-Options: `[A] Yes — write it` / `[B] Revise another section`
-Repeat until the user selects [A].
-
-If yes, generate the document using the template at `.claude/docs/templates/game-concept.md`, fill in ALL sections from the brainstorm conversation, and write the file, creating directories as needed.
-
-**Scope consistency rule**: The "Estimated Scope" field in the Core Identity table must match the full-vision timeline from the Scope Tiers section — not just say "Large (9+ months)". Write it as "Large (X–Y months, solo)" or "Large (X–Y months, team of N)" so the summary table is accurate.
-
-6. **Suggest next steps** (in this order — this is the professional studio
-   pre-production pipeline). List ALL steps — do not abbreviate or truncate:
-
-**Path A — Design-First** (recommended if the concept is well-defined):
-   1. "Run `/setup-engine` to configure the engine and populate version-aware reference docs"
-   2. "Run `/art-bible` to create the visual identity specification — do this BEFORE writing GDDs. **The art bible is required before the Technical Setup gate.** It gates asset production and shapes technical architecture decisions (rendering, VFX, UI systems)."
-   3. "Use `/design-review design/gdd/game-concept.md` to validate concept completeness before going downstream"
-   4. "Discuss vision with the `creative-director` agent for pillar refinement"
-   5. "Decompose the concept into individual systems with `/map-systems` — maps dependencies, assigns priorities, and creates the systems index"
-   6. "Author per-system GDDs with `/design-system` — guided, section-by-section GDD writing for each system identified in step 5"
-   7. "Plan the technical architecture with `/create-architecture` — produces the master architecture blueprint and Required ADR list"
-   8. "Record key architectural decisions with `/architecture-decision (×N)` — write one ADR per decision in the Required ADR list from `/create-architecture`"
-   9. "Run `/architecture-review` — bootstraps the TR registry and Requirements Traceability Matrix from your GDDs and ADRs (required before the Pre-Production gate)"
-   10. "Validate readiness to advance with `/gate-check` — phase gate before committing to production"
-
-**Path B — Prototype-First** (use if the core mechanic is unproven or the concept needs validation):
-   1. "Run `/setup-engine` to configure the engine"
-   2. "Run `/prototype [core-mechanic]` — validate the core idea is fun before writing any GDDs (1–3 days throwaway code)"
-   3. "If prototype PROCEEDS: run `/art-bible`, then continue with Path A steps 5–10 above, using prototype learnings to inform your GDDs"
-   4. "If prototype PIVOTS: return to `/brainstorm` with the learnings and reshape the concept"
-   5. "After full design and architecture, build the `/vertical-slice` to validate production readiness before committing to sprints"
-
-7. **Output a summary** with the chosen concept's elevator pitch, pillars,
-   primary player type, engine recommendation, biggest risk, and file path.
-
-Verdict: **COMPLETE** — game concept created and handed off for next steps.
+- **主要玩家类型**：谁会爱上这个游戏？（成就者、探索者、
+  社交者、竞争者、创造者、讲故事者）
+- **次要吸引力**：还有谁可能会喜欢它？
+- **谁不适合这个游戏**：明确谁不会喜欢这个游戏，
+  与知道谁会喜欢同样重要
+- **市场验证**：是否有成功游戏服务于类似的
+  玩家类型？我们能从它们的受众规模中学到什么？
 
 ---
 
-## Context Window Awareness
+### 阶段 6：范围与可行性
 
-This is a multi-phase skill. If context reaches or exceeds 70% during any phase,
-append this notice to the current response before continuing:
+将概念落地到现实：
 
-> **Context is approaching the limit (≥70%).** The game concept document is saved
-> to `design/gdd/game-concept.md`. Open a fresh Claude Code session to continue
-> if needed — progress is not lost.
+- **目标平台**：使用 `AskUserQuestion`——"你为本游戏瞄准哪些平台？"
+  选项：`PC (Steam / Epic)` / `移动端 (iOS / Android)` / `主机` / `Web / 浏览器` / `多平台`
+  记录答案——它直接影响引擎推荐，并将传递给 `/setup-engine`。
+  如果相关，注明平台影响（例如：移动端意味着强烈推荐 Unity；主机意味着 Godot 有限制；Web 意味着 Godot 可以干净地导出）。
+
+- **引擎经验**：使用 `AskUserQuestion`——"你是否已有熟悉的引擎？"
+  选项：`Godot` / `Unity` / `Unreal Engine 5` / `无偏好——帮我决定`
+  - 如果他们选择了引擎 → 记录为其偏好并继续。不要质疑。
+  - 如果"无偏好" → 告诉他们："本次会话之后运行 `/setup-engine`——它会根据你的概念和目标平台带你完成完整决策。" 这里不做推荐。
+- **美术管线**：美术风格是什么，劳动密集程度如何？
+- **内容范围**：预估关卡/区域数量、物品数量、游戏时长
+- **MVP 定义**：测试"核心循环是否好玩"绝对最小构建是什么？
+- **最大风险**：技术风险、设计风险、市场风险
+- **范围层级**：完整愿景 vs. 如果时间不够时发布什么？
+
+**审核模式检查** —— 在生成 TD-FEASIBILITY 之前应用：
+- `solo` → 跳过。注明："TD-FEASIBILITY 已跳过——单人模式。" 直接继续范围层级定义。
+- `lean` → 跳过（不是 PHASE-GATE）。注明："TD-FEASIBILITY 已跳过——精简模式。" 直接继续范围层级定义。
+- `full` → 正常生成。
+
+**在识别最大技术风险后，在定义范围层级之前，使用 gate TD-FEASIBILITY（`.claude/docs/director-gates.md`）通过 Task 生成 `technical-director`。**
+
+传入：核心循环描述、目标平台、引擎选择（或"未定"）、已识别的技术风险列表。
+
+向用户呈现评估结果。如果是 HIGH RISK，在最终确定之前提供重新审视范围的选项。如果是 CONCERNS，记录下来并继续。
+
+**审核模式检查** —— 在生成 PR-SCOPE 之前应用：
+- `solo` → 跳过。注明："PR-SCOPE 已跳过——单人模式。" 继续文档生成。
+- `lean` → 跳过（不是 PHASE-GATE）。注明："PR-SCOPE 已跳过——精简模式。" 继续文档生成。
+- `full` → 正常生成。
+
+**在范围层级定义后，使用 gate PR-SCOPE（`.claude/docs/director-gates.md`）通过 Task 生成 `producer`。**
+
+传入：完整愿景范围、MVP 定义、时间线估算、团队规模。
+
+向用户呈现评估结果。如果 UNREALISTIC，在写入文档之前提供调整 MVP 定义或范围层级的选项。
 
 ---
 
-## Recommended Next Steps
+4. **使用模板生成游戏概念文档**，模板位于
+   `.claude/docs/templates/game-concept.md`。根据头脑风暴对话填充**所有**部分，
+   包括 MDA 分析、玩家动机
+   画像和心流状态设计部分。
 
-After the game concept is written, follow the pre-production pipeline in order:
-1. `/setup-engine` — configure the engine and populate version-aware reference docs
-2. `/art-bible` — establish visual identity before writing any GDDs
-3. `/map-systems` — decompose the concept into individual systems with dependencies
-4. `/design-system [first-system]` — author per-system GDDs in dependency order
-5. `/create-architecture` — produce the master architecture blueprint
-6. `/architecture-review` — bootstrap TR registry and Requirements Traceability Matrix
-7. `/gate-check pre-production` — validate readiness before committing to production
+   **在游戏概念文档中包含视觉识别锚点部分**，包括：
+   - 选定的视觉方向名称
+   - 一句话视觉规则
+   - 2-3 条辅助视觉原则及其设计测试
+   - 色彩哲学摘要
+
+   此部分是艺术宝典的种子——它在会话之间捕获"一切必须
+   运动"的决策，防止遗忘。
+
+5. 使用 `AskUserQuestion` 进行写入审批：
+- 提示语："游戏概念已准备就绪。我可以将其写入 `design/gdd/game-concept.md` 吗？"
+- 选项：`[A] 是——写入它` / `[B] 还没——先修改某个部分`
+
+如果 [B]：通过 `AskUserQuestion` 询问要修改哪个部分，选项：`电梯演讲` / `核心幻想与独特钩子` / `支柱` / `核心循环` / `MVP 定义` / `范围层级` / `风险` / `其他——我来描述`
+
+修改后，以 diff 或清晰的 before/after 方式展示更新后的部分，然后使用 `AskUserQuestion`——"准备好写入更新后的概念文档了吗？"
+选项：`[A] 是——写入它` / `[B] 修改另一个部分`
+重复直到用户选择了 [A]。
+
+如果同意，使用 `.claude/docs/templates/game-concept.md` 模板生成文档，根据头脑风暴对话填充所有部分，并写入文件，按需要创建目录。
+
+**范围一致性规则**：核心身份表中的"预估范围"字段必须与范围层级部分的完整愿景时间线匹配——而不仅仅是"大型（9+ 个月）"。应写成"大型（X–Y 个月，独立开发者）"或"大型（X–Y 个月，N 人团队）"，这样摘要表才是准确的。
+
+6. **建议下一步**（按此顺序——这是专业工作室
+   预生产管线）。列出所有步骤——不要缩写或截断：
+
+**路径 A — 设计优先**（如果概念定义明确则推荐）：
+   1. "运行 `/setup-engine` 配置引擎并填充版本感知参考文档"
+   2. "运行 `/art-bible` 创建视觉识别规范——在撰写 GDD 之前进行。**艺术宝典是技术设置 gate 前的必需品。** 它监管资产生产并影响技术架构决策（渲染、VFX、UI 系统）。"
+   3. "使用 `/design-review design/gdd/game-concept.md` 验证概念完整性，然后再进入下游"
+   4. "与 `creative-director` agent 讨论愿景以细化支柱"
+   5. "使用 `/map-systems` 将概念分解为各个系统——映射依赖关系、分配优先级并创建系统索引"
+   6. "使用 `/design-system` 撰写每个系统的 GDD——针对步骤 5 中确定的每个系统进行引导式逐节 GDD 撰写"
+   7. "使用 `/create-architecture` 规划技术架构——生成主架构蓝图和必需 ADR 列表"
+   8. "使用 `/architecture-decision (×N)` 记录关键架构决策——为 `/create-architecture` 生成的必需 ADR 列表中的每个决策撰写一个 ADR"
+   9. "运行 `/architecture-review`——从你的 GDD 和 ADR 引导 TR 注册表和需求可追溯性矩阵（预生产 gate 前必需）"
+   10. "使用 `/gate-check` 验证是否准备好推进——提交生产前的阶段 gate"
+
+**路径 B — 原型优先**（如果核心机制未经证实或概念需要验证则使用）：
+   1. "运行 `/setup-engine` 配置引擎"
+   2. "运行 `/prototype [核心机制]`——在撰写任何 GDD 之前验证核心想法是否好玩（1–3 天一次性代码）"
+   3. "如果原型结果为 PROCEEDS：运行 `/art-bible`，然后继续上述路径 A 的步骤 5–10，使用原型经验来完善你的 GDD"
+   4. "如果原型结果为 PIVOTS：带着经验教训回到 `/brainstorm` 并重塑概念"
+   5. "在完成全部设计和架构后，构建 `/vertical-slice` 验证生产就绪性，然后再投入 Sprint"
+
+7. **输出摘要**，包含选定概念的电梯演讲、支柱、
+   主要玩家类型、引擎推荐、最大风险和文件路径。
+
+判定：**完成** —— 游戏概念已创建并移交给下一步。
+
+---
+
+## 上下文窗口感知
+
+这是一个多阶段 Skill。如果在任何阶段上下文达到或超过 70%，
+在继续之前将以下通知附加到当前回复：
+
+> **上下文接近限制（≥70%）。** 游戏概念文档已保存到
+> `design/gdd/game-concept.md`。如果需要，打开新的 Claude Code 会话继续
+> ——进度不会丢失。
+
+---
+
+## 推荐的下一步
+
+游戏概念文档写入后，按顺序遵循预生产管线：
+1. `/setup-engine` — 配置引擎并填充版本感知参考文档
+2. `/art-bible` — 在撰写任何 GDD 之前建立视觉识别
+3. `/map-systems` — 将概念分解为具有依赖关系的各个系统
+4. `/design-system [第一个系统]` — 按依赖顺序撰写每个系统的 GDD
+5. `/create-architecture` — 生成主架构蓝图
+6. `/architecture-review` — 引导 TR 注册表和需求可追溯性矩阵
+7. `/gate-check pre-production` — 在提交生产前验证准备就绪

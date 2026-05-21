@@ -1,180 +1,182 @@
 ---
 name: hotfix
-description: "Emergency fix workflow that bypasses normal sprint processes with a full audit trail. Creates hotfix branch, tracks approvals, and ensures the fix is backported correctly."
-argument-hint: "[bug-id or description]"
+description: "绕过正常冲刺流程的紧急修复工作流，带有完整的审计追踪。创建修复分支、跟踪审批并确保正确的向下合并修复。"
+argument-hint: "[bug-id 或描述]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task, AskUserQuestion
 model: sonnet
 ---
 
-> **Explicit invocation only**: This skill should only run when the user explicitly requests it with `/hotfix`. Do not auto-invoke based on context matching.
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Phase 1: Assess Severity
+> **仅显式调用**：此 Skill 应仅在用户通过 `/hotfix` 明确请求时运行。不要基于上下文匹配自动调用。
 
-Read the bug description or ID. Assess severity using these criteria:
+## 阶段 1：评估严重性
 
-- **S1 (Critical)**: Game unplayable, data loss, security vulnerability
-- **S2 (Major)**: Significant feature broken, workaround exists
-- **S3 or lower**: Minor issue — normal bug fix workflow applies
+读取 Bug 描述或 ID。使用以下标准评估严重性：
 
-Confirm with `AskUserQuestion`:
-- Prompt: "I've assessed this as **[assessed severity]** — [brief rationale]. Confirm severity to proceed:"
-- Options:
-  - `[A] S1 (Critical) — game unplayable, data loss, or security issue`
-  - `[B] S2 (Major) — significant feature broken, workaround exists`
-  - `[C] S3 or lower — redirect to normal bug fix workflow`
+- **S1（严重）**：游戏不可玩、数据丢失、安全漏洞
+- **S2（主要）**：重要功能损坏、存在变通方法
+- **S3 或以下**：轻微问题——适用常规 Bug 修复工作流
 
-If [C]: stop. Verdict: **REDIRECTED** — use the normal bug fix workflow for S3 and below.
+使用 `AskUserQuestion` 确认：
+- 提示："我已评估为 **【评估的严重性】**——【简要原因】。确认严重性以继续："
+- 选项：
+  - `[A] S1（严重）——游戏不可玩、数据丢失或安全问题`
+  - `[B] S2（主要）——重要功能损坏、存在变通方法`
+  - `[C] S3 或以下——重定向到常规 Bug 修复工作流`
+
+如果选择 [C]：停止。裁决：**已重定向**——对于 S3 及以下使用常规 Bug 修复工作流。
 
 ---
 
-## Phase 2: Create Hotfix Record
+## 阶段 2：创建修复记录
 
-Draft the hotfix record:
+起草修复记录：
 
 ```markdown
-## Hotfix: [Short Description]
-Date: [Date]
-Severity: [S1/S2]
-Reporter: [Who found it]
-Status: IN PROGRESS
+## 热修复：[简短描述]
+日期：[日期]
+严重性：[S1/S2]
+报告者：[谁发现的]
+状态：进行中
 
-### Problem
-[Clear description of what is broken and the player impact]
+### 问题
+[清晰描述什么坏了以及对玩家的影响]
 
-### Root Cause
-[To be filled during investigation]
+### 根本原因
+[在调查过程中填写]
 
-### Fix
-[To be filled during implementation]
+### 修复
+[在实现过程中填写]
 
-### Testing
-[What was tested and how]
+### 测试
+[测试了什么以及如何测试的]
 
-### Approvals
-- [ ] Fix reviewed by lead-programmer
-- [ ] Regression test passed (qa-tester)
-- [ ] Release approved (producer)
+### 审批
+- [ ] 修复由首席程序员审查
+- [ ] 回归测试已通过（QA 测试员）
+- [ ] 发布已批准（制作人）
 
-### Rollback Plan
-[How to revert if the fix causes new issues]
+### 回滚计划
+[如果修复导致新问题如何回退]
 ```
 
-Ask: "May I write this to `production/hotfixes/hotfix-[date]-[short-name].md`?"
+询问："我可以将此写入 `production/hotfixes/hotfix-[date]-[short-name].md` 吗？"
 
-If yes, write the file, creating the directory if needed.
+如果同意，写入文件，必要时创建目录。
 
 ---
 
-## Phase 3: Create Hotfix Branch
+## 阶段 3：创建修复分支
 
-Check whether this is a git repository:
+检查这是否是 git 仓库：
 
 `Bash: git rev-parse --is-inside-work-tree 2>/dev/null`
 
-If this command fails or returns empty: note "Not a git repository — create the branch manually." and skip branch creation.
+如果此命令失败或返回空：记录"不是 git 仓库——手动创建分支。"并跳过分支创建。
 
-If the check passes, use `AskUserQuestion` before creating the branch:
-- Prompt: "Ready to create hotfix branch 'hotfix/[short-name]' from [base-ref]?"
-- Options:
-  - `[A] Yes — create branch`
-  - `[B] Use a different base ref — I'll specify it`
-  - `[C] Skip — I'll create the branch myself`
+如果检查通过，在创建分支前使用 `AskUserQuestion`：
+- 提示："准备从 [基准引用] 创建修复分支 'hotfix/[short-name]'？"
+- 选项：
+  - `[A] 是——创建分支`
+  - `[B] 使用不同的基准引用——我来指定`
+  - `[C] 跳过——我自己创建分支`
 
-Only run `git checkout -b hotfix/[short-name] [base-ref]` if user selects [A]. If [B]: ask the user for the base ref, then run the command with that ref. If [C]: skip branch creation and proceed to Phase 4.
-
----
-
-## Phase 4: Investigate and Implement
-
-Focus on the minimal change that resolves the issue. Do NOT refactor, clean up, or add features alongside the hotfix.
-
-Validate the fix by running targeted tests for the affected system. Check for regressions in adjacent systems.
-
-Update the hotfix record with root cause, fix details, and test results.
+仅当用户选择 [A] 时运行 `git checkout -b hotfix/[short-name] [base-ref]`。如果选择 [B]：询问用户基准引用，然后使用该引用运行命令。如果选择 [C]：跳过分支创建，继续第 4 阶段。
 
 ---
 
-## Phase 5: Collect Approvals
+## 阶段 4：调查和实现
 
-Use the Task tool to request sign-off in parallel:
+专注于解决问题的最小变更。不要在修复过程中做重构、清理或添加功能。
 
-- `subagent_type: lead-programmer` — Review the fix for correctness and side effects
-- `subagent_type: qa-tester` — Run targeted regression tests on the affected system
-- `subagent_type: producer` — Approve deployment timing and communication plan
+通过运行受影响系统的针对性测试来验证修复。检查相邻系统是否有回归。
 
-All three must return APPROVE before proceeding. If any returns CONCERNS or REJECT, do not deploy — surface the issue and resolve it first.
+使用根本原因、修复细节和测试结果更新修复记录。
 
 ---
 
-## Phase 5b: QA Re-Entry Gate
+## 阶段 5：收集审批
 
-After approvals, determine the QA scope required before deploying the hotfix. Spawn `qa-lead` via Task with:
-- The hotfix description and affected system
-- The regression test results from Phase 5
-- A list of all systems that touch the changed files (use Grep to find callers)
+使用 Task 工具并行请求签署确认：
 
-Ask qa-lead: **Is a full smoke check sufficient, or does this fix require a targeted team-qa pass?**
+- `subagent_type: lead-programmer` — 审查修复的正确性和副作用
+- `subagent_type: qa-tester` — 对受影响系统运行针对性回归测试
+- `subagent_type: producer` — 批准部署时间和沟通计划
 
-Apply the verdict:
-- **Smoke check sufficient** — run `/smoke-check` against the hotfix build. If PASS, proceed to Phase 6.
-- **Targeted QA pass required** — run `/team-qa [affected-system]` scoped to the changed system only. If QA returns APPROVED or APPROVED WITH CONDITIONS, proceed to Phase 6.
-- **Full QA required** — S1 fixes that touch core systems may require a full `/team-qa sprint`. This delays deployment but prevents a bad patch.
-
-Do not skip this gate. A hotfix that breaks something else is worse than the original bug.
+在继续之前，三者必须全部返回批准。如果任何方返回疑虑或拒绝，不进行部署——呈现问题并首先解决它。
 
 ---
 
-## Phase 6: Update Bug Status and Deploy
+## 阶段 5b：QA 重入门禁
 
-Update the original bug file if one exists:
+审批后，确定部署修复之前所需的 QA 范围。通过 Task 生成 `qa-lead`，传递：
+- 修复描述和受影响的系统
+- 阶段 5 的回归测试结果
+- 与已更改文件相关的所有系统列表（使用 Grep 查找调用者）
+
+询问 qa-lead：**完整的冒烟检查是否足够，还是此修复需要针对性的团队 QA 通过？**
+
+应用裁决：
+- **冒烟检查足够**——对修复构建运行 `/smoke-check`。如果通过，继续第 6 阶段。
+- **需要针对性 QA**——运行 `/team-qa [affected-system]`，范围限定为已更改系统。如果 QA 返回已批准或有条件批准，继续第 6 阶段。
+- **需要全面 QA**——涉及核心系统的 S1 修复可能需要全面的 `/team-qa sprint`。这会延迟部署但防止糟糕的补丁。
+
+不要跳过此门禁。修复了一个问题但破坏了其他的修复比原始 Bug 更糟糕。
+
+---
+
+## 阶段 6：更新 Bug 状态并部署
+
+更新原始 Bug 文件（如果存在）：
 
 ```markdown
-## Fix Record
-**Fixed in**: hotfix/[branch-name] — [commit hash or description]
-**Fixed date**: [date]
-**Status**: Fixed — Pending Verification
+## 修复记录
+**修复于**：hotfix/[branch-name] — [提交哈希或描述]
+**修复日期**：[date]
+**状态**：已修复 — 待验证
 ```
 
-Set `**Status**: Fixed — Pending Verification` in the bug file header.
+在 Bug 文件头部设置 `**状态**：已修复 — 待验证`。
 
-Output a deployment summary:
+输出部署摘要：
 
 ```
-## Hotfix Ready to Deploy: [short-name]
+## 热修复已准备好部署：[short-name]
 
-**Severity**: [S1/S2]
-**Root cause**: [one line]
-**Fix**: [one line]
-**QA gate**: [Smoke check PASS / Team-QA APPROVED]
-**Approvals**: lead-programmer ✓ / qa-tester ✓ / producer ✓
-**Rollback plan**: [from Phase 2 record]
+**严重性**：[S1/S2]
+**根本原因**：[一句话]
+**修复**：[一句话]
+**QA 门禁**：[冒烟检查通过 / 团队QA已批准]
+**审批**：首席程序员 ✓ / QA 测试员 ✓ / 制作人 ✓
+**回滚计划**：[来自阶段 2 记录]
 
-Merge to: release branch AND development branch
-Next: /bug-report verify [BUG-ID] after deploy to confirm resolution
+合并到：发布分支 和 开发分支
+下一步：部署后运行 /bug-report verify [BUG-ID] 以确认问题已解决
 ```
 
-### Rules
-- Hotfixes must be the MINIMUM change to fix the issue — no cleanup, no refactoring
-- Every hotfix must have a rollback plan documented before deployment
-- Hotfix branches merge to BOTH the release branch AND the development branch
-- All hotfixes require a post-incident review within 48 hours
-- If the fix is complex enough to need more than 4 hours, escalate to `technical-director`
+### 规则
+- 修复必须是最小变更以解决问题——没有清理、没有重构
+- 每个修复在部署前必须有文档化的回滚计划
+- 修复分支必须合并到发布分支和开发分支
+- 所有修复都需要在 48 小时内进行事件后审查
+- 如果修复复杂到需要超过 4 小时，升级到 `technical-director`
 
 ---
 
-## Phase 7: Post-Deploy Verification
+## 阶段 7：部署后验证
 
-After deploying, run `/bug-report verify [BUG-ID]` to confirm the fix resolved the issue in the deployed build.
+部署后，运行 `/bug-report verify [BUG-ID]` 以确认修复是否在已部署构建中解决了问题。
 
-If VERIFIED FIXED: run `/bug-report close [BUG-ID]` to formally close it.
-If STILL PRESENT: the hotfix failed — immediately re-open, assess rollback, and escalate.
+如果已确认修复：运行 `/bug-report close [BUG-ID]` 正式关闭它。
+如果仍然存在：修复失败——立即重新打开、评估回滚并升级。
 
-Schedule a post-incident review within 48 hours using `/retrospective hotfix`.
+使用 `/retrospective hotfix` 安排 48 小时内的事件后审查。
 
-Use `AskUserQuestion`:
-- Prompt: "Hotfix complete. What's the next step?"
-- Options:
-  - `[A] Run /smoke-check to verify the fix`
-  - `[B] Run /patch-notes to document this hotfix`
-  - `[C] Stop here`
+使用 `AskUserQuestion`：
+- 提示："热修复完成。下一步是什么？"
+- 选项：
+  - `[A] 运行 /smoke-check 验证修复`
+  - `[B] 运行 /patch-notes 记录此修复`
+  - `[C] 在此停止`

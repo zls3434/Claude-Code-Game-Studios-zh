@@ -1,76 +1,61 @@
-# Godot Animation — Quick Reference
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Godot 4.5 — 动画参考
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+> 最后验证：2026-02-13
+> Godot 文档 — [Animation](https://docs.godotengine.org/en/4.5/classes/class_animationplayer.html)
 
-## What Changed Since ~4.3 (LLM Cutoff)
+## AnimationPlayer
 
-### 4.6 Changes
-- **IK system fully restored**: Complete inverse kinematics for 3D skeletons
-  - CCDIK, FABRIK, Jacobian IK, Spline IK, TwoBoneIK
-  - Applied via `SkeletonModifier3D` nodes (not the old IK approach)
-- **Animation editor QoL**: Solo/hide/lock/delete for Bezier node groups; draggable timeline
+关键方法和属性。对于 Agent 而言，模型可能建议过时的 API。
 
-### 4.5 Changes
-- **BoneConstraint3D**: Bind bones to other bones with modifiers
-  - `AimModifier3D`, `CopyTransformModifier3D`, `ConvertTransformModifier3D`
+| 方法 | 用途 | 备注 |
+|--------|---------|-------|
+| `play(name, custom_blend, custom_speed, from_end)` | 播放动画 | `custom_blend` 可平滑过渡 |
+| `stop()` | 停止，重置到开始 | 确保动画重置 |
+| `pause()` / `stop()` | 暂停/继续 | 调用 `pause()` 后调用 `play(false)` 可继续 |
+| `seek(seconds, update)` | 跳转到时间点 | `update` 强制立即状态更新 |
+| `advance(delta)` | 手动前进 | 在 `_process()` 中用于逐 delta 推进 |
+| `speed_scale` | 播放速度倍率 | 0 = 停止，1 = 正常速度，负值 = 倒放 |
+| `current_animation` | 当前播放的动画名称 | 只读属性 |
+| `is_playing()` | 是否正在播放？ | 布尔查询 |
+| `get_playing_speed()` | 当前速度 | 考虑 `speed_scale` |
+| `assigned_animation` | 返回当前动画的 `Animation` 资源 | 可用于检查属性 |
 
-### 4.3 Changes (in training data)
-- **AnimationMixer**: Base class for both AnimationPlayer and AnimationTree
-  - `method_call_mode` → `callback_mode_method`
-  - `playback_active` → `active`
-  - `bone_pose_updated` signal → `skeleton_updated`
-- **`Skeleton3D.add_bone()`**: Now returns `int32` (was `void`)
+## AnimationTree
 
-## Current API Patterns
+状态机驱动的动画系统。
 
-### AnimationPlayer (unchanged API, new base class)
+| 方法 | 用途 | 备注 |
+|--------|---------|-------|
+| `set("parameters/条件/current", value)` | 设置混合空间 | 字符串路径方法 |
+| `get("parameters/条件/current")` | 获取当前值 | 通用 getter |
+| `advance(delta)` | 手动前进树 | 用于手动处理 |
+| `active` | 激活/停用处理 | 布尔属性 |
+
+## Tween
+
+用于值插值。
+
 ```gdscript
-@onready var anim_player: AnimationPlayer = %AnimationPlayer
-
-func play_attack() -> void:
-    anim_player.play(&"attack")
-    await anim_player.animation_finished
+var tween := create_tween()
+tween.tween_property($Sprite, "modulate:a", 0.0, 0.5)
+tween.tween_callback(_on_fade_finished)
+tween.set_parallel(true)  # 同时运行所有后续补间
 ```
 
-### IK Setup (4.6 — NEW)
+## 常见模式
+
 ```gdscript
-# Add SkeletonModifier3D-based IK nodes as children of Skeleton3D
-# Available types:
-# - SkeletonModifier3D (base)
-# - TwoBoneIK (arms, legs)
-# - FABRIK (chains, tentacles)
-# - CCDIK (tails, spines)
-# - Jacobian IK (complex multi-joint)
-# - Spline IK (along curves)
+# 淡入淡出
+var tween := create_tween()
+tween.tween_property($Sprite, "modulate:a", 0.0, 0.5)
+await tween.finished
+$Sprite.queue_free()
 
-# Configure in editor or code:
-# 1. Add IK modifier node as child of Skeleton3D
-# 2. Set target bone and tip bone
-# 3. Add a Marker3D as the IK target
-# 4. IK solver runs automatically each frame
+# 连续动画
+var tween := create_tween()
+@warning_ignore("return_value_discarded")
+tween.tween_property($Sprite, "position:x", 100, 1.0)
+@warning_ignore("return_value_discarded")
+tween.tween_property($Sprite, "position:y", 50, 0.5)
 ```
-
-### BoneConstraint3D (4.5 — NEW)
-```gdscript
-# Add as child of Skeleton3D
-# Types:
-# - AimModifier3D: Point bone at target
-# - CopyTransformModifier3D: Mirror another bone's transform
-# - ConvertTransformModifier3D: Remap transform values
-```
-
-### AnimationTree (base class changed in 4.3)
-```gdscript
-# AnimationTree now extends AnimationMixer (not Node directly)
-# Use AnimationMixer properties:
-@onready var anim_tree: AnimationTree = %AnimationTree
-
-func _ready() -> void:
-    anim_tree.active = true  # NOT playback_active (deprecated 4.3)
-```
-
-## Common Mistakes
-- Using `playback_active` instead of `active` (deprecated since 4.3)
-- Using `bone_pose_updated` signal instead of `skeleton_updated` (renamed in 4.3)
-- Using old IK approach instead of SkeletonModifier3D system (restored in 4.6)
-- Not checking `is AnimationMixer` when type-checking animation nodes

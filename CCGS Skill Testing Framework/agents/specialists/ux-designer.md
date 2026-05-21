@@ -1,79 +1,83 @@
-# Agent Test Spec: ux-designer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: User experience flows, interaction design, information architecture, input handling design, and onboarding UX.
-Does NOT own: visual art style (art-director), UI implementation code (ui-programmer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：ux-designer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references UX flows / interaction design / information architecture)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over visual art direction or UI implementation code
+## Agent 摘要
+领域：用户交互流程设计、信息架构、菜单结构、可用性审查、玩家旅程映射
+不拥有：UI 代码实现（ui-programmer）、视觉外观（art-director）、gameplay 系统（gameplay-programmer）
+Model tier：Sonnet（默认）。
+未分配 Gate ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Design the inventory management flow for a survival game."
-**Expected behavior:**
-- Produces a user flow diagram (states and transitions) for the inventory: open, browse, select item, sub-actions (equip/drop/combine), close
-- Defines all interaction states (default, hover, selected, empty-slot, locked-slot)
-- Specifies input mappings for each action (keyboard, gamepad if applicable)
-- Notes cognitive load considerations (e.g., maximum items visible without scrolling)
-- Does NOT produce visual design (colors, icons) or implementation code
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Implement the inventory screen in GDScript with drag-and-drop support."
-**Expected behavior:**
-- Does NOT produce implementation code
-- Explicitly states that UI code implementation belongs to `ui-programmer`
-- Redirects the request to `ui-programmer`
-- Notes that the UX flow spec should be provided to ui-programmer as the implementation reference
-
-### Case 3: Flow depth conflict — simplification
-**Input:** "The lead designer says the current 5-step crafting flow is too deep; maximum 3 steps allowed."
-**Expected behavior:**
-- Produces a revised 3-step flow that collapses the original 5-step sequence
-- Shows clearly what was merged or removed and why each collapse is safe from a usability standpoint
-- Does NOT simply remove steps without addressing the user's goal at each removed step
-- Flags if the 3-step constraint makes any required use case impossible and proposes an alternative
-
-### Case 4: Accessibility conflict
-**Input:** "The onboarding flow uses a timed prompt (auto-advances after 3 seconds) to keep pace, but this conflicts with accessibility requirements for user-controlled timing."
-**Expected behavior:**
-- Identifies the conflict with WCAG 2.1 2.2.1 (Timing Adjustable)
-- Does NOT override the accessibility requirement to preserve pace
-- Coordinates with `accessibility-specialist` to agree on a compliant solution
-- Proposes alternatives: pause-on-hover, skip button, settings option to disable auto-advance
-
-### Case 5: Context pass — player mental model research
-**Input:** Playtest research provided in context: "Players consistently expected the 'Crafting' option to be inside the Inventory screen, not in a separate top-level menu." Request: "Redesign the navigation IA for crafting."
-**Expected behavior:**
-- References the specific player expectation from the research (crafting expected inside inventory)
-- Restructures the information architecture to place crafting as a tab or panel within the inventory screen
-- Does NOT produce a design that contradicts the stated player mental model without explicit justification
-- Notes the research source in the rationale for the design decision
+- [ ] `description:` 字段存在且领域特定（UX 流程、交互设计、信息架构）
+- [ ] `allowed-tools:` 列表以读取为主；写入设计/UX/ 文档
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对 UI 代码或视觉设计拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (UX flows, interaction design, IA, onboarding)
-- [ ] Redirects code implementation to ui-programmer, visual style to art-director
-- [ ] Returns structured findings (state diagrams, flow steps, input mappings) not freeform opinions
-- [ ] Coordinates with accessibility-specialist when flows have timing or cognitive load constraints
-- [ ] Designs flows based on provided user research, not assumed behavior
-- [ ] Documents rationale for flow decisions against user goals
+### Case 1：域内请求 — 适当的输出
+**输入：** "设计背包系统的 UX 流程 — 玩家查看物品、装备/卸下装备、比较属性以及丢弃不需要的物品。"
+**预期行为：**
+- 产出 UX 流程设计：
+  - 屏幕结构：物品网格 → 选中物品的详情面板 → 操作按钮
+  - 流程步骤：选择 → 查看详情 → 装备/卸下/丢弃操作
+  - 比较模式：选中物品与已装备物品属性比较面板
+  - 交互优先级：主要 = 装备；次要 = 比较；三级 = 丢弃
+- 不指定颜色、字体或视觉效果 (art-director)
+- 不实现代码 (ui-programmer)
+
+### Case 2：领域外请求 — 适当重定向
+**输入：** "现在编写背包 UI 的代码。"
+**预期行为：**
+- 重定向到 ui-programmer
+- 不实现 UI 代码
+- 可提供 UX 流程示意图或线框作为 ui-programmer 的输入
+
+### Case 3：UX 流程可用性审查
+**输入：** "审查此 UX 流程：玩家打开设置 → 音频 → 主音量滑块 → 返回" — 此步骤为打开音频设置需要 3 次点击。"
+**预期行为：**
+- 标记高摩擦 UX：主音量滑块应有 1 次交互可访问性
+- 在玩家频繁使用的流程中，建议减少到达主音量的嵌套深度
+- 提供替代方案：主音量滑块可在第一屏（设置首页）可直接访问，使用单独标签页用于次要设置
+
+### Case 4：信息架构 — 菜单结构
+**输入：** "组织主菜单：开始游戏、继续游戏、设置、制作人员、退出"
+**预期行为：**
+- 设计菜单层级：
+  - 第一层：继续游戏、开始游戏、设置
+  - 在设置内：音频、游戏、控制、辅助功能
+  - 次要层级：制作人员、退出（较少频率操作移到次级入口）
+- 根据重要性和使用频率对选项进行分组和排列
+
+### Case 5：上下文传递 — 平台 UX 规范
+**输入上下文：** 游戏目标为控制台 (PS5, Switch)。控制台 UX 要求：所有菜单必须可完全用 d-pad 或模拟杆操作（无鼠标）。文本必须可读于远距离的电视屏幕。所有选项必须可访问在最多 3 次按钮按下内。
+**输入：** "根据平台 UX 要求审查我们的设置菜单。"
+**预期行为：**
+- 应用所提供的上下文规则：
+  - 检查菜单树深度：任何设置是否超过 3 次按下？
+  - 检查导航：所有元素是否可完全通过游戏手柄导航？（对每个菜单项确认）
+  - 检查电视可读性：所有字体最小尺寸是否满足电视阅读的适当高度（或 CSS 像素等效）？
+- 标记不符合的条目
 
 ---
 
-## Coverage Notes
-- Inventory flow (Case 1) should be written to `design/ux/` as a spec for ui-programmer to implement against
-- Mental model case (Case 5) verifies the agent applies research evidence, not intuition
-- Accessibility coordination (Case 4) confirms the agent does not override accessibility requirements for UX aesthetics
+## 协议合规性
+
+- [ ] 停留在声明领域内（UX 流程、交互设计、信息架构）
+- [ ] 将 UI 代码请求重定向到 ui-programmer
+- [ ] 将视觉设计请求重定向到 art-director
+- [ ] 使用来自上下文的平台特定 UX 规范
+- [ ] 对菜单深度和可用性做定量审查（例如最大点击次数）
+
+---
+
+## 覆盖说明
+- Case 4（信息架构）是可量化的 — 正确的菜单结构有具体规则
+- Case 5 要求平台 UX 文档在上下文中可用；是最重要的上下文测试
+- 无自动化运行器；手动审查或通过 `/skill-test`

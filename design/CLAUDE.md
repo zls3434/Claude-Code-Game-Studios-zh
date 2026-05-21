@@ -1,38 +1,39 @@
-# Design Directory
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# 设计目录
 
-When authoring or editing files in this directory, follow these standards.
+在本目录下编写或编辑文件时，请遵循以下标准。
 
-## GDD Files (`design/gdd/`)
+## GDD 文件（`design/gdd/`）
 
-Every GDD must include all **8 required sections** in this order:
-1. Overview — one-paragraph summary
-2. Player Fantasy — intended feeling and experience
-3. Detailed Rules — unambiguous mechanics
-4. Formulas — all math defined with variables
-5. Edge Cases — unusual situations handled
-6. Dependencies — other systems listed
-7. Tuning Knobs — configurable values identified
-8. Acceptance Criteria — testable success conditions
+每个 GDD 必须按以下顺序包含全部 **8 个必需部分**：
+1. 概述 — 一段话摘要
+2. 玩家幻想 — 预期的感受和体验
+3. 详细规则 — 不含歧义的机制说明
+4. 公式 — 所有数学定义及变量说明
+5. 边界情况 — 异常情况的处理方式
+6. 依赖项 — 列出的其他系统
+7. 调优参数 — 标识出的可配置值
+8. 验收标准 — 可测试的成功条件
 
-**File naming:** `[system-slug].md` (e.g. `movement-system.md`, `combat-system.md`)
+**文件命名：** `[系统缩写].md`（例如 `movement-system.md`、`combat-system.md`）
 
-**Systems index:** `design/gdd/systems-index.md` — update when adding a new GDD.
+**系统索引：** `design/gdd/systems-index.md` — 添加新 GDD 时更新。
 
-**Design order:** Foundation → Core → Feature → Presentation → Polish
+**设计顺序：** 基础层 → 核心层 → 功能层 → 表现层 → 打磨层
 
-**Validation:** Run `/design-review [path]` after authoring any GDD.
-Run `/review-all-gdds` after completing a set of related GDDs.
+**验证：** 编写完任何 GDD 后运行 `/design-review [路径]`。
+完成一组相关 GDD 后运行 `/review-all-gdds`。
 
-## Quick Specs (`design/quick-specs/`)
+## Quick Specs（`design/quick-specs/`）
 
-Lightweight specs for tuning changes, minor mechanics, or balance adjustments.
-Use `/quick-design` to author.
+用于调优变更、小型机制或平衡性调整的轻量级规格。
+使用 `/quick-design` 来编写。
 
-## UX Specs (`design/ux/`)
+## UX Specs（`design/ux/`）
 
-- Per-screen specs: `design/ux/[screen-name].md`
-- HUD design: `design/ux/hud.md`
-- Interaction pattern library: `design/ux/interaction-patterns.md`
-- Accessibility requirements: `design/ux/accessibility-requirements.md`
+- 各界面规格：`design/ux/[界面名称].md`
+- HUD 设计：`design/ux/hud.md`
+- 交互模式库：`design/ux/interaction-patterns.md`
+- 无障碍要求：`design/ux/accessibility-requirements.md`
 
-Use `/ux-design` to author. Validate with `/ux-review` before passing to `/team-ui`.
+使用 `/ux-design` 来编写。传递给 `/team-ui` 前用 `/ux-review` 验证。

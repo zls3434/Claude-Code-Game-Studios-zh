@@ -1,145 +1,139 @@
 ---
 name: team-audio
-description: "Orchestrate audio team: audio-director + sound-designer + technical-artist + gameplay-programmer for full audio pipeline from direction to implementation."
-argument-hint: "[feature or area to design audio for] [--review full|lean|solo]"
+description: "编排音频团队：audio-director + sound-designer + technical-artist + gameplay-programmer 实现从方向到实现的完整音频管线。"
+argument-hint: "[要设计音频的功能或区域] [--review full|lean|solo]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task, AskUserQuestion, TodoWrite
 model: sonnet
 ---
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-If no argument is provided, output usage guidance and exit without spawning any agents:
-> Usage: `/team-audio [feature or area]` — specify the feature or area to design audio for (e.g., `combat`, `main menu`, `forest biome`, `boss encounter`). Do not use `AskUserQuestion` here; output the guidance directly.
+如果未提供参数，输出用法指导并退出而不生成任何 Agent：
+> 用法：`/team-audio [功能或区域]` — 指定要设计音频的功能或区域（例如 `combat`、`main menu`、`forest biome`、`boss encounter`）。不要在此使用 `AskUserQuestion`；直接输出指导。
 
-When this skill is invoked with an argument, orchestrate the audio team through a structured pipeline.
+当此 Skill 以参数调用时，通过结构化流水线编排音频团队。
 
-**Decision Points:** At each step transition, use `AskUserQuestion` to present
-the user with the subagent's proposals as selectable options. Write the agent's
-full analysis in conversation, then capture the decision with concise labels.
-The user must approve before moving to the next step.
+**决策点：** 在每个步骤过渡时，使用 `AskUserQuestion` 将子 Agent 的提案作为可选项展示给用户。将 Agent 的完整分析写到对话中，然后用简洁的标签捕获决策。用户必须在进入下一步前批准。
 
-## Phase 0: Resolve Review Mode
+## 第 0 阶段：解析审查模式
 
-1. If `--review [mode]` was passed as an argument, use that mode.
-2. Else read `production/review-mode.txt` — use whatever is written there.
-3. Else default to `lean`.
+1. 如果传入 `--review [mode]` 参数，使用该模式。
+2. 否则读取 `production/review-mode.txt` — 使用其中写入的内容。
+3. 否则默认 `lean`。
 
-Modes:
-- `full` — spawn all director and lead gates as described
-- `lean` — skip director gates unless they are PHASE-GATE type (CD-PHASE-GATE, TD-PHASE-GATE, PR-PHASE-GATE, AD-PHASE-GATE)
-- `solo` — skip all director gate spawning entirely; run the skill without any agent gates
+模式：
+- `full` — 按描述生成所有主管和牵头关卡
+- `lean` — 跳过主管关卡，除非它们是 PHASE-GATE 类型（CD-PHASE-GATE、TD-PHASE-GATE、PR-PHASE-GATE、AD-PHASE-GATE）
+- `solo` — 完全跳过所有主管关卡生成；在没有任何 Agent 关卡的情况下运行 Skill
 
-Store the resolved mode for use in all subsequent phases.
+存储解析后的模式以供所有后续阶段使用。
 
-1. **Read the argument** for the target feature or area (e.g., `combat`,
-   `main menu`, `forest biome`, `boss encounter`).
+1. **读取参数** 获取目标功能或区域（例如 `combat`、`main menu`、`forest biome`、`boss encounter`）。
 
-2. **Gather context**:
-   - Read relevant design docs in `design/gdd/` for the feature
-   - Read the sound bible at `design/gdd/sound-bible.md` if it exists
-   - Read existing audio asset lists in `assets/audio/`
-   - Read any existing sound design docs for this area
+2. **收集上下文**：
+   - 读取 `design/gdd/` 中该功能的相关设计文档
+   - 读取 `design/gdd/sound-bible.md`（如果存在）
+   - 读取 `assets/audio/` 中现有的音频资产列表
+   - 读取此区域任何已有的声音设计文档
 
-## How to Delegate
+## 如何委托
 
-Use the Task tool to spawn each team member as a subagent:
-- `subagent_type: audio-director` — Sonic identity, emotional tone, audio palette
-- `subagent_type: sound-designer` — SFX specifications, audio events, mixing groups
-- `subagent_type: technical-artist` — Audio middleware, bus structure, memory budgets
-- `subagent_type: [primary engine specialist]` — Validate audio integration patterns for the engine
-- `subagent_type: gameplay-programmer` — Audio manager, gameplay triggers, adaptive music
+使用 Task 工具将每个团队成员作为子 Agent 生成：
+- `subagent_type: audio-director` — 声音身份、情感基调、音频调色板
+- `subagent_type: sound-designer` — SFX 规格、音频事件、混音组
+- `subagent_type: technical-artist` — 音频中间件、总线结构、内存预算
+- `subagent_type: [primary engine specialist]` — 验证引擎的音频集成模式
+- `subagent_type: gameplay-programmer` — 音频管理器、玩法触发器、自适应音乐
 
-Always provide full context in each agent's prompt (feature description, existing audio assets, design doc references).
+始终向每个 Agent 的提示提供完整上下文（功能描述、现有音频资产、设计文档引用）。
 
-3. **Orchestrate the audio team** in sequence:
+3. **按顺序编排音频团队**：
 
-### Step 1: Audio Direction (audio-director)
-Spawn the `audio-director` agent to:
-- Define the sonic identity for this feature/area
-- Specify the emotional tone and audio palette
-- Set music direction (adaptive layers, stems, transitions)
-- Define audio priorities and mix targets
-- Establish any adaptive audio rules (combat intensity, exploration, tension)
+### 步骤 1：音频方向（audio-director）
+生成 `audio-director` Agent 来：
+- 为此功能/区域定义声音身份
+- 指定情感基调和音频调色板
+- 设定音乐方向（自适应层、分段、过渡）
+- 定义音频优先级和混音目标
+- 建立任何自适应音频规则（战斗强度、探索、紧张）
 
-### Step 2: Sound Design and Audio Accessibility (parallel)
-Spawn the `sound-designer` agent to:
-- Create detailed SFX specifications for every audio event
-- Define sound categories (ambient, UI, gameplay, music, dialogue)
-- Specify per-sound parameters (volume range, pitch variation, attenuation)
-- Plan audio event list with trigger conditions
-- Define mixing groups and ducking rules
+### 步骤 2：声音设计和音频无障碍（并行）
+生成 `sound-designer` Agent 来：
+- 为每个音频事件创建详细的 SFX 规格
+- 定义声音类别（环境、UI、玩法、音乐、对话）
+- 指定每个声音的参数（音量范围、音调变化、衰减）
+- 规划附触发条件的音频事件列表
+- 定义混音组和闪避规则
 
-Spawn the `accessibility-specialist` agent in parallel to:
-- Identify which audio events carry critical gameplay information (damage received, enemy nearby, objective complete) and require visual alternatives for hearing-impaired players
-- Specify subtitle requirements: which audio events need captions, what text format, on-screen duration
-- Check that no gameplay state is communicated by audio alone (all must have a visual fallback)
-- Review the audio event list for any that could cause issues for players with auditory sensitivities (high-frequency alerts, sudden loud events)
-- Output: audio accessibility requirements list integrated into the audio event spec
+并行生成 `accessibility-specialist` Agent 来：
+- 识别哪些音频事件携带关键玩法信息（受到伤害、附近有敌人、目标完成）并需要为听力障碍玩家提供视觉替代方案
+- 指定字幕需求：哪些音频事件需要字幕、文本格式、屏幕持续时间
+- 检查没有任何玩法状态仅通过音频传达（所有都必须有视觉回退）
+- 审查音频事件列表中任何可能对听觉敏感玩家造成问题的项（高频警报、突然的大声事件）
+- 输出：集成到音频事件规格中的音频无障碍需求列表
 
-### Step 3: Technical Implementation (parallel)
-Spawn the `technical-artist` agent to:
-- Design the audio middleware integration (Wwise/FMOD/native)
-- Define audio bus structure and routing
-- Specify memory budgets for audio assets per platform
-- Plan streaming vs preloaded asset strategy
-- Design any audio-reactive visual effects
+### 步骤 3：技术实现（并行）
+生成 `technical-artist` Agent 来：
+- 设计音频中间件集成（Wwise/FMOD/原生）
+- 定义音频总线结构和路由
+- 指定各平台音频资产的内存预算
+- 规划流式与预加载资产策略
+- 设计任何音频反应式视觉效果
 
-Spawn the **primary engine specialist** in parallel (from `.claude/docs/technical-preferences.md` Engine Specialists) to validate the integration approach:
-- Is the proposed audio middleware integration idiomatic for the engine? (e.g., Godot's built-in AudioStreamPlayer vs FMOD, Unity's Audio Mixer vs Wwise, Unreal's MetaSounds vs FMOD)
-- Any engine-specific audio node/component patterns that should be used?
-- Known audio system changes in the pinned engine version that affect the integration plan?
-- Output: engine audio integration notes to merge with the technical-artist's plan
+并行生成 **primary engine specialist**（来自 `.claude/docs/technical-preferences.md` Engine Specialists）来验证集成方法：
+- 提议的音频中间件集成对引擎是否地道？（例如 Godot 内置 AudioStreamPlayer vs FMOD、Unity Audio Mixer vs Wwise、Unreal MetaSounds vs FMOD）
+- 是否应使用任何引擎特定的音频节点/组件模式？
+- 固定引擎版本中有任何已知的音频系统变更会影响集成计划？
+- 输出：与 technical-artist 计划合并的引擎音频集成说明
 
-If no engine is configured, skip the specialist spawn.
+如果未配置引擎，跳过专家生成。
 
-### Step 4: Code Integration (gameplay-programmer)
-Spawn the `gameplay-programmer` agent to:
-- Implement audio manager system or review existing
-- Wire up audio events to gameplay triggers
-- Implement adaptive music system (if specified)
-- Set up audio occlusion/reverb zones
-- Write unit tests for audio event triggers
+### 步骤 4：代码集成（gameplay-programmer）
+生成 `gameplay-programmer` Agent 来：
+- 实现音频管理器系统或审查已有的
+- 将音频事件连接到玩法触发器
+- 实现自适应音乐系统（如果已指定）
+- 设置音频遮挡/混响区域
+- 为音频事件触发器编写单元测试
 
-4. **Compile the audio design document** combining all team outputs.
+4. **编译音频设计文档**，合并所有团队输出。
 
-5. **Save to** `design/audio/audio-[feature].md`.
+5. **保存到** `design/audio/audio-[feature].md`。
 
-   Note: If `design/audio/` does not exist, the sub-agent writing the document should create it (the directory will be created automatically when the file is written).
+   注意：如果 `design/audio/` 不存在，编写文档的子 Agent 应创建它（目录将在文件写入时自动创建）。
 
-6. **Output a summary** with: audio event count, estimated asset count,
-   implementation tasks, and any open questions between team members.
+6. **输出摘要**，包含：音频事件计数、预估资产数量、实现任务以及团队成员之间的任何未决问题。
 
-Verdict: **COMPLETE** — audio design document produced and team pipeline finished.
+判定：**COMPLETE** — 音频设计文档已生成且团队流水线已完成。
 
-If the pipeline stops because a dependency is unresolved (e.g., critical accessibility gap or missing GDD not resolved by the user):
+如果流水线因未解决的依赖而停止（例如关键无障碍缺口或缺失的 GDD 未被用户解决）：
 
-Verdict: **BLOCKED** — [reason]
+判定：**BLOCKED** — [原因]
 
-## File Write Protocol
+## 文件写入协议
 
-All file writes (audio design docs, SFX specs, implementation files) are delegated
-to sub-agents spawned via Task. Each sub-agent enforces the "May I write to [path]?"
-protocol. This orchestrator does not write files directly.
+所有文件写入（音频设计文档、SFX 规格、实现文件）都委托给通过 Task 生成的子 Agent。每个子 Agent 强制执行"我可以写入 [path] 吗？"协议。此编排器不直接写入文件。
 
-## Next Steps
+## 后续步骤
 
-- Review the audio design doc with the audio-director before implementation begins.
-- Use `/dev-story` to implement the audio manager and event system once the design is approved.
-- Run `/asset-audit` after audio assets are created to verify naming and format compliance.
+- 在实现开始前与 audio-director 审查音频设计文档。
+- 设计获批后使用 `/dev-story` 实现音频管理器和事件系统。
+- 音频资产创建后运行 `/asset-audit` 验证命名和格式合规。
 
-## Error Recovery Protocol
+## 错误恢复协议
 
-If any spawned agent (via Task) returns BLOCKED, errors, or cannot complete:
+如果任何生成的 Agent（通过 Task）返回 BLOCKED、出错或无法完成：
 
-1. **Surface immediately**: Report "[AgentName]: BLOCKED — [reason]" to the user before continuing to dependent phases
-2. **Assess dependencies**: Check whether the blocked agent's output is required by subsequent phases. If yes, do not proceed past that dependency point without user input.
-3. **Offer options** via AskUserQuestion with choices:
-   - Skip this agent and note the gap in the final report
-   - Retry with narrower scope
-   - Stop here and resolve the blocker first
-4. **Always produce a partial report** — output whatever was completed. Never discard work because one agent blocked.
+1. **立即呈现**：在继续到依赖阶段之前报告"[AgentName]：BLOCKED — [reason]"
+2. **评估依赖**：检查被阻塞 Agent 的输出是否被后续阶段所需。如果是，未经用户输入不得继续超过该依赖点。
+3. **提供选项** 通过 AskUserQuestion 并提供选择：
+   - 跳过此 Agent 并在最终报告中注明缺口
+   - 以更窄范围重试
+   - 在此停止并先解决阻塞项
+4. **始终生成部分报告** — 输出已完成的内容。不要因为一个 Agent 阻塞就丢弃工作。
 
-Common blockers:
-- Input file missing (story not found, GDD absent) → redirect to the skill that creates it
-- ADR status is Proposed → do not implement; run `/architecture-decision` first
-- Scope too large → split into two stories via `/create-stories`
-- Conflicting instructions between ADR and story → surface the conflict, do not guess
+常见阻塞项：
+- 输入文件缺失（故事未找到、GDD 缺失）→ 重定向到创建它的 Skill
+- ADR 状态为 Proposed → 不要实现；先运行 `/architecture-decision`
+- 范围太大 → 通过 `/create-stories` 拆分为两个故事
+- ADR 与故事之间的指令冲突 → 呈现冲突，不要猜测

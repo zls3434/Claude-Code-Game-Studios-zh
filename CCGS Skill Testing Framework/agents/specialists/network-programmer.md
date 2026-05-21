@@ -1,81 +1,78 @@
-# Agent Test Spec: network-programmer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: Multiplayer networking, state replication, lag compensation, matchmaking protocol design, and network message schemas.
-Does NOT own: gameplay logic (only the networking of it), server infrastructure and deployment (devops-engineer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：network-programmer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references multiplayer / replication / networking)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over gameplay logic or server deployment infrastructure
+## Agent 摘要
+领域：Gameplay 网络 — 客户端/服务器同步、状态复制、RPC、netcode 优化、在线匹配系统。所有引擎通用的网络模式。
+不拥有：服务器基础设施和 CI（devops-engineer）。游戏逻辑设计（game-designer）。反作弊设计（security-engineer）。
+Model tier：Sonnet（默认）。
+未分配 Gate ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Design state replication for player position in a 4-player co-op game."
-**Expected behavior:**
-- Produces a sync strategy document covering:
-  - Replication frequency (e.g., 20Hz with delta compression)
-  - Priority tier (e.g., own-player high priority, other players medium)
-  - Interpolation approach for remote players (e.g., linear interpolation with 100ms buffer)
-  - Bandwidth estimate per player per second
-- Does NOT implement the player movement logic itself (defers to gameplay-programmer)
-- Proposes dead-reckoning or prediction strategy to reduce visible lag
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Deploy our game server to AWS EC2 and set up auto-scaling."
-**Expected behavior:**
-- Does NOT produce server deployment configuration, Terraform, or AWS setup scripts
-- Explicitly states that server infrastructure belongs to `devops-engineer`
-- Redirects the request to `devops-engineer`
-- May note it can provide the network protocol spec the server needs to implement once infrastructure is set up
-
-### Case 3: State divergence — rollback/reconciliation
-**Input:** "Under high latency, clients are diverging from the authoritative server state for physics objects."
-**Expected behavior:**
-- Proposes a rollback-and-reconciliation approach (client-side prediction + server authoritative correction)
-- Specifies the state snapshot format, reconciliation trigger threshold (e.g., >5 units position error), and correction interpolation speed
-- Notes the input buffer pattern for deterministic replay
-- Does NOT change the physics simulation itself — documents the interface contract for engine-programmer
-
-### Case 4: Anti-cheat conflict
-**Input:** "We want client-authoritative position for smooth movement, but anti-cheat requires server validation."
-**Expected behavior:**
-- Surfaces the direct conflict: client-authority is fast but exploitable; server-authority is secure but requires latency compensation
-- Coordinates with `security-engineer` to agree on the validation boundary
-- Proposes a compromise (server validates position within a tolerance band, flags outliers) rather than unilaterally deciding
-- Documents the trade-off and escalates the final decision to `technical-director` if security-engineer and network-programmer cannot agree
-
-### Case 5: Context pass — latency budget
-**Input:** Technical preferences provided in context: target latency 80ms RTT for 95th percentile players. Request: "Design the input replication scheme for a fighting game."
-**Expected behavior:**
-- References the 80ms RTT budget explicitly in the design
-- Selects replication approach calibrated to that budget (e.g., rollback netcode is preferred for fighting games at this latency)
-- Specifies input delay frames calculated from the 80ms budget (e.g., 2 frames at 60fps = 33ms buffer)
-- Flags that rollback netcode requires gameplay-programmer to implement deterministic simulation
+- [ ] `description:` 字段存在且领域特定（reference to netcode / replication/ matchmaking）
+- [ ] `allowed-tools:` 列表包含 Read、Write、Edit、Bash、Glob、Grep
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对基础设施、游戏设计或安全拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (replication, lag compensation, protocol design, matchmaking)
-- [ ] Redirects server deployment to devops-engineer
-- [ ] Returns structured findings (sync strategies, protocol specs, bandwidth estimates)
-- [ ] Does not implement gameplay logic — only specifies the network contract for it
-- [ ] Coordinates with security-engineer on anti-cheat boundaries
-- [ ] Designs to explicit latency targets from provided context
+### Case 1：域内请求 — 适当的输出
+**输入：** "将玩家爬墙动作同步到其他客户端。"
+**预期行为：**
+- 产出客户端/服务器同步设计：
+  - 状态复制模型：服务器权威，客户端带插值回滚的预测
+  - `player_state` 同步：位置、速度、壁面状态
+  - 同步的数据保持最小以节省带宽 — 仅同步复制实际必需的内容
+  - 不实施具体游戏机制（gameplay-programmer）— 仅网络传输
+
+### Case 2：领域外请求 — 适当重定向
+**输入：** "为我们的游戏编写爬墙动画系统。"
+**预期行为：**
+- 将动画系统请求重定向到 gameplay-programmer
+- 明确这不是网络同步问题
+- 不编写代码在领域外
+
+### Case 3：带宽保护 — 冗余数据
+**输入：** "为一个频繁变化的 10 个对象字段同步状态。所有字段每帧发送。"
+**预期行为：**
+- 识别带宽浪费：每帧同步所有字段是浪费的 — 仅发送实际更改的字段，使用脏标记
+- 建议：位标记作为哪些字段实际脏的指示器
+- 估计节省：如果平均每个 tick 仅 2 个字段发生变化，增加 80% 效率
+- 将此应用于具体输入示例
+
+### Case 4：可靠性层级 — 正确交付
+**输入：** "每个击中指示应在两个客户端上精确同时呈现。"
+**预期行为：**
+- 正确识别交付需求：击中指示需要不可靠有序交付（快速和最近状态比完整历史更重要）
+- 不推荐可靠有序 — 解释如果每个击中事件在呈现前需要确认，则会引入延迟并落后
+- 提供具体交付模式的编码示例
+
+### Case 5：上下文传递 — 引擎能力
+**输入上下文：** 引擎为 Godot 4（ENet 多人网络 API）。ENet 提供可靠/不可靠信道、有序/无序选项、托管/专用两种。
+**输入：** "为我们的游戏设计多人网络网络层 — 4 名玩家，PvP。应使用 ENet 托管还是制作专用服务器？"
+**预期行为：**
+- 使用提供的引擎上下文：ENet 网络特定特性（信道、订购、托管/专用）
+- 为 4 名玩家的 PvP 推荐专用服务器模型以消除主机优势并确保公平性
+- 不推荐用 Godot 的原始 Socket 通信 — ENet 的 API 抽象对此规模合适
+- 使用时延迟测量进行设计，并具体引用 4 名玩家的场景
 
 ---
 
-## Coverage Notes
-- Replication strategy (Case 1) should include a bandwidth calculation reviewable by technical-director
-- Rollback/reconciliation (Case 3) must document the engine-programmer interface contract clearly
-- Anti-cheat conflict (Case 4) confirms the agent escalates rather than unilaterally deciding security trade-offs
+## 协议合规性
+
+- [ ] 停留在声明领域内（网络同步、netcode、匹配）
+- [ ] 将实现请求（动画、UI、游戏逻辑）重定向到适当 specialist
+- [ ] 输出带宽计算或交付模型 — 而非纯粹的叙述性描述
+- [ ] 根据所提供的上下文中的引擎能力进行设计
+
+---
+
+## 覆盖说明
+- Case 3（带宽估算）是可量化测试 — agent 必须产出实际数字
+- Case 5 需要引擎上下文在运行前可用；是上下文测试中最重要的
+- 无自动化运行器；手动审查或通过 `/skill-test`

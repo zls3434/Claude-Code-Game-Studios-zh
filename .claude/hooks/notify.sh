@@ -1,11 +1,12 @@
+# 翻译修改：2026-05-20, 修改人: zls3434
 #!/usr/bin/env bash
-# Notification hook — fires when Claude Code sends a notification
-# Shows a Windows toast via PowerShell
+# 通知 hook —— 当 Claude Code 发送通知时触发
+# 通过 PowerShell 显示 Windows 弹窗通知
 
-# Read notification JSON from stdin
+# 从 stdin 读取通知 JSON
 INPUT=$(cat)
 
-# Extract message — try jq first, fall back to grep
+# 提取消息 —— 优先使用 jq，备用 grep
 if command -v jq &>/dev/null; then
   MESSAGE=$(echo "$INPUT" | jq -r '.message // empty' 2>/dev/null)
 fi
@@ -16,10 +17,10 @@ if [ -z "$MESSAGE" ]; then
   MESSAGE="Claude Code needs your attention"
 fi
 
-# Sanitize message for PowerShell string embedding (escape single quotes)
+# 清理消息，使其安全嵌入 PowerShell 字符串（转义单引号）
 MESSAGE_SAFE=$(echo "$MESSAGE" | sed "s/'/''/g" | head -c 200)
 
-# Show Windows balloon tip notification (works on all Windows 10/11 without extra modules)
+# 显示 Windows 气泡提示通知（适用于所有 Windows 10/11，无需额外模块）
 powershell.exe -NonInteractive -WindowStyle Hidden -Command "
   Add-Type -AssemblyName System.Windows.Forms
   \$notify = New-Object System.Windows.Forms.NotifyIcon
@@ -32,4 +33,4 @@ powershell.exe -NonInteractive -WindowStyle Hidden -Command "
   \$notify.Dispose()
 " 2>/dev/null &
 
-echo "Notification: $MESSAGE_SAFE"
+echo "通知：$MESSAGE_SAFE"

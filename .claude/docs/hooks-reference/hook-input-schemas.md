@@ -1,12 +1,13 @@
-# Hook Input/Output Schemas
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Hook 输入/输出 Schema
 
-This documents the JSON payloads each Claude Code hook receives on stdin for every event type.
+本文档记录了每个 Claude Code Hook 在各个事件类型中通过 stdin 接收的 JSON 负载。
 
 ## PreToolUse
 
-Fired before a tool is executed. Can **allow** (exit 0) or **block** (exit 2).
+在工具执行前触发。可以 **允许**（exit 0）或 **阻止**（exit 2）。
 
-### PreToolUse: Bash
+### PreToolUse：Bash
 
 ```json
 {
@@ -19,7 +20,7 @@ Fired before a tool is executed. Can **allow** (exit 0) or **block** (exit 2).
 }
 ```
 
-### PreToolUse: Write
+### PreToolUse：Write
 
 ```json
 {
@@ -31,7 +32,7 @@ Fired before a tool is executed. Can **allow** (exit 0) or **block** (exit 2).
 }
 ```
 
-### PreToolUse: Edit
+### PreToolUse：Edit
 
 ```json
 {
@@ -44,7 +45,7 @@ Fired before a tool is executed. Can **allow** (exit 0) or **block** (exit 2).
 }
 ```
 
-### PreToolUse: Read
+### PreToolUse：Read
 
 ```json
 {
@@ -57,9 +58,9 @@ Fired before a tool is executed. Can **allow** (exit 0) or **block** (exit 2).
 
 ## PostToolUse
 
-Fired after a tool completes. **Cannot block** (exit code ignored for blocking). Stderr messages are shown as warnings.
+在工具完成后触发。**无法阻止**（阻塞检查会忽略退出码）。Stderr 消息会显示为警告。
 
-### PostToolUse: Write
+### PostToolUse：Write
 
 ```json
 {
@@ -72,7 +73,7 @@ Fired after a tool completes. **Cannot block** (exit code ignored for blocking).
 }
 ```
 
-### PostToolUse: Edit
+### PostToolUse：Edit
 
 ```json
 {
@@ -88,7 +89,7 @@ Fired after a tool completes. **Cannot block** (exit code ignored for blocking).
 
 ## SubagentStart
 
-Fired when a subagent is spawned via the Task tool.
+当通过 Task 工具启动子 Agent 时触发。
 
 ```json
 {
@@ -100,27 +101,27 @@ Fired when a subagent is spawned via the Task tool.
 
 ## SessionStart
 
-Fired when a Claude Code session begins. **No stdin input** — the hook just runs and its stdout is shown to Claude as context.
+当 Claude Code 会话开始时触发。**无 stdin 输入** — Hook 仅运行，其 stdout 会作为上下文显示给 Claude。
 
 ## PreCompact
 
-Fired before context window compression. **No stdin input** — the hook runs to save state before compression occurs.
+在上下文窗口压缩之前触发。**无 stdin 输入** — Hook 运行以在压缩前保存状态。
 
 ## Stop
 
-Fired when the Claude Code session ends. **No stdin input** — the hook runs for cleanup and logging.
+当 Claude Code 会话结束时触发。**无 stdin 输入** — Hook 运行以进行清理和日志记录。
 
-## Exit Code Reference
+## 退出码参考
 
-| Exit Code | Meaning | Applicable Events |
+| 退出码 | 含义 | 适用事件 |
 |-----------|---------|-------------------|
-| 0 | Allow / Success | All events |
-| 2 | Block (stderr shown to Claude) | PreToolUse only |
-| Other | Treated as error, tool proceeds | All events |
+| 0 | 允许 / 成功 | 所有事件 |
+| 2 | 阻止（stderr 显示给 Claude） | 仅 PreToolUse |
+| 其他 | 视为错误，工具继续执行 | 所有事件 |
 
-## Notes
+## 注意事项
 
-- Hooks receive JSON on **stdin** (pipe). Use `INPUT=$(cat)` to capture.
-- Parse with `jq` if available, fall back to `grep` for cross-platform compatibility.
-- On Windows, `grep -P` (Perl regex) is often unavailable. Use `grep -E` (POSIX extended) instead.
-- Path separators may be `\` on Windows. Normalize with `sed 's|\\|/|g'` when comparing paths.
+- Hook 通过 **stdin**（管道）接收 JSON。使用 `INPUT=$(cat)` 捕获。
+- 如果有 `jq` 可用，使用它解析；回退到 `grep` 以保证跨平台兼容性。
+- 在 Windows 上，`grep -P`（Perl 正则）通常不可用。改用 `grep -E`（POSIX 扩展正则）。
+- 在 Windows 上，路径分隔符可能是 `\`。比较路径时使用 `sed 's|\\|/|g'` 规范化。

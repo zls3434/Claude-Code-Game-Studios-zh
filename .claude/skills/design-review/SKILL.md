@@ -1,268 +1,137 @@
 ---
 name: design-review
-description: "Reviews a game design document for completeness, internal consistency, implementability, and adherence to project design standards. Run this before handing a design document to programmers."
-argument-hint: "[path-to-design-doc] [--depth full|lean|solo]"
+description: "评估游戏设计文档的深度、一致性和可构建性。对照支柱进行验证，识别必须在实现前解决的漏洞和矛盾。"
+argument-hint: "[系统名称 或 设计文件路径]"
 user-invocable: true
-allowed-tools: Read, Glob, Grep, Write, Edit, Task, AskUserQuestion
+allowed-tools: Read, Glob, Grep, Write, Task, AskUserQuestion
 model: sonnet
+agent: design-director
 ---
 
-## Phase 0: Parse Arguments
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-Extract `--depth [full|lean|solo]` if present. Default is `full` when no flag is given.
+## 阶段 1：加载设计规范
 
-**Note**: `--depth` controls the *analysis depth* of this skill (how many specialist agents are spawned). It is independent of the global review mode in `production/review-mode.txt`, which controls director gate spawning. These are two different concepts — `--depth` is about how thoroughly *this* skill analyses the document.
+读取用户指定的设计文件。如果未指定文件，提示用户选择。
 
-- **`full`**: Complete review — all phases + specialist agent delegation (Phase 3b)
-- **`lean`**: All phases, no specialist agents — faster, single-session analysis
-- **`solo`**: Phases 1-4 only, no delegation, no Phase 5 next-step prompt — use when called from within another skill
+对于 GDD 文件，如果设计文件没有 `Status` 字段，将其设置为 `Proposed`。
 
----
+加载相关参考：
 
-## Phase 1: Load Documents
-
-Read the target design document in full. Read CLAUDE.md to understand project context and standards. Read related design documents referenced or implied by the target doc (check `design/gdd/` for related systems).
-
-**Dependency graph validation:** For every system listed in the Dependencies section, use Glob to check whether its GDD file exists in `design/gdd/`. Flag any that don't exist yet — these are broken references that downstream authors will hit.
-
-**Lore/narrative alignment:** If `design/gdd/game-concept.md` or any file in `design/narrative/` exists, read it. Note any mechanical choices in this GDD that contradict established world rules, tone, or design pillars. Pass this context to `game-designer` in Phase 3b.
-
-**Prior review check:** Check whether `design/gdd/reviews/[doc-name]-review-log.md` exists. If it does, read the most recent entry — note what verdict was given and what blocking items were listed. This session is a re-review; track whether prior items were addressed.
+- 支柱文件：`design/gdd/game-pillars.md`（如果存在）
+- 游戏概念：`design/gdd/game-concept.md`
+- 系统索引：`design/gdd/systems-index.md`
+- 系统索引中引用的任何相邻系统的 GDD
 
 ---
 
-## Phase 2: Completeness Check
+## 阶段 2：对照支柱进行审查（设计一致性）
 
-Evaluate against the Design Document Standard checklist:
+读取游戏支柱并从以下角度评估设计：
 
-- [ ] Has Overview section (one-paragraph summary)
-- [ ] Has Player Fantasy section (intended feeling)
-- [ ] Has Detailed Rules section (unambiguous mechanics)
-- [ ] Has Formulas section (all math defined with variables)
-- [ ] Has Edge Cases section (unusual situations handled)
-- [ ] Has Dependencies section (other systems listed)
-- [ ] Has Tuning Knobs section (configurable values identified)
-- [ ] Has Acceptance Criteria section (testable success conditions)
+- **共鸣**：此设计与支柱的一致性如何？
+- **摩擦**：什么会产生负面玩家体验？
+- **优先级**：设计的哪一部分对支柱最重要？
+
+每根支柱都需要明确的声明或询问。
 
 ---
 
-## Phase 3: Consistency and Implementability
+## 阶段 3：结构完整性检查
 
-**Internal consistency:**
-- Do the formulas produce values that match the described behavior?
-- Do edge cases contradict the main rules?
-- Are dependencies bidirectional (does the other system know about this one)?
+检查设计文档是否涵盖这些部分：
 
-**Implementability:**
-- Are the rules precise enough for a programmer to implement without guessing?
-- Are there any "hand-wave" sections where details are missing?
-- Are performance implications considered?
+1. **概述**（这个系统做什么，为什么存在）
+2. **接口 / API**（其他系统如何与它交互——信号、方法、数据契约）
+3. **数据模型**（它拥有什么状态、数据结构、边界）
+4. **核心逻辑**（主要算法、规则、公式）
+5. **流程**（玩家/系统的交互序列，尤其是带顺序的）
+6. **事件**（它触发什么，它监听什么）
+7. **系统交互**（它如何与每个依赖项/调用者连接）
+8. **状态机**（它有哪些状态以及转换）
+9. **边缘情况**（什么可能出错以及如何应对）
+10. **UI & 交互**（如果有 UI)
+11. **性能预算**（帧预算、内存、加载时间）
+12. **平衡值**（数字、公式、约束）
+13. **验收标准**（什么使设计完成 / 可构建）
+14. **考虑过的替代方案**（什么被探索过但被拒绝了，以及为什么）
+15. **未解答的问题**（设计留下的开放性内容）
 
-**Cross-system consistency:**
-- Does this conflict with any existing mechanic?
-- Does this create unintended interactions with other systems?
-- Is this consistent with the game's established tone and pillars?
-
----
-
-## Phase 3b: Adversarial Specialist Review (full mode only)
-
-**Skip this phase in `lean` or `solo` mode.**
-
-**This phase is MANDATORY in full mode.** Do not skip it.
-
-**Before spawning any agents**, print this notice:
-> "Full review: spawning specialist agents in parallel. This typically takes 8–15 minutes. Use `--review lean` for faster single-session analysis."
-
-### Step 1 — Identify all domains the GDD touches
-
-Read the GDD and identify every domain present. A GDD can touch multiple domains simultaneously — be thorough. Common signals:
-
-| If the GDD contains... | Spawn these agents |
-|------------------------|-------------------|
-| Costs, prices, drops, rewards, economy | `economy-designer` |
-| Combat stats, damage, health, DPS | `game-designer`, `systems-designer` |
-| AI behaviour, pathfinding, targeting | `ai-programmer` |
-| Level layout, spawning, wave structure | `level-designer` |
-| Player progression, XP, unlocks | `economy-designer`, `game-designer` |
-| UI, HUD, menus, player-facing displays | `ux-designer`, `ui-programmer` |
-| Dialogue, quests, story, lore | `narrative-director` |
-| Animation, feel, timing, juice | `gameplay-programmer` |
-| Multiplayer, sync, replication | `network-programmer` |
-| Audio cues, music triggers | `audio-director` |
-| Performance, draw calls, memory | `performance-analyst` |
-| Engine-specific patterns or APIs | Primary engine specialist (from `.claude/docs/technical-preferences.md`) |
-| Acceptance criteria, test coverage | `qa-lead` |
-| Data schema, resource structure | `systems-designer` |
-| Any gameplay system | `game-designer` (always) |
-
-Spawn `game-designer` for all GDDs that describe gameplay mechanics or player-facing rules.
-Spawn `systems-designer` for all GDDs that contain formulas or system interaction rules.
-These are the most common baselines — but not required for pure UI specs, audio specs, or lore documents. Use the domain table above to determine which specialists are truly relevant.
-
-### Step 2 — Spawn all relevant specialists in parallel
-
-**CRITICAL: Task in this skill spawns a SUBAGENT — a separate independent Claude session
-with its own context window. It is NOT task tracking. Do NOT simulate specialist
-perspectives internally. Do NOT reason through domain views yourself. You MUST issue
-actual Task calls. A simulated review is not a specialist review.**
-
-Issue all Task calls simultaneously. Do NOT spawn one at a time.
-
-**Prompt each specialist adversarially:**
-> "Here is the GDD for [system] and the main review's structural findings so far.
-> Your job is NOT to validate this design — your job is to find problems.
-> Challenge the design choices from your domain expertise. What is wrong,
-> underspecified, likely to cause problems, or missing entirely?
-> Be specific and critical. Disagreement with the main review is welcome."
-
-**Additional instructions per agent type:**
-
-- **`game-designer`**: Anchor your review to the Player Fantasy stated in Section B of this GDD. Does this design actually deliver that fantasy? Would a player feel the intended experience? Flag any rules that serve implementability but undermine the stated feeling.
-
-- **`systems-designer`**: For every formula in the GDD, plug in boundary values (minimum and maximum plausible inputs). Report whether any outputs go degenerate — negative values, division by zero, infinity, or nonsensical results at the extremes.
-
-- **`qa-lead`**: Review every acceptance criterion. Flag any that are not independently testable — phrases like "feels balanced", "works correctly", "performs well" are not ACs. Suggest concrete rewrites for any that fail this test.
-
-### Step 3 — Senior lead review
-
-After all specialists respond, spawn `creative-director` as the **senior reviewer**:
-- Provide: the GDD, all specialist findings, any disagreements between them
-- Ask: "Synthesise these findings. What are the most important issues? Do you agree with the specialists? What is your overall verdict on this design?"
-- The creative-director's synthesis becomes the **final verdict** in Phase 4.
-
-### Step 4 — Surface disagreements
-
-If specialists disagree with each other or with the creative-director, do NOT silently pick one view. Present the disagreement explicitly in Phase 4 so the user can adjudicate.
-
-Mark every finding with its source: `[game-designer]`, `[economy-designer]`, `[creative-director]` etc.
+标记缺失的部分为：
+- `缺失` = 应该存在但不存在 → 标记为**疑虑**
+- `不适用` = 合理缺失（例如，没有 UI 的系统）→ 静默通过
+- `不完整` = 存在但太薄而无法实现 → 标记为**疑虑**
 
 ---
 
-## Phase 4: Output Review
+## 阶段 4：检查系统间的一致性
 
-```
-## Design Review: [Document Title]
-Specialists consulted: [list agents spawned]
-Re-review: [Yes — prior verdict was X on YYYY-MM-DD / No — first review]
+如果此设计涉及其他系统，验证：没有开放的循环（系统 A 提供和系统 B 消耗，但没有系统实际上导致它）、没有冲突的术语、没有冲突的所有权。
 
-### Completeness: [X/8 sections present]
-[List missing sections]
+---
 
-### Dependency Graph
-[List each declared dependency and whether its GDD file exists on disk]
-- ✓ enemy-definition-data.md — exists
-- ✗ loot-system.md — NOT FOUND (file does not exist yet)
+## 阶段 5：架构合规性审查
 
-### Required Before Implementation
-[Numbered list — blocking issues only. Each item tagged with source agent.]
+对照控制清单（`docs/architecture/control-manifest.md`）中的规则评估设计：
 
-### Recommended Revisions
-[Numbered list — important but not blocking. Source-tagged.]
+- 设计是否要求控制清单中禁止的任何内容？
+- 规则是否为约束此设计以实现其性能的方式提供了一种特定技术方法？
 
-### Specialist Disagreements
-[Any cases where agents disagreed with each other or with the main review.
-Present both sides — do not silently resolve.]
+---
 
-### Nice-to-Have
-[Minor improvements, low priority.]
+## 阶段 6：输出审查
 
-### Senior Verdict [creative-director]
-[Creative director's synthesis and overall assessment.]
+生成两个输出：（1）一个简短的裁决摘要；以及（2）一个详细审查文档。
 
-### Scope Signal
-Estimate implementation scope based on: dependency count, formula count,
-systems touched, and whether new ADRs are required.
-- **S** — single system, no formulas, no new ADRs, <3 dependencies
-- **M** — moderate complexity, 1-2 formulas, 3-6 dependencies
-- **L** — multi-system integration, 3+ formulas, may require new ADR
-- **XL** — cross-cutting concern, 5+ dependencies, multiple new ADRs likely
-Label clearly: "Rough scope signal: M (producer should verify before sprint planning)"
+### 裁决摘要
+在写入详细审查之前输出此内容：
 
-### Verdict: [APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED]
+```markdown
+## [设计文件] 的设计审查
+
+**审查日期**：[日期]
+**支柱对齐**：[对齐 / 存在摩擦 / 冲突]
+**完整性**：[完整 / 存在缺口 / 不完整]
+**裁决**：[批准 / 有条件批准 / 拒绝]
+
+**摘要**：[1-2 句话的结论]
+
+**冲突 / 缺口**：[列出需要解决的]
 ```
 
-This skill is read-only — no files are written during Phase 4.
+### 详细审查
+输出完整的审查文档。保存到 `design/reviews/[design-name]-review-[date].md`。
 
 ---
 
-## Phase 5: Next Steps
+## 阶段 7：裁决和行动
 
-Use `AskUserQuestion` for ALL closing interactions. Never plain text.
+### 批准
+输出："裁决：**批准**。设计完整且一致。将其标记为 `Status: Accepted` 以表示它已准备好实现。"
 
-**First widget — what to do next:**
+询问用户："为 [设计文件] 设置 `Status: Accepted` 吗？"
+- [A] 是 — 在 [file] 中设置 `Status: Accepted`
+- [B] 否 — 保持当前状态
 
-If APPROVED (first-pass, no revision needed), proceed directly to the systems-index widget, review-log widget, then the final closing widget. Do not show a separate "what to do" widget — the final closing widget covers next steps.
+### 有条件批准
+输出："裁决：**有条件批准**。设计坚实但存在缺口。"
 
-If NEEDS REVISION or MAJOR REVISION NEEDED, options:
-- `[A] Revise the GDD now — address blocking items together`
-- `[B] Stop here — revise in a separate session`
-- `[C] Accept as-is and move on (only if all items are advisory)`
+列出需要解决的缺口。对于每个缺口，要求：
+- `[A] 我将在最终确定前解决它`
+- `[B] 推迟——记录在'未解答的问题'下`
+- `[C] 不适用的切口——标记为'不适用'`
 
-**If user selects [A] — Revise now:**
+所有缺口解决后，重新运行设计审查（从阶段 1 进行新的评估）。
 
-Work through all blocking items, asking for design decisions only where you cannot resolve the issue from the GDD and existing docs alone. Group all design-decision questions into a single multi-tab `AskUserQuestion` before making any edits — do not interrupt mid-revision for each blocker individually.
+### 拒绝
+输出："裁决：**拒绝**。在实现之前必须解决 [N] 个冲突/缺口。"
 
-After all revisions are complete, show a summary table (blocker → fix applied) and use `AskUserQuestion` for a **post-revision closing widget**:
-
-- Prompt: "Revisions complete — [N] blockers resolved. What next?"
-- Note current context usage: if context is above ~50%, add: "(Recommended: /clear before re-review — this session has used X% context. A full re-review runs 5 agents and needs clean context.)"
-- Options:
-  - `[A] Re-review in a new session — run /design-review [doc-path] after /clear`
-  - `[B] Accept revisions and mark Approved — update systems index, skip re-review`
-  - `[C] Move to next system — /design-system [next-system] (#N in design order)`
-  - `[D] Stop here`
-
-Never end the revision flow with plain text. Always close with this widget.
-
-**Second widget — tracking records (combined, for APPROVED path):**
-
-When the verdict is APPROVED, use a single `AskUserQuestion` with `multiSelect: true` to batch the two tracking updates:
-- Prompt: "Verdict: APPROVED. I can update the tracking records now. Select any you'd like me to complete:"
-- Options:
-  - `Update systems-index.md status to 'Approved' for [system]`
-  - `Append approval entry to design/gdd/reviews/[doc-name]-review-log.md`
-
-If the review-log option is selected, append the same format as below. Execute both selected actions before showing the final closing widget.
-
-When the verdict is NEEDS REVISION or MAJOR REVISION NEEDED, use separate widgets as before:
-
-Use a second `AskUserQuestion`:
-- Prompt: "May I update `design/gdd/systems-index.md` to mark [system] as [In Review / Approved]?"
-- Options: `[A] Yes — update it` / `[B] No — leave it as-is`
-
-Use a third `AskUserQuestion`:
-- Prompt: "May I append this review summary to `design/gdd/reviews/[doc-name]-review-log.md`? This creates a revision history so future re-reviews can track what changed."
-- Options: `[A] Yes — append to review log` / `[B] No — skip`
-
-If yes, append an entry in this format:
-```
-## Review — [YYYY-MM-DD] — Verdict: [APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED]
-Scope signal: [S/M/L/XL]
-Specialists: [list]
-Blocking items: [count] | Recommended: [count]
-Summary: [2-3 sentence summary of key findings from creative-director verdict]
-Prior verdict resolved: [Yes / No / First review]
-```
+呈现每个冲突并请求解决方向。在所有冲突解决后重新运行审查。
 
 ---
 
-**Final closing widget — always show after all file writes complete:**
+## 阶段 8：后续步骤
 
-Once the systems-index and review-log widgets are answered, check project state and show one final `AskUserQuestion`:
-
-Before building options, read:
-- `design/gdd/systems-index.md` — find any system with Status: In Review or NEEDS REVISION (other than the one just reviewed)
-- Count `.md` files in `design/gdd/` (excluding game-concept.md, systems-index.md) to determine if `/review-all-gdds` is worth offering (≥2 GDDs)
-- Find the next system with Status: Not Started in design order
-
-Build the option list dynamically — only include options that are genuinely next:
-- `[_] Run /design-review [other-gdd-path] — [system name] is still [In Review / NEEDS REVISION]` (include if another GDD needs review)
-- `[_] Run /consistency-check — verify this GDD's values don't conflict with existing GDDs` (always include if ≥1 other GDD exists)
-- `[_] Run /review-all-gdds — holistic design-theory review across all designed systems` (include if ≥2 GDDs exist)
-- `[_] Run /design-system [next-system] — next in design order` (always include, name the actual system)
-- `[_] Stop here`
-
-Assign letters A, B, C… only to included options. Mark the most pipeline-advancing option as `(recommended)`.
-
-Never end the skill with plain text after file writes. Always close with this widget.
+- 如果已批准：运行 `/create-stories [system]` 创建实现任务。
+- 如果已批准且是第一个系统：运行 `/create-control-manifest`。
+- 如果被拒绝 / 有条件：提供 `/quick-design [缺口]` 以帮助解决。

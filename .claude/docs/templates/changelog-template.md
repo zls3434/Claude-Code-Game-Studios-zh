@@ -1,62 +1,64 @@
-# What's New in [Version]
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-**Release Date**: [Date]
+# [版本] 更新内容
 
----
-
-## New Features
-
-- **[Feature Name]**: [Player-friendly description of what they can now do. Focus on the experience, not the implementation. 1-2 sentences.]
-
-- **[Feature Name]**: [Description]
+**发布日期**：[日期]
 
 ---
 
-## Improvements
+## 新功能
 
-- **[Area Improved]**: [How this makes the game better for the player. Be specific.]
+- **[功能名称]**：[面向玩家的描述，说明他们现在能做什么。关注体验，而非实现。1-2句话。]
 
-- **[Area Improved]**: [Description]
-
----
-
-## Balance Changes
-
-- **[What Changed]**: [Old value] -> [New value]. [Brief design reasoning in player terms. Example: "Healing potions now restore 50 HP (up from 30) -- late-game encounters needed more recovery options."]
-
-- **[What Changed]**: [Description]
+- **[功能名称]**：[描述]
 
 ---
 
-## Bug Fixes
+## 改进
 
-- Fixed an issue where [describe the player-visible symptom, not the code fix]
-- Fixed [another player-visible symptom]
-- Fixed [symptom]
+- **[改进领域]**：[这对玩家而言如何使游戏更好。要具体。]
 
----
-
-## Known Issues
-
-- [Issue description in player terms]. [Workaround if one exists.] We're working on a fix.
+- **[改进领域]**：[描述]
 
 ---
 
-## Technical Notes (Internal Only -- Remove Before Publishing)
+## 平衡性变更
 
-### Commits Covered
-- Range: `[first-hash]..[last-hash]`
-- Total commits: [N]
+- **[变更内容]**：[旧值] -> [新值]。[用玩家能理解的术语简述设计理由。示例："治疗药水现在恢复50点HP（从30上调）—— 后期遭遇需要更多恢复选项。"]
 
-### Internal Changes
-- [Refactoring, infrastructure, or tooling changes not visible to players]
-
-### Deferred Items
-- [Features or fixes originally planned for this release but moved to next]
-  - Reason: [why deferred]
-  - New target: [version or sprint]
+- **[变更内容]**：[描述]
 
 ---
 
-Thank you for playing! Your feedback helps us improve the game.
-Report issues at [support link].
+## Bug修复
+
+- 修复了一个问题，即 [描述玩家可见的症状，而非代码修复]
+- 修复了 [另一个玩家可见的症状]
+- 修复了 [症状]
+
+---
+
+## 已知问题
+
+- [以玩家能理解的术语描述问题]。[如果存在变通方案则提供。]我们正在努力修复。
+
+---
+
+## 技术备注（仅供内部 — 发布前删除）
+
+### 覆盖的提交
+- 范围：`[first-hash]..[last-hash]`
+- 总提交数：[N]
+
+### 内部变更
+- [重构、基础设施或工具变更，对玩家不可见]
+
+### 推迟的项目
+- [原本计划此次发布但移至下一个版本的功能或修复]
+  - 原因：[为什么推迟]
+  - 新目标：[版本或冲刺]
+
+---
+
+感谢您的游玩！您的反馈帮助我们改进游戏。
+在 [支持链接] 报告问题。

@@ -1,18 +1,19 @@
+# 翻译修改：2026-05-20, 修改人: zls3434
 #!/bin/bash
-# Claude Code SubagentStop hook: Log agent completion for audit trail
-# Tracks when agents finish and their outcome
+# Claude Code SubagentStop hook：记录 Agent 完成日志用于审计追踪
+# 追踪 Agent 何时完成及其结果
 #
-# Input schema (SubagentStop) — per Claude Code hooks reference:
+# 输入 schema（SubagentStop）—— 依据 Claude Code hooks 参考文档：
 # { "session_id": "...", "agent_id": "agent-abc123", "agent_type": "Explore",
 #   "agent_transcript_path": "...", "last_assistant_message": "...", ... }
 #
-# The agent name is in `agent_type`, NOT `agent_name`. Reading `.agent_name`
-# returns null on every invocation, so the fallback "unknown" is always used
-# and the audit trail captures nothing useful.
+# Agent 名称在 `agent_type` 中，而非 `agent_name`。读取 `.agent_name`
+# 每次调用都返回 null，因此备用值 "unknown" 总是被使用，
+# 审计追踪记录不到有用信息。
 
 INPUT=$(cat)
 
-# Parse agent name -- use jq if available, fall back to grep
+# 解析 Agent 名称 —— 优先使用 jq，备用 grep
 if command -v jq >/dev/null 2>&1; then
     AGENT_NAME=$(echo "$INPUT" | jq -r '.agent_type // "unknown"' 2>/dev/null)
 else
@@ -25,6 +26,6 @@ SESSION_LOG_DIR="production/session-logs"
 
 mkdir -p "$SESSION_LOG_DIR" 2>/dev/null
 
-echo "$TIMESTAMP | Agent completed: $AGENT_NAME" >> "$SESSION_LOG_DIR/agent-audit.log" 2>/dev/null
+echo "$TIMESTAMP | Agent 已完成：$AGENT_NAME" >> "$SESSION_LOG_DIR/agent-audit.log" 2>/dev/null
 
 exit 0

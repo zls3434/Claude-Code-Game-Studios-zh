@@ -1,31 +1,44 @@
-# Godot Engine — Version Reference
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Godot 引擎版本
 
-| Field | Value |
-|-------|-------|
-| **Engine Version** | Godot 4.6 |
-| **Release Date** | January 2026 |
-| **Project Pinned** | 2026-02-12 |
-| **Last Docs Verified** | 2026-02-12 |
-| **LLM Knowledge Cutoff** | May 2025 |
+> 最后验证：2026-02-13
+> Godot 官方文档 — https://docs.godotengine.org/en/stable/
 
-## Knowledge Gap Warning
+## 锁定版本
 
-The LLM's training data likely covers Godot up to ~4.3. Versions 4.4, 4.5,
-and 4.6 introduced significant changes that the model does NOT know about.
-Always cross-reference this directory before suggesting Godot API calls.
+**引擎：** Godot 4.5.1（稳定版）
 
-## Post-Cutoff Version Timeline
+当 LLM 知识截止日期早于引擎发布日期时，
+引擎参考文件具有权威性。
 
-| Version | Release | Risk Level | Key Theme |
-|---------|---------|------------|-----------|
-| 4.4 | ~Mid 2025 | MEDIUM | Jolt physics option, FileAccess return types, shader texture type changes |
-| 4.5 | ~Late 2025 | HIGH | Accessibility (AccessKit), variadic args, @abstract, shader baker, SMAA |
-| 4.6 | Jan 2026 | HIGH | Jolt default, glow rework, D3D12 default on Windows, IK restored |
+Agent 调用任何引擎 API 时，应提供官方文档链接
+以进行验证和深入阅读。
 
-## Verified Sources
+## 知识缺口窗口
 
-- Official docs: https://docs.godotengine.org/en/stable/
-- 4.5→4.6 migration: https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.6.html
-- 4.4→4.5 migration: https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.5.html
-- Changelog: https://github.com/godotengine/godot/blob/master/CHANGELOG.md
-- Release notes: https://godotengine.org/releases/4.6/
+| 项目 | 日期 |
+|------|------|
+| LLM 知识截止日期 | 2025 年 5 月 |
+| Godot 4.5 发布 | 2025 年 6 月 |
+| Godot 4.5.1 发布 | 2025 年 9 月 |
+
+**缺口：** 从 2025 年 5 月发布以来的所有 Godot 更新均在 LLM 数据之外。
+下面的参考文件记录了模型无法知晓的 API、最佳实践和破坏性更改。
+
+## 参考文件
+
+```
+engine-reference/godot/
+├── VERSION.md              ← 你在这里
+├── breaking-changes.md     ← 从 4.4 以来的 API 破坏性变更
+├── deprecated-apis.md       ← 被替换的旧 API
+├── current-best-practices.md ← 不在模型数据中的新实践
+└── modules/                ← 快速子系统参考
+    ├── animation.md
+    ├── audio.md
+    ├── input.md
+    ├── navigation.md
+    ├── networking.md
+    ├── physics.md
+    └── rendering.md
+```

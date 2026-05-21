@@ -1,66 +1,67 @@
-# Sprint [N] — [Start Date] to [End Date]
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Sprint Goal
+# 冲刺 [N] — [开始日期] 至 [结束日期]
 
-[One sentence: what does this sprint achieve toward the current milestone?]
+## 冲刺目标
 
-## Milestone Context
+[一句话：此冲刺对当前里程碑实现有什么贡献？]
 
-- **Current Milestone**: [Name]
-- **Milestone Deadline**: [Date]
-- **Sprints Remaining**: [N]
+## 里程碑上下文
 
-## Capacity
+- **当前里程碑**：[名称]
+- **里程碑截止日期**：[日期]
+- **剩余冲刺数**：[N]
 
-- **Total days**: [X]
-- **Buffer (20%)**: [Y days reserved for unplanned work]
-- **Available**: [Z days]
+## 人力容量
 
-## Tasks
+- **总天数**：[X]
+- **缓冲（20%）**：[Y天保留用于计划外工作]
+- **可用天数**：[Z天]
 
-### Must Have (Critical Path)
+## 任务
 
-| ID | Task | Agent/Owner | Est. Days | Dependencies | Acceptance Criteria | Status |
+### 必须完成（关键路径）
+
+| ID | 任务 | Agent/负责人 | 预估天数 | 依赖项 | 验收标准 | 状态 |
 |----|------|-------------|-----------|-------------|-------------------|--------|
-| S[N]-001 | | | | None | | Not Started |
-| S[N]-002 | | | | S[N]-001 | | Not Started |
+| S[N]-001 | | | | 无 | | 未开始 |
+| S[N]-002 | | | | S[N]-001 | | 未开始 |
 
-### Should Have
+### 应该完成
 
-| ID | Task | Agent/Owner | Est. Days | Dependencies | Acceptance Criteria | Status |
+| ID | 任务 | Agent/负责人 | 预估天数 | 依赖项 | 验收标准 | 状态 |
 |----|------|-------------|-----------|-------------|-------------------|--------|
-| S[N]-010 | | | | | | Not Started |
+| S[N]-010 | | | | | | 未开始 |
 
-### Nice to Have (Cut First)
+### 锦上添花（首先裁剪）
 
-| ID | Task | Agent/Owner | Est. Days | Dependencies | Acceptance Criteria | Status |
+| ID | 任务 | Agent/负责人 | 预估天数 | 依赖项 | 验收标准 | 状态 |
 |----|------|-------------|-----------|-------------|-------------------|--------|
-| S[N]-020 | | | | | | Not Started |
+| S[N]-020 | | | | | | 未开始 |
 
-## Carryover from Sprint [N-1]
+## 从冲刺 [N-1] 移入的任务
 
-| Original ID | Task | Reason for Carryover | New Estimate | Priority Change |
+| 原始ID | 任务 | 移入原因 | 新预估 | 优先级变更 |
 |------------|------|---------------------|-------------|----------------|
 
-## Risks to This Sprint
+## 本次冲刺的风险
 
-| Risk | Probability | Impact | Mitigation | Owner |
+| 风险 | 概率 | 影响 | 缓解措施 | 负责人 |
 |------|------------|--------|-----------|-------|
 
-## External Dependencies
+## 外部依赖
 
-| Dependency | Status | Impact if Delayed | Contingency |
+| 依赖项 | 状态 | 延迟影响 | 应急方案 |
 |-----------|--------|------------------|-------------|
 
-## Definition of Done
+## 完成的定义
 
-- [ ] All Must Have tasks completed
-- [ ] All tasks pass acceptance criteria
-- [ ] QA plan exists (`production/qa/qa-plan-sprint-[N].md`)
-- [ ] All Logic/Integration stories have passing unit/integration tests
-- [ ] Smoke check passed (`/smoke-check sprint`)
-- [ ] QA sign-off report: APPROVED or APPROVED WITH CONDITIONS (`/team-qa sprint`)
-- [ ] No S1 or S2 bugs in delivered features
-- [ ] Design documents updated for any deviations
-- [ ] Code reviewed and merged
-
+- [ ] 所有"必须完成"任务已完成
+- [ ] 所有任务通过验收标准
+- [ ] QA计划已存在（`production/qa/qa-plan-sprint-[N].md`）
+- [ ] 所有逻辑/集成故事具有通过的单元/集成测试
+- [ ] 冒烟测试通过（`/smoke-check sprint`）
+- [ ] QA签收报告：已批准或带条件批准（`/team-qa sprint`）
+- [ ] 已交付功能中无S1或S2级别Bug
+- [ ] 设计文档已针对任何偏差更新
+- [ ] 代码已审查并合并

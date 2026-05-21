@@ -1,72 +1,83 @@
-# Godot Input — Quick Reference
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Godot 4.5 — 输入参考
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+> 最后验证：2026-02-13
+> Godot 文档 — [Input](https://docs.godotengine.org/en/4.5/classes/class_input.html)
 
-## What Changed Since ~4.3 (LLM Cutoff)
+## InputEvent 类型
 
-### 4.6 Changes
-- **Dual-focus system**: Mouse/touch focus is now separate from keyboard/gamepad focus
-  - Visual feedback differs by input method
-  - Custom focus implementations may need updating
-- **Select Mode keybind changed**: "Select Mode" is now `v` key; old mode renamed "Transform Mode" (`q` key)
+现代 Godot 使用带类型的输入事件，而非通用字符串检查。
 
-### 4.5 Changes
-- **SDL3 gamepad driver**: Gamepad handling delegated to SDL library for better cross-platform support
-- **Recursive Control disable**: Single property disables mouse/focus for entire node hierarchies
+| 类型 | 使用场景 | 属性 |
+|------|---------|------------|
+| `InputEventKey` | 键盘按键 | `keycode`、`physical_keycode`、`echo`、`pressed` |
+| `InputEventMouseButton` | 鼠标按钮 | `button_index`、`pressed`、`double_click` |
+| `InputEventMouseMotion` | 鼠标移动 | `relative`、`velocity` |
+| `InputEventJoypadButton` | 手柄按钮 | `button_index`、`pressed` |
+| `InputEventJoypadMotion` | 手柄摇杆 | `axis`、`axis_value` |
+| `InputEventScreenTouch` | 触摸屏按下 | `index`、`position`、`pressed` |
+| `InputEventScreenDrag` | 触摸屏拖拽 | `index`、`position`、`relative` |
+| `InputEventAction` | 输入映射动作 | `action`、`pressed`、`strength` |
 
-### 4.3 Changes (in training data)
-- **InputEventShortcut**: Dedicated event type for menu shortcuts (optional)
+## InputEventAction（首选方式）
 
-## Current API Patterns
-
-### Input Actions (unchanged)
 ```gdscript
-func _physics_process(delta: float) -> void:
-    var input_dir: Vector2 = Input.get_vector(
-        &"move_left", &"move_right", &"move_forward", &"move_back"
-    )
-    if Input.is_action_just_pressed(&"jump"):
-        jump()
-```
-
-### Input Events (unchanged)
-```gdscript
-func _unhandled_input(event: InputEvent) -> void:
-    if event is InputEventMouseButton:
-        if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-            handle_click(event.position)
-    elif event is InputEventKey:
-        if event.keycode == KEY_ESCAPE and event.pressed:
-            toggle_pause()
-```
-
-### Focus Management (4.6 — CHANGED)
-```gdscript
-# Mouse/touch and keyboard/gamepad focus are now SEPARATE
-# Visual styles may differ depending on which input method is active
-# If you have custom focus drawing, test with both input methods
-
-# Standard approach still works:
-func _ready() -> void:
-    %StartButton.grab_focus()  # Keyboard/gamepad focus
-
-# But be aware: mouse hover focus != keyboard focus in 4.6
-```
-
-### Gamepad (4.5+ — SDL3 backend)
-```gdscript
-# API unchanged, but SDL3 provides:
-# - Better device detection across platforms
-# - Improved rumble support
-# - More consistent button mapping
-
 func _input(event: InputEvent) -> void:
-    if event is InputEventJoypadButton:
-        if event.button_index == JOY_BUTTON_A and event.pressed:
-            confirm_selection()
+    if event.is_action_pressed("jump"):
+        _do_jump()
+    elif event.is_action_released("jump"):
+        _release_jump()
 ```
 
-## Common Mistakes
-- Not testing both mouse and keyboard focus paths (dual-focus in 4.6)
-- Assuming `grab_focus()` affects mouse focus (it only affects keyboard/gamepad in 4.6)
-- Using string literals instead of `StringName` (`&"action"`) for action names in hot paths
+## Input Singleton
+
+用于轮询当前状态。
+
+```gdscript
+# 检查当前是否按下
+if Input.is_action_pressed("jump"):
+    velocity.y = JUMP_VELOCITY
+
+# 检查是否刚按下（沿）
+if Input.is_action_just_pressed("attack"):
+    _attack()
+
+# 获取轴值（-1.0 到 1.0）
+var direction: float = Input.get_axis("move_left", "move_right")
+
+# 获取矢量方向
+var input_dir: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+
+# 鼠标位置和动作
+var mouse_pos: Vector2 = get_viewport().get_mouse_position()
+```
+
+## 输入映射
+
+通过 `InputMap` 可编程设置：
+
+```gdscript
+# 创建动作
+InputMap.add_action("dash")
+var event := InputEventKey.new()
+event.keycode = KEY_SHIFT
+InputMap.action_add_event("dash", event)
+```
+
+## 常见模式
+
+```gdscript
+# 标准平台游戏移动
+func _physics_process(delta: float) -> void:
+    var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+    velocity = input_dir * speed
+    move_and_slide()
+
+# 鼠标捕获/释放
+func _input(event: InputEvent) -> void:
+    if event.is_action_pressed("ui_cancel"):
+        if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+            Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+        else:
+            Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+```

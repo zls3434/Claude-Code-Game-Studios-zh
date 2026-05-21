@@ -1,16 +1,26 @@
-# CODEOWNERS — auto-assigns reviewers to PRs by path
-# Format: <pattern> <@github-username or @org/team>
-# Last match wins. Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# 代码所有者  — Claude Code Game Studios
+#
+# 自动请求审查。最后匹配的模式优先。
+#
+# 默认所有者（回退），除非特定路径另有指定
+*       @donchitos @github-actions
 
-# Default owner for everything
-*                           @Donchitos
+# 生产和工作流
+production/     @calong
+.claude/        @calong
 
-# Core configuration — owner review required
-CLAUDE.md                   @Donchitos
-.claude/                    @Donchitos
-settings.json               @Donchitos
+# 游戏设计文档
+design/         @donchitos
 
-# Skills and agents — high-impact, review carefully
-.claude/skills/             @Donchitos
-.claude/agents/             @Donchitos
-.claude/hooks/              @Donchitos
+# 源代码（按语言/引擎划分）
+src/            @calong
+
+# 测试
+tests/          @calong
+
+# 文档
+docs/           @calong
+
+# CI/CD 和构建
+.github/        @donchitos

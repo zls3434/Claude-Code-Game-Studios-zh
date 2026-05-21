@@ -1,79 +1,84 @@
-# Agent Test Spec: ue-umg-specialist
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-- **Domain**: UMG widget hierarchy design, data binding patterns, CommonUI input routing and action tags, widget styling (WidgetStyle assets), UI optimization (widget pooling, ListView, invalidation)
-- **Does NOT own**: UX flow and screen navigation design (ux-designer), gameplay logic (gameplay-programmer), backend data sources (game code), server communication
-- **Model tier**: Sonnet
-- **Gate IDs**: None; defers UX flow decisions to ux-designer
+# Agent Test Spec：ue-umg-specialist
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references UMG, widget hierarchy, CommonUI)
-- [ ] `allowed-tools:` list matches the agent's role (Read/Write for UI assets and Blueprint files; no server or gameplay source tools)
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over UX flow, navigation architecture, or gameplay data logic
+## Agent 摘要
+领域：Unreal Motion Graphics（UMG）— Widget Blueprint、Common UI、Slate 集成、UMG 性能、数据绑定。
+不拥有：UX 流程设计（ux-designer）、视觉样式（art-director）。
+Model tier：Sonnet（默认）。
+未分配 Gate ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — inventory widget with data binding
-**Input**: "Create an inventory widget that shows a grid of item slots. Each slot should display item icon, quantity, and rarity color. It needs to update when the inventory changes."
-**Expected behavior**:
-- Produces a UMG widget structure: a parent WBP_Inventory containing a UniformGridPanel or TileView, with a child WBP_InventorySlot widget per item
-- Describes data binding approach: either Event Dispatchers on an Inventory Component triggering a refresh, or a ListView with a UObject item data class implementing IUserObjectListEntry
-- Specifies how rarity color is driven: a WidgetStyle asset or a data table lookup, not hardcoded color values
-- Output includes the widget hierarchy, binding pattern, and the refresh trigger mechanism
-
-### Case 2: Out-of-domain request — UX flow design
-**Input**: "Design the full navigation flow for our inventory system — how the player opens it, transitions to character stats, and exits to the pause menu."
-**Expected behavior**:
-- Does not produce a navigation flow or screen transition architecture
-- States clearly: "Navigation flow and screen transition design is owned by ux-designer; I can implement the UMG widget structure once the flow is defined"
-- Does not make UX decisions (back button behavior, transition animations, modal vs. fullscreen) without a UX spec
-
-### Case 3: Domain boundary — CommonUI input action mismatch
-**Input**: "Our inventory widget isn't responding to the controller Back button. We're using CommonUI."
-**Expected behavior**:
-- Identifies the likely cause: the widget's Back input action tag does not match the project's registered CommonUI InputAction data asset
-- Explains the CommonUI input routing model: widgets declare input actions via `CommonUI_InputAction` tags; the CommonActivatableWidget handles routing
-- Provides the fix: verify that the widget's Back action tag matches the registered tag in the project's CommonUI input action data table
-- Distinguishes this from a hardware input binding issue (which would be Enhanced Input territory)
-
-### Case 4: Widget performance issue — many widget instances per frame
-**Input**: "Our leaderboard widget creates 500 individual WBP_LeaderboardRow instances at once. The game hitches for 300ms when opening the leaderboard."
-**Expected behavior**:
-- Identifies the root cause: 500 widget instantiations in a single frame causes a construction hitch
-- Recommends switching to ListView or TileView with virtualization — only visible rows are constructed
-- Explains the IUserObjectListEntry interface requirement for ListView data objects
-- If ListView is not appropriate, recommends pooling: pre-instantiate a fixed number of rows and recycle them with new data
-- Output is a concrete recommendation with the specific UMG component to use, not a vague "optimize it"
-
-### Case 5: Context pass — CommonUI setup already configured
-**Input context**: Project uses CommonUI with the following registered InputAction tags: UI.Action.Confirm, UI.Action.Back, UI.Action.Pause, UI.Action.Secondary.
-**Input**: "Add a 'Sort Inventory' button to the inventory widget that works with CommonUI."
-**Expected behavior**:
-- Uses UI.Action.Secondary (or recommends registering a new tag like UI.Action.Sort if Secondary is already allocated)
-- Does NOT invent a new InputAction tag without noting that it must be registered in the CommonUI data table
-- Does NOT use a non-CommonUI input binding approach (e.g., raw key press in Event Graph) when CommonUI is the established pattern
-- References the provided tag list explicitly in the recommendation
+- [ ] `description:` 字段存在且领域特定（引用 UMG / Widget / Common UI / Slate）
+- [ ] `allowed-tools:` 列表包含 Read、Write、Edit、Bash、Glob、Grep
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对 UX 流程或视觉艺术拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (UMG structure, data binding, CommonUI, widget performance)
-- [ ] Redirects UX flow and navigation design requests to ux-designer
-- [ ] Returns structured findings (widget hierarchy + binding pattern) rather than freeform opinions
-- [ ] Uses existing CommonUI InputAction tags from context; does not invent new ones without flagging registration requirement
-- [ ] Recommends virtualized lists (ListView/TileView) before widget pooling for large collections
+### Case 1：域内请求 — 适当的输出
+**输入：** "为 RPG 角色创建带有标签页的主菜单（背包、角色属性、设置）。"
+**预期行为：**
+- 生成 UMG Blueprint 布局设计：
+  - 带有 `CommonActivatableWidgetStack`（或 `WidgetSwitcher`）的主容器用于标签切换
+  - 每个标签页注册为 `CommonActivatableWidget`（InventoryWidget、StatsWidget、SettingsWidget）
+  - 带有将输入路由到正确面板的逻辑的 Back button 处理
+- 如果使用 Common UI，使用 `UCommonActivatableWidgetStack` 的推入/弹出激活 API
+- 不设计视觉外观或 UX 流程 — 仅构建容器结构
+
+### Case 2：领域外重定向
+**输入：** "设计背包的 UX 流程 — 玩家装备物品 vs. 丢弃物品 — 以及物品交互菜单的外观。"
+**预期行为：**
+- 将 UX 流程设计重定向到 `ux-designer`
+- 将视觉样式重定向到 `art-director`
+- 不设计物品装扮或 UI 视觉效果
+- 可备注将实现 ux-designer 和 art-director 指定的任何规范和资产
+
+### Case 3：列表性能 — 大型物品列表
+**输入：** "背包 UMG ListView 需要显示 200 个物品，界面会卡顿。"
+**预期行为：**
+- 诊断原因：`UListView` 不使用 `EntryWidgetPool` 进行元素复用，在大型列表中会导致性能问题
+- 提供 `UTileView`（网格）或带池化的自定义 `UListView` 作为备选，但注明 UMG 大型列表存在固有性能问题
+- 建议：将可见物品限制在 20-30 个，并添加搜索/过滤以避免渲染全部 200 个元素
+- 不过度设计列表在 Blueprint 中放置 200+ 条目的复杂池化
+
+### Case 4：输入导航 — 焦点陷阱
+**输入：** "游戏手柄导航跳出设置面板进入背后运行的 gameplay HUD。"
+**预期行为：**
+- 识别缺少焦点隔离
+- 在 Common UI 中，使用 `CommonActivatableWidget` 激活/停用时的焦点管理 API
+- 设置面板激活时禁用 gameplay widget 输入
+- 面板关闭时将焦点恢复到上一个聚焦元素
+- 处理设置面板中的环形导航（焦点循环不退出到 gameplay）
+
+### Case 5：上下文传递 — 游戏手柄模式
+**输入：** 项目上下文：专为游戏手柄使用构建的游戏。请求："为带滚动列表的设置面板实现导航。"
+**预期行为：**
+- 使用所提供上下文：全游戏手柄导航，无鼠标备用
+- 使用 Common UI 的导航提示（`CommonBoundActionBar` 或等效）指示按钮可用于将焦点移入/移出滚动列表
+- 确保列表项正确可聚焦，带有视觉高亮状态
+- 为向上/向下滚动设计显式导航路径，而非依赖意外游戏手柄行为
 
 ---
 
-## Coverage Notes
-- Case 3 (CommonUI input routing) requires project to have CommonUI configured; test is skipped if project does not use CommonUI
-- Case 4 (performance) is a high-impact failure mode — 300ms hitches are shipping-blocking; prioritize this test case
-- Case 5 is the most important context-awareness test for UI pipeline consistency
-- No automated runner; review manually or via `/skill-test`
+## 协议合规性
+
+- [ ] 停留在声明领域内（UMG、Common UI、Slate 集成、数据绑定）
+- [ ] 将 UX 流程重定向到 ux-designer
+- [ ] 将视觉资产/样式重定向到 art-director
+- [ ] 返回结构化 Widget Blueprint 布局和导航设计
+- [ ] 使用适当的 UMG 容器（`CommonActivatableWidgetStack`、`WidgetSwitcher`、`ListView`）
+- [ ] 为大型列表标记 UMG 性能限制（200+ 条目 = 需要搜索/过滤/池化）
+- [ ] 根据提供的游戏手柄上下文设计焦点导航（非键鼠假设）
+
+---
+
+## 覆盖说明
+- 主菜单结构（Case 1）应生成可扩展布局 — 新标签页无需修改容器即可添加
+- UMG 列表性能（Case 3）确认 agent 知道 UMG 限制且不会过度设计池化
+- 焦点陷阱（Case 4）是常见的 UE 可访问性 bug — 验证 agent 以可访问性为出发点处理游戏手柄导航

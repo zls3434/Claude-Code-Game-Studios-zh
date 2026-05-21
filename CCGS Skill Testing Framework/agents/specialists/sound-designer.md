@@ -1,84 +1,86 @@
-# Agent Test Spec: sound-designer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: SFX specs, audio events, mixing parameters, and sound category definitions.
-Does NOT own: music composition direction (audio-director), code implementation of audio systems.
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：sound-designer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references SFX / audio events / mixing)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Glob, Grep — does NOT include engine code execution tools
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over music direction or audio code implementation
+## Agent 摘要
+- **领域**：声音效果设计（SFX）、音频资产创建、环境音轨、音频混合、音频实现脚本
+- **不拥有**：音乐创作（不同领域），视觉艺术（art-director），叙事内容（narrative-director），代码实现（sound 集成由 gameplay-programmer 处理）
+- **Model tier**：Sonnet（单个系统的创作）
+- **Gate ID**：无
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Create an SFX spec for a sword swing attack."
-**Expected behavior:**
-- Produces a complete audio event spec including:
-  - Event name (e.g., `sfx_combat_sword_swing`)
-  - Variation count (minimum 3 to avoid repetition fatigue)
-  - Pitch range (e.g., ±8% randomization)
-  - Volume range and normalization target (e.g., -12 dBFS)
-  - Sound category (e.g., `combat_sfx`)
-  - Suggested layering notes (whoosh layer + impact transient)
-- Output follows the project audio naming convention if one is established
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Compose a looping ambient music track for the forest level."
-**Expected behavior:**
-- Does NOT produce music composition direction or a music brief
-- Explicitly states that music direction belongs to `audio-director`
-- Redirects the request to `audio-director`
-- May note it can provide an SFX ambience layer spec (wind, wildlife) to complement the music once the music direction is set
-
-### Case 3: Dynamic parameter — falloff curve spec
-**Input:** "The sword swing SFX needs distance falloff so it sounds different across the arena."
-**Expected behavior:**
-- Produces a spec for the dynamic parameter including:
-  - Parameter name (e.g., `distance` or `listener_distance`)
-  - Falloff curve type (e.g., logarithmic, linear, custom)
-  - Near/far distance thresholds with corresponding volume and high-frequency attenuation values
-  - Occlusion override behavior if applicable
-- Does NOT write the audio engine integration code (defers to the appropriate programmer)
-
-### Case 4: Naming convention conflict
-**Input:** "Add a new SFX event called `SWORD_HIT_1` for the melee system."
-**Expected behavior:**
-- Identifies that `SWORD_HIT_1` conflicts with the established event naming convention (snake_case with category prefix, e.g., `sfx_combat_sword_hit`)
-- Does NOT silently register the non-conforming name
-- Flags the conflict to `audio-director` with the proposed compliant alternative
-- Will proceed with the corrected name once confirmed by audio-director
-
-### Case 5: Context pass — uses audio style guide
-**Input:** Audio style guide provided in context specifying: "gritty, grounded, no reverb tails over 1.5s, reference: The Witcher 3 combat audio." Request: "Create SFX specs for the full melee combat suite."
-**Expected behavior:**
-- References the "gritty, grounded" tone descriptor in the spec rationale
-- Caps all reverb tail specifications at 1.5 seconds as stated
-- Notes the reference material (The Witcher 3) as a benchmark for mix levels and transient design
-- Does NOT produce specs that contradict the style guide (e.g., no ethereal or heavily reverb-processed specs)
+- [ ] `description:` 字段存在且领域特定（SFX、环境、音频混合）
+- [ ] `allowed-tools:` 列表匹配 agent 角色（读写音频文件、参数；如果音频工具是脚本驱动也许 Bash）
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对视觉资产或叙事内容拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (SFX specs, event definitions, mixing parameters)
-- [ ] Redirects music direction requests to audio-director
-- [ ] Returns structured audio event specs (event name, variations, pitch, volume, category)
-- [ ] Does not produce code for audio system implementation
-- [ ] Flags naming convention violations rather than silently accepting non-conforming names
-- [ ] References provided style guides and constraints in all spec output
+### Case 1：域内请求 — 环境音轨
+**输入：** "为我们的水下洞穴关卡设计一个环境音轨。声音应反映深度、隔离感以及远处偶然的水滴声。3 分钟循环。"
+**预期行为：**
+- 产出环境声音设计：
+  - 基础层：低频水下嗡嗡声（低沉、深沉、无干扰）
+  - 中层：远距离流水/潜水声（偶尔、有机时间）
+  - 顶层：近距离水滴声（每 5-15 秒随机发生）
+  - 参数：距离衰减、音调、混合平衡谱
+- 为水效果指定具体音频参数（例如低通滤波器 <400Hz 用于深水音调）
+- 不创作实际音频波形 — 仅设计
+
+### Case 2：领域外请求 — 视觉资产
+**输入：** "为山洞中的发光水母设计视觉 VFX。"
+**预期行为：**
+- 将视觉资产请求重定向到 art-director
+- 不设计视觉外观或 VFX
+- 可提供音频提示（例如发光水母可能有轻微闪烁的声音），但不设计视觉效果
+
+### Case 3：音频混合 — 语音对白平衡
+**输入：** "玩家报告在与 Boss 战斗时听不到角色 VO 语音。OS 是最重要的叙事部分。"
+**预期行为：**
+- 识别音频混合问题：战斗音乐 + SFX 正压过语音对白
+- 提出混合调整：
+  - 在关键对话期间，使用 -6dB ducking 降低战斗音乐和 SFX，以防止语音被压倒
+  - 在对话混音中优先处理语音智能度（高于 2kHz 的频率）
+- 提供具体 dB 数值和混合平衡谱
+
+### Case 4：UI SFX — 反馈时机
+**输入：** "UI 按钮需要声音反馈 — 它们应在何时发生？"
+**预期行为：**
+- 指定 UI 声音时机：
+  - 点击按钮：按钮'按下'声音在按下时立即播放（<5ms 延迟）
+  - 悬停：轻微'高亮'声音用于选择（UI 导航）
+  - 错误：按钮不可用时播放空咔嗒声或轻微蜂鸣声
+- 指定声音类型（非叙事性，无环境混响，单声道，简短在 <100ms）
+- 在 UI 状态机中包含上下文相关的声音触发
+
+### Case 5：上下文传递 — 音频资产格式
+**输入上下文：** 目标平台为 Nintendo Switch 和 PC。Switch 编码要求：所有音频使用 ADPCM 4bit 编码以减少 CPU 负载。PC 使用 Vorbis 高质量。
+**输入：** "为我们的敌人死亡 SFX 设计音频管道 — 需要 Switch 和 PC 两种构建。"
+**预期行为：**
+- 使用提供的平台编码上下文：Switch 输出使用 ADPCM 4bit 编码，PC 输出使用 Vorbis 高品质编码
+- 设计资产管道：来源 = 24bit/48kHz WAV → 为 Switch 导出为 ADPCM 4bit → 为 PC 导出为 Vorbis q6
+- 不混合平台格式
+- 如果音频预算超过每个平台允许的最大数量，注明内存影响
 
 ---
 
-## Coverage Notes
-- SFX spec format (Case 1) should match whatever event schema the audio middleware (Wwise/FMOD/built-in) requires
-- Falloff curve (Case 3) verifies the agent produces implementation-ready parameter specs
-- Style guide compliance (Case 5) confirms the agent reads provided context and constrains output accordingly
+## 协议合规性
+
+- [ ] 停留在声明领域内（SFX、环境声音、音频混合）
+- [ ] 将视觉资产请求重定向到 art-director
+- [ ] 将叙事请求重定向到 narrative-director
+- [ ] 使用上下文中具体的 dB 数值和频率参数
+- [ ] 根据平台特定编码约束设计音频资产
+
+---
+
+## 覆盖说明
+- Case 3（音频平衡）是可量化测试 — 需要具体 dB 数值
+- Case 5 要求平台编码信息在运行前可用；是上下文测试中最重要的
+- 无实际音频波形需要验证 — 仅行为设计
+- 无自动化运行器；手动审查或通过 `/skill-test`

@@ -1,82 +1,86 @@
-# Agent Test Spec: performance-analyst
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: Profiling, bottleneck identification, performance metrics tracking, and optimization recommendations.
-Does NOT own: implementing optimizations (belongs to the appropriate programmer for that domain).
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：performance-analyst
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references profiling / bottleneck analysis / performance metrics)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over implementing any optimization — explicitly identifies itself as analysis/recommendation only
+## Agent 摘要
+- **领域**：分析 CPU、GPU、内存和磁盘性能、帧时间分析、瓶颈识别、优化建议
+- **不拥有**：实际代码实现（engine-programmer、gameplay-programmer 等根据系统而定）、资产创建（技术/艺术团队）
+- **Model tier**：Sonnet（单个系统的分析）
+- **Gate ID**：无
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Analyze this frame time data: CPU 14ms, GPU 8ms, physics 6ms, draw calls 420, scripts 3ms."
-**Expected behavior:**
-- Identifies the primary bottleneck: CPU is over a 16.67ms (60fps) budget at 14ms total
-- Breaks down contributors: physics (6ms, 43% of CPU time) is the top culprit
-- Draw calls (420) flags as a secondary concern if the budget limit is lower (e.g., 200 draw calls per technical-preferences.md)
-- Produces a prioritized bottleneck report:
-  1. Physics — 6ms, reduce simulation frequency or switch broadphase algorithm
-  2. Draw calls — 420, implement batching or LOD
-  3. Scripts — 3ms, profile hot paths
-- Does NOT implement any of these optimizations
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Implement the batching optimization to reduce draw calls from 420 to under 200."
-**Expected behavior:**
-- Does NOT produce implementation code for batching
-- Explicitly states that implementing optimizations belongs to the appropriate programmer (engine-programmer for rendering batching)
-- Redirects the implementation to `engine-programmer` with the recommendation context attached
-- May produce a requirements brief for the optimization so engine-programmer has a clear target
-
-### Case 3: Regression identification
-**Input:** "Performance dropped significantly after last week's commits. Frame time went from 10ms to 18ms."
-**Expected behavior:**
-- Proposes a bisection strategy to identify the offending commit range
-- Requests or reviews the diff of commits in the window to narrow the likely cause
-- Identifies affected systems based on what changed (e.g., if physics code was modified, points to physics as the primary suspect)
-- Produces a regression report naming the probable commit, the affected system, and the measured delta
-
-### Case 4: Recommendation vs. code quality trade-off
-**Input:** "The fastest optimization for the script bottleneck would be to inline all calls and remove abstraction layers."
-**Expected behavior:**
-- Surfaces the trade-off: inlining improves performance but reduces testability and violates the coding standard requiring unit-testable public methods
-- Does NOT recommend the optimization without noting the code quality cost
-- Escalates the trade-off to `lead-programmer` for a decision
-- May propose a middle path (e.g., profile-guided inlining of only the hottest 2–3 methods) that preserves testability
-
-### Case 5: Context pass — technical-preferences.md budget
-**Input:** Technical preferences from context: Target 60fps, frame budget 16.67ms, draw calls max 200, memory ceiling 512MB. Request: "Review the current build profile."
-**Expected behavior:**
-- References the specific values from the provided context: 16.67ms, 200 draw calls, 512MB
-- Compares current measurements against each threshold explicitly
-- Labels each metric as WITHIN BUDGET / AT RISK / OVER BUDGET based on the provided numbers
-- Does NOT use different budget numbers than those provided in the context
+- [ ] `description:` 字段存在且领域特定（性能分析、帧时间、瓶颈）
+- [ ] `allowed-tools:` 列表匹配 agent 角色（读代码进行性能分析，读资产，不修改代码）
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对代码实现拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (profiling, analysis, recommendations — not implementation)
-- [ ] Redirects optimization implementation to the correct programmer domain agent
-- [ ] Returns structured findings (bottleneck report with severity, measured values, and recommended action owner)
-- [ ] Escalates code-quality trade-offs to lead-programmer rather than deciding unilaterally
-- [ ] Applies budget thresholds from provided context rather than assumed defaults
-- [ ] Labels all findings with a specific action owner (who should implement the fix)
+### Case 1：域内请求 — 帧时间分析
+**输入：** "我们游戏的运行帧时间为：AI 更新 3.2ms、渲染提交 5.1ms、物理 1.8ms、UI 0.4ms、其他 0.6ms。总帧时间为 11.1ms（在 60fps 时为 16.67ms 内）。有哪些优化机会？"
+**预期行为：**
+- 分析帧时间预算分布：
+  - AI 更新 3.2ms 是 CPU 侧最大的单一块 — 如果可优化，优先优化 AI
+  - 渲染提交 5.1ms 很高 — 可能 draw call 或 overdraw 导致
+  - 物理 1.8ms 在良好边界内
+- 为每个块识别具体问题（AI 更新 — 太多 NPC 运行？；渲染 — 太多动态对象合并？）
+- 不重写代码 — 仅诊断
+- 输出带有每个问题的 CPU 时间估计的瓶颈排名
+
+### Case 2：领域外请求 — 代码修复
+**输入：** "好的，AI 块很慢。你能修复 AI 代码使其更快吗？"
+**预期行为：**
+- 不修复代码
+- 将实现请求重定向到 ai-programmer 或 engine-programmer
+- 可提供 AI 代码的具体优化策略描述（例如将感知范围减小到 X 单位、将行为树从 Y 复杂度降低），但不编写代码
+- 产出带有这些建议的修改建议文档
+
+### Case 3：内存使用分析
+**输入：** "游戏使用 2.8GB RAM，但 target 是 2GB 上限。我们有一个背包系统加载物品图标为 2048x2048 纹理。如何减少？"
+**预期行为：**
+- 分析内存来源：
+  - 2048x2048 纹理可能为 RGBA8 占用 ~16MB 一个
+  - 如果 UI 中有 50 个物品图标，成本 ~800MB — 完全未经缩放
+- 提出缩放减小：项目内物品图标为 256x256 (~1MB/个)，50 项 — 显著降低内存负担
+- 建议不加载全分辨率纹理，可流式加载缩略图
+- 结果必须可获得以适应当前目标
+
+### Case 4：Draw Call 优化 — overdraw
+**输入：** "场景有 15 个 draw call 在透明对象上，GPU 帧时间很高。"
+**预期行为：**
+- 识别 overdraw 为问题：15 个透明对象互相叠加，每个对像素着色器增加 GPU 成本
+- 提出合并/批处理透明对象以减少 pass 数
+- 考虑将不透明对象作为透明之前的第一 pass
+- 如果需要，建议将绘图顺序从后到前排列
+- 不产出代码修复 — 仅策略
+
+### Case 5：上下文传递 — 平台性能目标
+**输入上下文：** 目标平台为 Nintendo Switch。CPU 目标是 30fps（33.33ms 帧时间）。GPU 目标是 1080p 手持，720p 底座。
+**输入：** "我们的游戏目前在 Switch 上的最坏情况场景下以 18ms 帧时间运行。分析我们是否达到目标（需要 33.33ms 窗口），还有什么可优化。"
+**预期行为：**
+- 在上下文中使用提供的目标 Switch 帧时间（33.33ms）
+- 确定游戏当前以 18ms 运行 — 远低于预算（良好！），无需紧急优化
+- 如果确实需要，仍然识别潜在风险区域（尖峰、未利用的帧时间）
+- 不目标化为泛化"更快" — 基于上下文的实际目标
 
 ---
 
-## Coverage Notes
-- Frame time analysis (Case 1) output should be structured as a report filed in `production/qa/evidence/`
-- Regression case (Case 3) confirms the agent investigates cause, not just measures symptoms
-- Code quality trade-off (Case 4) verifies the agent does not recommend optimizations that violate coding standards without flagging the conflict
+## 协议合规性
+
+- [ ] 停留在声明领域内（性能分析，优化建议）
+- [ ] 将代码修复请求重定向到适当 specialist
+- [ ] 产出带有具体时间/budget 数字的结构化分析
+- [ ] 使用提供的平台目标作为约束
+- [ ] 绝不修改游戏代码 — 仅读和分析
+
+---
+
+## 覆盖说明
+- Case 1（帧时间分析）是最量化的测试 — 必须产出实际数字
+- Case 5 要求平台性能目标在运行前可用；是上下文测试中最重要的
+- 无自动化运行器；手动审查或通过 `/skill-test`

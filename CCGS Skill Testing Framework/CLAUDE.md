@@ -1,31 +1,33 @@
-# CCGS Skill Testing Framework — Claude Instructions
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-This folder is the quality assurance layer for the Claude Code Game Studios skill/agent
-framework. It is self-contained and separate from any game project.
+# CCGS Skill Testing Framework — Claude 使用说明
 
-## Key files
+本文件夹是 Claude Code Game Studios skill/agent 框架的质量保障层。
+它是自包含的，独立于任何游戏项目。
 
-| File | Purpose |
+## 关键文件
+
+| 文件 | 用途 |
 |------|---------|
-| `catalog.yaml` | Master registry for all 73 skills and 49 agents. Contains category, spec path, and last-test tracking fields. Always read this first when running any test command. |
-| `quality-rubric.md` | Category-specific pass/fail metrics. Read the matching `###` section for the skill's category when running `/skill-test category`. |
-| `skills/[category]/[name].md` | Behavioral spec for a skill — 5 test cases + protocol compliance assertions. |
-| `agents/[tier]/[name].md` | Behavioral spec for an agent — 5 test cases + protocol compliance assertions. |
-| `templates/skill-test-spec.md` | Template for writing new skill spec files. |
-| `templates/agent-test-spec.md` | Template for writing new agent spec files. |
-| `results/` | Written by `/skill-test spec` when results are saved. Gitignored. |
+| `catalog.yaml` | 全部 73 个 skill 和 49 个 agent 的主注册表。包含 category、spec 路径和最近测试跟踪字段。执行任何测试命令时，始终首先读取此文件。 |
+| `quality-rubric.md` | 按 category 分类的 PASS/FAIL 指标。运行 `/skill-test category` 时，请阅读对应 skill category 的 `###` 章节。 |
+| `skills/[category]/[name].md` | skill 的行为规范 — 5 个测试用例 + 协议合规性断言。 |
+| `agents/[tier]/[name].md` | agent 的行为规范 — 5 个测试用例 + 协议合规性断言。 |
+| `templates/skill-test-spec.md` | 编写新 skill spec 文件的模板。 |
+| `templates/agent-test-spec.md` | 编写新 agent spec 文件的模板。 |
+| `results/` | 由 `/skill-test spec` 在保存结果时写入。已通过 .gitignore 忽略。 |
 
-## Path conventions
+## 路径约定
 
-- Skill specs: `CCGS Skill Testing Framework/skills/[category]/[name].md`
-- Agent specs: `CCGS Skill Testing Framework/agents/[tier]/[name].md`
-- Catalog: `CCGS Skill Testing Framework/catalog.yaml`
-- Rubric: `CCGS Skill Testing Framework/quality-rubric.md`
+- Skill specs：`CCGS Skill Testing Framework/skills/[category]/[name].md`
+- Agent specs：`CCGS Skill Testing Framework/agents/[tier]/[name].md`
+- Catalog：`CCGS Skill Testing Framework/catalog.yaml`
+- Rubric：`CCGS Skill Testing Framework/quality-rubric.md`
 
-The `spec:` field in `catalog.yaml` is the authoritative path for each skill/agent spec.
-Always read it rather than guessing the path.
+`catalog.yaml` 中的 `spec:` 字段是每个 skill/agent spec 的权威路径。
+始终读取该字段，而不是猜测路径。
 
-## Skill categories
+## Skill 类别
 
 ```
 gate        → gate-check
@@ -42,10 +44,10 @@ team        → team-combat, team-narrative, team-audio, team-level, team-ui,
               team-qa, team-release, team-polish, team-live-ops
 sprint      → sprint-plan, sprint-status, milestone-review, retrospective,
               changelog, patch-notes
-utility     → all remaining skills
+utility     → 所有其他 skill
 ```
 
-## Agent tiers
+## Agent 层级
 
 ```
 directors   → creative-director, technical-director, producer, art-director
@@ -66,28 +68,28 @@ creative    → writer, world-builder, game-designer, economy-designer,
               systems-designer, prototyper
 ```
 
-## Workflow for testing a skill
+## 测试 skill 的工作流程
 
-1. Read `catalog.yaml` to get the skill's `spec:` path and `category:`
-2. Read the skill at `.claude/skills/[name]/SKILL.md`
-3. Read the spec at the `spec:` path
-4. Evaluate assertions case by case
-5. Offer to write results to `results/` and update `catalog.yaml`
+1. 读取 `catalog.yaml` 获取该 skill 的 `spec:` 路径和 `category:`
+2. 读取位于 `.claude/skills/[name]/SKILL.md` 的 skill
+3. 读取 `spec:` 路径下的 spec
+4. 逐用例评估断言
+5. 提供将结果写入 `results/` 并更新 `catalog.yaml` 的选项
 
-## Workflow for improving a skill
+## 改进 skill 的工作流程
 
-Use `/skill-improve [name]`. It handles the full loop:
-test → diagnose → propose fix → rewrite → retest → keep or revert.
+使用 `/skill-improve [name]`。它处理完整循环：
+test → diagnose → propose fix → rewrite → retest → keep or revert。
 
-## Spec validity note
+## Spec 有效性说明
 
-Specs in this folder describe **current behavior**, not ideal behavior. They were
-written by reading the skills, so they may encode bugs. When a skill misbehaves in
-practice, correct the skill first, then update the spec to match the fixed behavior.
-Treat spec failures as "this needs investigation," not "the skill is definitively wrong."
+本文件夹中的 spec 描述的是**当前行为**，而非理想行为。它们是
+通过读取 skill 编写而成的，因此可能包含 bug。当 skill 在实际中表现异常时，
+先修正 skill，然后更新 spec 以匹配修正后的行为。
+将 spec 失败视为"需要调查的事项"，而非"skill 一定有问题"。
 
-## This folder is deletable
+## 本文件夹可删除
 
-Nothing in `.claude/` imports from here. Deleting this folder has no effect on the
-CCGS skills or agents themselves. `/skill-test` and `/skill-improve` will report that
-`catalog.yaml` is missing and guide the user to initialize it.
+`.claude/` 中没有任何内容导入本文件夹。删除本文件夹对
+CCGS skill 或 agent 本身没有任何影响。`/skill-test` 和 `/skill-improve` 会报告
+`catalog.yaml` 缺失，并引导用户初始化它。

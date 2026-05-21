@@ -1,249 +1,250 @@
-# Skill Quality Rubric
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-Used by `/skill-test category [name|all]` to evaluate skills beyond structural compliance.
-Each category defines 4–5 binary PASS/FAIL metrics specific to the skill's job.
+# Skill 质量评分标准
 
-A metric is PASS when the skill's written instructions clearly satisfy the criterion.
-A metric is FAIL when the instructions are absent, ambiguous, or contradictory.
-A metric is WARN when the instructions partially address the criterion.
+用于 `/skill-test category [name|all]`，评估 skill 在结构合规性之外的质量。
+每个 category 定义 4–5 个二元的 PASS/FAIL 指标，针对该 skill 的具体职责。
+
+当 skill 的书面指令明确满足某条标准时，该指标为 PASS。
+当指令缺失、模糊或矛盾时，该指标为 FAIL。
+当指令部分满足标准时，该指标为 WARN。
 
 ---
 
-## Skill Categories
+## Skill 类别
 
 ### `gate`
 
-**Skills**: gate-check
+**Skills**：gate-check
 
-Gate skills control phase transitions. They must enforce correctness without
-auto-advancing stage and must respect the three review modes.
+Gate skill 控制阶段转换。它必须在不过度自动推进 stage 的前提下强制执行正确性，
+并且必须遵守三种 review mode。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **G1 — Review mode read** | Skill reads `production/session-state/review-mode.txt` (or equivalent) before deciding which directors to spawn |
-| **G2 — Full mode: all 4 directors spawn** | In `full` mode, all 4 Tier-1 directors (CD, TD, PR, AD) PHASE-GATE prompts are invoked in parallel |
-| **G3 — Lean mode: PHASE-GATE only** | In `lean` mode, only `*-PHASE-GATE` gates run; inline gates (CD-PILLARS, TD-ARCHITECTURE, etc.) are skipped |
-| **G4 — Solo mode: no directors** | In `solo` mode, no director gates spawn; each is noted as "skipped — Solo mode" |
-| **G5 — No auto-advance** | Skill never writes `production/stage.txt` without explicit user confirmation via "May I write" |
+| **G1 — Review mode 读取** | Skill 在决定 spawn 哪些 director 之前读取 `production/session-state/review-mode.txt`（或等效文件） |
+| **G2 — Full mode：所有 4 个 director 均 spawn** | 在 `full` mode 下，所有 4 个 Tier-1 director（CD, TD, PR, AD）的 PHASE-GATE prompt 被并行 invoke |
+| **G3 — Lean mode：仅 PHASE-GATE** | 在 `lean` mode 下，仅运行 `*-PHASE-GATE` gate；内联 gate（CD-PILLARS, TD-ARCHITECTURE 等）被跳过 |
+| **G4 — Solo mode：无 director** | 在 `solo` mode 下，不 spawn 任何 director gate；每个都被标注为"已跳过 — Solo mode" |
+| **G5 — 不自动推进** | Skill 在未经用户通过"May I write"明确确认的情况下，绝不写入 `production/stage.txt` |
 
 ---
 
 ### `review`
 
-**Skills**: design-review, architecture-review, review-all-gdds
+**Skills**：design-review, architecture-review, review-all-gdds
 
-Review skills read documents and produce structured verdicts. They are primarily
-read-only and must not trigger director gates during the analysis phase.
+Review skill 读取文档并产出结构化的裁决结果。它们在分析阶段主要处于只读模式，
+且不得触发 director gate。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **R1 — Read-only enforcement** | Skill does not modify the reviewed document without explicit user approval; any write operations (review logs, index updates) are gated behind "May I write" |
-| **R2 — 8-section check** | Skill evaluates all 8 required GDD sections (or equivalent architectural sections) explicitly |
-| **R3 — Correct verdict vocabulary** | Verdict is exactly one of: APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED (design) or PASS / CONCERNS / FAIL (architecture) |
-| **R4 — No director gates during analysis** | Skill does not spawn director gates during its analysis phases; post-analysis director review (as in architecture-review) is acceptable when the skill's scope and stakes warrant it |
-| **R5 — Structured findings** | Output contains a per-section status table or checklist before the final verdict |
+| **R1 — 只读强制** | Skill 在未经用户明确批准的情况下不修改被审查的文档；任何写操作（review log、index 更新）都受"May I write" gate 控制 |
+| **R2 — 8-section 检查** | Skill 明确评估所有 8 个必需的 GDD section（或等效的架构 section） |
+| **R3 — 正确的裁决词汇** | 裁决必须恰好为以下之一：APPROVED / NEEDS REVISION / MAJOR REVISION NEEDED（design）或 PASS / CONCERNS / FAIL（architecture） |
+| **R4 — 分析阶段无 director gate** | Skill 在其分析阶段不 spawn director gate；分析后 director review（如 architecture-review 中）在 skill 的范围和风险需要时是可接受的 |
+| **R5 — 结构化发现** | 输出在最终裁决之前包含逐 section 的状态表或 checklist |
 
-> **Exceptions:**
-> - `design-review`: Has `Write, Edit` in allowed-tools to support an optional "Revise now" path (all writes gated behind user approval) and to write review logs. R1 is satisfied because the reviewed document is never silently modified.
-> - `architecture-review`: Spawns TD-ARCHITECTURE and LP-FEASIBILITY gates after its analysis is complete. This is intentional — architecture review is high-stakes and benefits from director sign-off. R4 is satisfied because the gates run post-analysis, not during it.
+> **例外情况：**
+> - `design-review`：在 allowed-tools 中包含 `Write, Edit`，以支持可选的"立即修订"路径（所有写入受用户批准控制）以及写入 review log。R1 满足，因为被审查的文档不会被静默修改。
+> - `architecture-review`：在分析完成后 spawn TD-ARCHITECTURE 和 LP-FEASIBILITY gate。这是有意为之 — architecture review 属于高风险操作，受益于 director 签字。R4 满足，因为 gate 在分析之后运行，而非分析期间。
 
 ---
 
 ### `authoring`
 
-**Skills**: design-system, quick-design, architecture-decision, ux-design, ux-review, art-bible, create-architecture
+**Skills**：design-system, quick-design, architecture-decision, ux-design, ux-review, art-bible, create-architecture
 
-Authoring skills create or update design documents collaboratively. Full GDD/UX
-authoring skills use a section-by-section cycle; lightweight authoring skills use
-a single-draft pattern appropriate to their smaller scope.
+Authoring skill 以协作方式创建或更新设计文档。完整的 GDD/UX authoring skill 使用
+逐 section 循环；轻量级 authoring skill 使用适合其较小范围的单草稿模式。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **A1 — Section-by-section cycle** | Full authoring skills (design-system, ux-design, art-bible) author one section at a time, presenting content for approval before proceeding to the next. Lightweight skills (quick-design, architecture-decision, create-architecture) may draft the complete document then ask for approval — single-draft is acceptable for documents under ~4 hours of implementation scope. |
-| **A2 — May-I-write per section** | Full authoring skills ask "May I write this to [filepath]?" before each section write. Lightweight skills ask once for the complete document. |
-| **A3 — Retrofit mode** | Skill detects if the target file already exists and offers to update specific sections rather than overwriting the whole document. Lightweight skills (quick-design) that always create new files are exempt. |
-| **A4 — Director gate at correct tier** | If a director gate is defined for this skill (e.g., CD-GDD-ALIGN, TD-ADR), it runs at the correct mode threshold (full/lean) — NOT in solo |
-| **A5 — Skeleton-first** | Full authoring skills create a file skeleton with all section headers before filling content, to preserve progress on session interruption. Lightweight skills are exempt. |
+| **A1 — 逐 section 循环** | 完整 authoring skill（design-system, ux-design, art-bible）一次编写一个 section，在继续下一个之前呈现内容供审批。轻量级 skill（quick-design, architecture-decision, create-architecture）可草拟完整文档后请求审批 — 对于实现范围约 4 小时以下的文档，单草稿模式是可接受的。 |
+| **A2 — 逐 section 的 May-I-write** | 完整 authoring skill 在写入每个 section 之前询问"May I write this to [filepath]?"。轻量级 skill 对完整文档询问一次。 |
+| **A3 — Retrofit mode** | Skill 检测目标文件是否已存在，并提供更新特定 section 而非覆盖整个文档的选项。始终创建新文件的轻量级 skill（quick-design）除外。 |
+| **A4 — Director gate 在正确的层级** | 如果为此 skill 定义了 director gate（例如 CD-GDD-ALIGN, TD-ADR），则在正确的 mode 阈值（full/lean）下运行 — 不在 solo 下运行 |
+| **A5 — Skeleton-first** | 完整 authoring skill 在填充内容之前创建一个包含所有 section 标题的文件骨架，以便在会话中断时保留进度。轻量级 skill 除外。 |
 
-> **Full authoring skills** (must pass all 5 metrics): `design-system`, `ux-design`, `art-bible`
-> **Lightweight authoring skills** (A1, A2, A5 use single-draft pattern; A3 exempt for new-file-only skills): `quick-design`, `architecture-decision`, `create-architecture`
-> **Review-mode skill** (evaluated against review metrics): `ux-review`
+> **完整 authoring skill**（必须通过全部 5 项指标）：`design-system`, `ux-design`, `art-bible`
+> **轻量级 authoring skill**（A1、A2、A5 使用单草稿模式；A3 对于仅创建新文件的 skill 豁免）：`quick-design`, `architecture-decision`, `create-architecture`
+> **Review-mode skill**（按 review 指标评估）：`ux-review`
 
 ---
 
 ### `readiness`
 
-**Skills**: story-readiness, story-done
+**Skills**：story-readiness, story-done
 
-Readiness skills validate stories before or after implementation. They must produce
-multi-dimensional verdicts and integrate correctly with director gate mode.
+Readiness skill 在实现之前或之后验证 story。它们必须产出
+多维裁决，并与 director gate mode 正确集成。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **RD1 — Multi-dimensional check** | Skill checks ≥3 independent dimensions (e.g., Design, Architecture, Scope, DoD) and reports each separately |
-| **RD2 — Three verdict levels** | Verdict hierarchy is clearly defined: READY/COMPLETE > NEEDS WORK/COMPLETE WITH NOTES > BLOCKED |
-| **RD3 — BLOCKED requires external action** | BLOCKED verdict is reserved for issues that cannot be fixed by the story author alone (e.g., Proposed ADR, unresolvable dependency) |
-| **RD4 — Director gate at correct mode** | QL-STORY-READY or LP-CODE-REVIEW gate spawns in `full` mode, skips in `lean`/`solo` with a noted skip message |
-| **RD5 — Next-story handoff** | After completion, skill surfaces the next READY story from the active sprint |
+| **RD1 — 多维检查** | Skill 检查 ≥3 个独立维度（例如 Design, Architecture, Scope, DoD），并分别报告每个维度 |
+| **RD2 — 三级裁决** | 裁决层次结构明确定义：READY/COMPLETE > NEEDS WORK/COMPLETE WITH NOTES > BLOCKED |
+| **RD3 — BLOCKED 需要外部操作** | BLOCKED 裁决仅保留给 story 作者独自无法解决的问题（例如 Proposed ADR、不可解决的依赖） |
+| **RD4 — Director gate 在正确的 mode** | QL-STORY-READY 或 LP-CODE-REVIEW gate 在 `full` mode 下 spawn，在 `lean`/`solo` 下跳过并附跳过说明信息 |
+| **RD5 — 下一个 story 交接** | 完成后，skill 显示活动 sprint 中的下一个 READY story |
 
 ---
 
 ### `pipeline`
 
-**Skills**: create-epics, create-stories, dev-story, create-control-manifest, propagate-design-change, map-systems
+**Skills**：create-epics, create-stories, dev-story, create-control-manifest, propagate-design-change, map-systems
 
-Pipeline skills produce artifacts that other skills consume. They must write files
-with correct schema, respect layer/priority ordering, and gate before writing.
+Pipeline skill 产出供其他 skill 消费的工件。它们必须按正确 schema 写入文件，
+遵守 layer/priority 排序，并在写入前 gate。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **P1 — Correct output schema** | Each produced file follows the project template (EPIC.md, story frontmatter, etc.); skill references the template path |
-| **P2 — Layer/priority ordering** | Skills that produce epics or stories respect layer ordering (core → extended → meta) and priority fields |
-| **P3 — May-I-write before each artifact** | Skill asks "May I write [artifact]?" before creating each output file, not batch-approving all files at once |
-| **P4 — Director gate at correct tier** | In-scope gates (PR-EPIC, QL-STORY-READY, LP-CODE-REVIEW, etc.) run in `full`, skip in `lean`/`solo` with noted skip |
-| **P5 — Reads before writes** | Skill reads the relevant GDD/ADR/manifest before producing artifacts to ensure alignment |
+| **P1 — 正确的输出 schema** | 每个产出文件遵循项目模板（EPIC.md、story frontmatter 等）；skill 引用模板路径 |
+| **P2 — Layer/priority 排序** | 产出 epic 或 story 的 skill 遵守 layer 排序（core → extended → meta）和 priority 字段 |
+| **P3 — 每个工件前 May-I-write** | Skill 在创建每个输出文件之前询问"May I write [artifact]?"，而非一次性批量批准所有文件 |
+| **P4 — Director gate 在正确的层级** | 范围内的 gate（PR-EPIC, QL-STORY-READY, LP-CODE-REVIEW 等）在 `full` 下运行，在 `lean`/`solo` 下跳过并附跳过说明 |
+| **P5 — 写前先读** | Skill 在产出工件前读取相关的 GDD/ADR/manifest 以确保对齐 |
 
 ---
 
 ### `analysis`
 
-**Skills**: consistency-check, balance-check, content-audit, code-review, tech-debt,
+**Skills**：consistency-check, balance-check, content-audit, code-review, tech-debt,
 scope-check, estimate, perf-profile, asset-audit, security-audit, test-evidence-review, test-flakiness
 
-Analysis skills scan the project and surface findings. They are read-only during
-analysis and must ask before recommending any file writes.
+Analysis skill 扫描项目并呈现发现结果。它们在分析期间是只读的，
+且必须在推荐任何文件写入之前询问。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **AN1 — Read-only scan** | Analysis phase uses only Read/Glob/Grep tools; no Write or Edit during the scan itself |
-| **AN2 — Structured findings table** | Output includes a findings table or checklist (not prose only) with severity/priority per finding |
-| **AN3 — No auto-write** | Any suggested file writes (e.g., tech-debt register, fix patches) are gated behind "May I write" |
-| **AN4 — No director gates during analysis** | Analysis skills do not spawn director gates; they produce findings for human review |
+| **AN1 — 只读扫描** | 分析阶段仅使用 Read/Glob/Grep 工具；扫描过程中不使用 Write 或 Edit |
+| **AN2 — 结构化发现表** | 输出包含一个发现表或 checklist（而非仅文本描述），每条发现附有 severity/priority |
+| **AN3 — 不自动写入** | 任何建议的文件写入（例如 tech-debt 登记、修复补丁）受"May I write"控制 |
+| **AN4 — 分析期间无 director gate** | Analysis skill 不 spawn director gate；它们产出发现供人工审查 |
 
 ---
 
 ### `team`
 
-**Skills**: team-combat, team-narrative, team-audio, team-level, team-ui, team-qa,
+**Skills**：team-combat, team-narrative, team-audio, team-level, team-ui, team-qa,
 team-release, team-polish, team-live-ops
 
-Team skills orchestrate multiple specialist agents for a department. They must
-spawn the right agents, run independent ones in parallel, and surface blocks immediately.
+Team skill 为某个部门编排多个 specialist agent。它们必须
+spawn 正确的 agent，以并行方式运行相互独立的 agent，并立即浮现 block。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **T1 — Named agent list** | Skill explicitly names which agents it spawns and in what order |
-| **T2 — Parallel where independent** | Agents whose inputs don't depend on each other are spawned in parallel (single message, multiple Task calls) |
-| **T3 — BLOCKED surfacing** | If any spawned agent returns BLOCKED or fails, skill surfaces it immediately and halts dependent work — never silently skips |
-| **T4 — Collect all verdicts before proceeding** | Dependent phases wait for all parallel agents to complete before proceeding |
-| **T5 — Usage error on no argument** | If required argument (e.g., feature name) is missing, skill outputs usage hint and stops without spawning agents |
+| **T1 — 命名 agent 列表** | Skill 明确列出它 spawn 哪些 agent 以及顺序 |
+| **T2 — 独立任务并行化** | 输入不相互依赖的 agent 被并行 spawn（单条消息，多个 Task 调用） |
+| **T3 — BLOCKED 浮现** | 如果任何 spawn 的 agent 返回 BLOCKED 或失败，skill 立即浮现该状态并停止依赖工作 — 绝不静默跳过 |
+| **T4 — 在继续之前收集所有裁决** | 依赖阶段等待所有并行 agent 完成后才继续 |
+| **T5 — 无参数时输出用法错误** | 如果缺少必需参数（例如 feature name），skill 输出用法提示并停止，不 spawn agent |
 
 ---
 
 ### `sprint`
 
-**Skills**: sprint-plan, sprint-status, milestone-review, retrospective, changelog, patch-notes
+**Skills**：sprint-plan, sprint-status, milestone-review, retrospective, changelog, patch-notes
 
-Sprint skills read production state and produce reports or planning artifacts.
-They have a PR-SPRINT or PR-MILESTONE gate at specific mode thresholds.
+Sprint skill 读取 production 状态并产出报告或规划工件。
+它们在特定 mode 阈值下有 PR-SPRINT 或 PR-MILESTONE gate。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **SP1 — Reads sprint/milestone state** | Skill reads `production/sprints/` or `production/milestones/` before producing output |
-| **SP2 — Correct sprint gate** | PR-SPRINT (for planning) or PR-MILESTONE (for milestone review) gate runs in `full` mode, skips in `lean`/`solo` |
-| **SP3 — Structured output** | Output uses a consistent structure (velocity table, risk list, action items) rather than free prose |
-| **SP4 — No auto-commit** | Skill never writes sprint files or milestone records without "May I write" |
+| **SP1 — 读取 sprint/milestone 状态** | Skill 在产出输出之前读取 `production/sprints/` 或 `production/milestones/` |
+| **SP2 — 正确的 sprint gate** | PR-SPRINT（用于规划）或 PR-MILESTONE（用于 milestone review）gate 在 `full` mode 下运行，在 `lean`/`solo` 下跳过 |
+| **SP3 — 结构化输出** | 输出使用一致的结构（velocity table、risk list、action items），而非自由文本 |
+| **SP4 — 不自动提交** | Skill 在未经"May I write"的情况下绝不写入 sprint 文件或 milestone 记录 |
 
 ---
 
 ### `utility`
 
-**Skills**: start, help, brainstorm, onboard, adopt, hotfix, prototype, localize,
+**Skills**：start, help, brainstorm, onboard, adopt, hotfix, prototype, localize,
 launch-checklist, release-checklist, smoke-check, soak-test, test-setup, test-helpers,
 regression-suite, qa-plan, bug-triage, bug-report, playtest-report, asset-spec,
 reverse-document, project-stage-detect, setup-engine, skill-test, skill-improve,
-day-one-patch, and any other skills not in categories above
+day-one-patch，以及不在上述 category 中的任何其他 skill
 
-Utility skills pass the 7 standard static checks. If they happen to spawn director
-gates, the gate mode logic must also be correct.
+Utility skill 通过 7 项标准静态检查。如果它们碰巧 spawn director
+gate，则 gate mode 逻辑也必须正确。
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **U1 — Passes all 7 static checks** | `/skill-test static [name]` returns COMPLIANT with 0 FAILs |
-| **U2 — Gate mode correct (if applicable)** | If the skill spawns any director gate, it reads review-mode and applies full/lean/solo logic correctly |
+| **U1 — 通过全部 7 项静态检查** | `/skill-test static [name]` 返回 COMPLIANT，0 个 FAIL |
+| **U2 — Gate mode 正确（如适用）** | 如果 skill spawn 任何 director gate，则正确读取 review-mode 并应用 full/lean/solo 逻辑 |
 
 ---
 
-## Agent Categories
+## Agent 类别
 
-Used to validate agent spec files in `tests/agents/`.
+用于验证 `tests/agents/` 中的 agent spec 文件。
 
 ### `director`
 
-**Agents**: creative-director, technical-director, art-director, producer
+**Agents**：creative-director, technical-director, art-director, producer
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **D1 — Correct verdict vocabulary** | Returns APPROVE / CONCERNS / REJECT (or domain equivalent: REALISTIC/CONCERNS/UNREALISTIC for producer) |
-| **D2 — Domain boundary respected** | Does not make binding decisions outside its declared domain |
-| **D3 — Conflict escalation** | When two departments conflict, escalates to correct parent (creative-director or technical-director) rather than unilaterally deciding |
-| **D4 — Opus model tier** | Agent is assigned Opus model per coordination-rules.md |
+| **D1 — 正确的裁决词汇** | 返回 APPROVE / CONCERNS / REJECT（或领域等价词：producer 使用 REALISTIC/CONCERNS/UNREALISTIC） |
+| **D2 — 尊重领域边界** | 不在其声明的领域之外做出有约束力的决策 |
+| **D3 — 冲突升级** | 当两个部门冲突时，升级到正确的父级（creative-director 或 technical-director），而非单方面决定 |
+| **D4 — Opus model tier** | Agent 按 coordination-rules.md 分配 Opus 模型 |
 
 ### `lead`
 
-**Agents**: lead-programmer, qa-lead, narrative-director, audio-director, game-designer,
+**Agents**：lead-programmer, qa-lead, narrative-director, audio-director, game-designer,
 systems-designer, level-designer
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **L1 — Domain verdict** | Returns a domain-specific verdict (e.g., FEASIBLE/INFEASIBLE for lead-programmer, PASS/FAIL for qa-lead) |
-| **L2 — Escalates to shared parent** | Out-of-domain conflicts escalate to creative-director (design) or technical-director (tech) |
-| **L3 — Sonnet model tier** | Agent is assigned Sonnet model (default) per coordination-rules.md |
+| **L1 — 领域裁决** | 返回领域特定的裁决（例如 lead-programmer 使用 FEASIBLE/INFEASIBLE，qa-lead 使用 PASS/FAIL） |
+| **L2 — 升级到共享父级** | 领域外冲突升级到 creative-director（design）或 technical-director（tech） |
+| **L3 — Sonnet model tier** | Agent 按 coordination-rules.md 分配 Sonnet 模型（默认） |
 
 ### `specialist`
 
-**Agents**: gameplay-programmer, ai-programmer, technical-artist, sound-designer,
+**Agents**：gameplay-programmer, ai-programmer, technical-artist, sound-designer,
 engine-programmer, tools-programmer, network-programmer, security-engineer,
 accessibility-specialist, ux-designer, ui-programmer, performance-analyst, prototyper,
 qa-tester, writer, world-builder
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **S1 — Stays in domain** | Explicitly scopes itself to its declared domain; defers out-of-domain requests |
-| **S2 — No binding cross-domain decisions** | Does not unilaterally decide matters owned by another specialist |
-| **S3 — Defers correctly** | Out-of-domain requests are redirected to the correct agent, not refused silently |
+| **S1 — 留在领域内** | 明确限定自身到其声明的领域；将领域外请求转交 |
+| **S2 — 不做出跨领域有约束力的决策** | 不单方面决定由另一个 specialist 拥有的事项 |
+| **S3 — 正确转交** | 领域外请求被重定向到正确的 agent，而非静默拒绝 |
 
 ### `engine`
 
-**Agents**: godot-specialist, godot-gdscript-specialist, godot-csharp-specialist,
+**Agents**：godot-specialist, godot-gdscript-specialist, godot-csharp-specialist,
 godot-shader-specialist, godot-gdextension-specialist, unity-specialist, unity-ui-specialist,
 unity-shader-specialist, unity-dots-specialist, unity-addressables-specialist,
 unreal-specialist, ue-blueprint-specialist, ue-gas-specialist, ue-umg-specialist,
 ue-replication-specialist
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **E1 — Version-aware** | References engine version from `docs/engine-reference/` before suggesting API calls; flags post-cutoff risk |
-| **E2 — File routing** | Routes file types to the correct sub-specialist (e.g., `.gdshader` → godot-shader-specialist, not godot-gdscript-specialist) |
-| **E3 — Engine-specific patterns** | Enforces engine-specific idioms (e.g., GDScript static typing, C# attribute exports, Blueprint function libraries) |
+| **E1 — 版本感知** | 在建议 API 调用之前引用 `docs/engine-reference/` 中的引擎版本；标记截止后风险 |
+| **E2 — 文件路由** | 将文件类型路由到正确的子 specialist（例如 `.gdshader` → godot-shader-specialist，而非 godot-gdscript-specialist） |
+| **E3 — 引擎特定模式** | 强制执行引擎特定的惯用法（例如 GDScript static typing、C# attribute exports、Blueprint function libraries） |
 
 ### `qa`
 
-**Agents**: qa-tester, qa-lead, security-engineer, accessibility-specialist
+**Agents**：qa-tester, qa-lead, security-engineer, accessibility-specialist
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **Q1 — Produces artifacts not code** | Primary output is test cases, bug reports, or coverage gaps — not implementation code |
-| **Q2 — Evidence format** | Test cases follow the project's test evidence format (unit/integration/visual/UI per coding-standards.md) |
-| **Q3 — No scope creep** | Does not propose new features; flags gaps for humans to decide |
+| **Q1 — 产出工件而非代码** | 主要输出是 test case、bug report 或 coverage gap — 而非实现代码 |
+| **Q2 — 证据格式** | Test case 遵循项目的 test evidence 格式（按 coding-standards.md 的 unit/integration/visual/UI） |
+| **Q3 — 不越界** | 不提议新功能；标记缺口供人工决定 |
 
 ### `operations`
 
-**Agents**: devops-engineer, release-manager, live-ops-designer, community-manager,
+**Agents**：devops-engineer, release-manager, live-ops-designer, community-manager,
 analytics-engineer, economy-designer, localization-lead
 
-| Metric | PASS criteria |
+| 指标 | PASS 标准 |
 |---|---|
-| **O1 — Domain ownership clear** | Agent description clearly states what it owns (pipeline, releases, economy, etc.) |
-| **O2 — Defers implementation** | Does not write game logic or engine code; delegates to appropriate specialist |
-| **O3 — Toolset matches role** | `allowed-tools` in frontmatter matches the operational (not coding) nature of the role |
+| **O1 — 领域所有权明确** | Agent 描述清楚说明它拥有什么（pipeline、release、economy 等） |
+| **O2 — 转交实现** | 不编写游戏逻辑或引擎代码；委托给适当的 specialist |
+| **O3 — 工具集匹配角色** | Frontmatter 中的 `allowed-tools` 匹配角色的运维性质（而非编码性质）|

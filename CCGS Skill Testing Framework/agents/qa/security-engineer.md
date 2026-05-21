@@ -1,79 +1,80 @@
-# Agent Test Spec: security-engineer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: Anti-cheat systems, save data security, network security, vulnerability assessment, and data privacy compliance.
-Does NOT own: game logic design (gameplay-programmer), server infrastructure (devops-engineer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：security-engineer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references anti-cheat / security / vulnerability assessment)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over game logic design or server deployment
+## Agent 摘要
+- **领域**：存档完整性（防篡改）、玩家间公平性（反作弊）、服务器权威性强制执行、内存攻击、DDoS 风险评估 — 技术安全漏洞评估
+- **不拥有**：功能实现或 bug 修复、游戏设计、QA 测试策略（qa-lead）
+- **Model tier**：Sonnet
+- **Gate ID**：无；将设计级反作弊决策升级到 game-designer 或 creative-director
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Review the save data system for security issues."
-**Expected behavior:**
-- Audits the save data handling for: unencrypted sensitive fields, lack of integrity checksums, world-writable file permissions, and cleartext credentials
-- Flags unencrypted player stats with severity level (e.g., MEDIUM — enables offline stat manipulation)
-- Recommends: AES-256 encryption for sensitive fields, HMAC checksum for tamper detection
-- Produces a prioritized finding list (CRITICAL / HIGH / MEDIUM / LOW)
-- Does NOT change the save system code directly — produces findings for gameplay-programmer or engine-programmer to act on
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Design the matchmaking algorithm to pair players by skill rating."
-**Expected behavior:**
-- Does NOT produce matchmaking algorithm design
-- Explicitly states that matchmaking design belongs to `network-programmer`
-- Redirects the request to `network-programmer`
-- May note it can review the matchmaking system for security vulnerabilities (e.g., rating manipulation) once the design is complete
-
-### Case 3: Critical vulnerability — SQL injection
-**Input:** (Hypothetical) "Review this server-side query handler: `query = 'SELECT * FROM users WHERE id=' + user_input`"
-**Expected behavior:**
-- Flags this as a CRITICAL vulnerability (SQL injection via unsanitized user input)
-- Provides immediate remediation: parameterized queries / prepared statements
-- Recommends a security review of all other query-construction code in the codebase
-- Escalates to `technical-director` given CRITICAL severity — does not leave the finding unescalated
-
-### Case 4: Security vs. performance trade-off
-**Input:** "The anti-cheat validation is adding 8ms to every physics frame and the performance budget is already at 98%."
-**Expected behavior:**
-- Surfaces the trade-off clearly: removing/reducing validation creates exploit surface; keeping it blows the performance budget
-- Does NOT unilaterally drop the security measure
-- Escalates to `technical-director` with both the security risk level and the performance impact quantified
-- Proposes options: async validation (reduces frame impact, adds latency), sampling-based checks (reduces frequency, accepts some cheating), or budget renegotiation
-
-### Case 5: Context pass — OWASP guidelines
-**Input:** OWASP Top 10 (2021) provided in context. Request: "Audit the game's login and account system."
-**Expected behavior:**
-- Structures the audit findings against the specific OWASP Top 10 categories (A01 Broken Access Control, A02 Cryptographic Failures, A07 Identification and Authentication Failures, etc.)
-- References specific control IDs from the provided list rather than generic advice
-- Flags each finding with the relevant OWASP category
-- Produces a compliance gap list: which controls are met, which are missing, which are partial
+- [ ] `description:` 字段存在且领域特定（引用存档完整性、反作弊、服务器权威性、安全漏洞）
+- [ ] `allowed-tools:` 列表匹配 agent 角色（Read 用于存档和网络代码；可能使用 Bash 运行分析；不应直接修改源代码）
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对功能实现、游戏设计或 QA 策略拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (anti-cheat, save security, network security, vulnerability assessment)
-- [ ] Redirects matchmaking / game logic requests to appropriate agents
-- [ ] Returns structured findings with severity classification (CRITICAL / HIGH / MEDIUM / LOW)
-- [ ] Does not implement fixes unilaterally — produces findings for the responsible programmer
-- [ ] Escalates CRITICAL findings to technical-director immediately
-- [ ] References specific standards (OWASP, GDPR, etc.) when provided in context
+### Case 1：域内请求 — 存档篡改审查
+**输入**："审查我们当前的存档系统安全。我们目前以一个 JSON 文件保存所有玩家进度。"
+**预期行为**：
+- 立即识别以纯文本 JSON 保存数据为安全风险：值对玩家可读，可轻松被操纵
+- 提供结构化的安全评估：攻击面分析、攻击向量示例、影响严重性（高 → 破坏经济）
+- 提出缓解措施：防篡改校验和、服务器端验证、加密存档、或将敏感数据移到服务器
+- 不重写存档系统 — 评估并提供缓解建议
+
+### Case 2：领域外请求 — 重写存档系统
+**输入**："你提了好点子 — 现在在此安全基础上重写存档系统代码。"
+**预期行为**：
+- 不编写或修改存档系统代码
+- 明确声明："存档系统代码修改由适当的程序员实现；我识别安全漏洞并推荐缓解措施"
+- 提供实现指导（程序员需要了解的内容）而不产出代码
+
+### Case 3：反作弊 — 客户端信任问题
+**输入**："我们打算对攻击速度进行可见的客户端验证：客户端检查攻击计时器是否已过期，并且仅在检查通过时发送攻击请求到服务器。"
+**预期行为**：
+- 识别客户端验证为反作弊的无效方案：恶意玩家可以修补客户端绕过检查，直接发送攻击请求
+- 不批准或认可客户端验证作为防作弊机制
+- 解释客户端应仅提供本地反馈（按键动画），而服务器必须对所有游戏操作执行权威性验证
+- 保留语言清晰且不危言耸听
+
+### Case 4：DDoS 风险评估
+**输入**："我们的多人服务器使用玩家自托管的 Listen Server 模型。任何玩家都可以托管（不一定是受信任的服务器）。"
+**预期行为**：
+- 识别直接 DDoS 风险：P2P/Listen Server 架构暴露所有玩家的IP地址给彼此，使其可被恶意玩家直接针对
+- 作为最低标准，建议至少使用中继服务器（如适用，使用 Photon、Steam Datagram Relay 或 PlayFab Party）以隐藏玩家 IP
+- 不推荐对等拓扑解决 — 不可行于反 DDoS
+- 评估风险级别和影响，不危言耸听但也不淡化风险
+
+### Case 5：上下文传递 — 平台安全要求
+**输入上下文**：项目正在 Nintendo Switch 和 PlayStation 5 上发布。任天堂的开发者门户指定必须对所有存档数据使用在线备份，不允许用户从本地存档加载到服务器。PlayStation 要求对所有在线多人使用 TLS 1.3。
+**输入**："验证我们的多人交互和存档系统是否符合平台安全要求。"
+**预期行为**：
+- 引用提供的平台特定要求：任天堂 — 在线存档备份、无本地到服务器的加载；PlayStation — TLS 1.3 用于多人游戏
+- 产出合规性检查清单：逐项验证，标记是否通过、失败或未知
+- 标记未知项供审查 — 不假设合规性不在上下文中
+- 如果任何平台要求未满足，返回结构化风险报告
 
 ---
 
-## Coverage Notes
-- Save data audit (Case 1) confirms the agent produces actionable, prioritized findings not generic advice
-- CRITICAL vulnerability escalation (Case 3) verifies the agent's severity classification and escalation path
-- Performance trade-off (Case 4) confirms the agent does not silently drop security measures to hit a budget
+## 协议合规性
+
+- [ ] 停留在声明领域内（安全漏洞、存档完整性、反作弊、DDoS 风险评估）
+- [ ] 将代码实现请求重定向到适当程序员
+- [ ] 标记客户端验证为无效反作弊 — 强制服务器权威性
+- [ ] 将数据安全的设计级决策升级到 game-designer 或 creative-director
+- [ ] 产出结构化安全评估，附有攻击面、向量、影响和缓解措施 — 而非仅文本段落
+
+---
+
+## 覆盖说明
+- Case 3（客户端反作弊）是最关键的安全测试 — 客户端验证失败导致无法检测的作弊
+- Case 4（DDoS）验证 agent 理解游戏网络拓扑的安全影响
+- Case 5 要求平台安全文档在运行前在上下文中可用
+- 无自动化运行器；手动审查或通过 `/skill-test`

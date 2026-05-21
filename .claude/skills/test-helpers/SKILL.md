@@ -1,395 +1,281 @@
 ---
 name: test-helpers
-description: "Generate engine-specific test helper libraries for the project's test suite. Reads existing test patterns and produces tests/helpers/ with assertion utilities, factory functions, and mock objects tailored to the project's systems. Reduces boilerplate in new test files."
-argument-hint: "[system-name | all | scaffold]"
+description: "为各引擎生成测试辅助函数（模拟器、工厂函数、固定装置、存根）。创建适合项目引擎和测试框架的辅助函数。在设置测试基础设施时运行。"
+argument-hint: "[类别]（例如 'input'、'ai'、'physics'、'network'）"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write
-model: sonnet
+model: opus
 ---
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-# Test Helpers
+# 测试辅助函数生成
 
-Writing test cases is faster and more consistent when common setup, teardown,
-and assertion patterns are abstracted into helpers. This skill generates a
-`tests/helpers/` library tailored to the project's actual engine, language,
-and systems — so every developer writes less boilerplate and more assertions.
+测试辅助函数使测试变得可行。模拟预测不到的物理、注入虚拟输入、隔离不应该运行完整游戏循环的系统，并以可预测的方式构建测试对象。
 
-**Output:** `tests/helpers/` directory with engine-specific helper files
+此 Skill 为特定类别的游戏系统创建或更新适应引擎的测试辅助函数。
 
-**When to run:**
-- After `/test-setup` scaffolds the framework (first time)
-- When multiple test files repeat the same setup boilerplate
-- When starting to write tests for a new system
+**输出：** 辅助函数文件写入 `tests/helpers/[category].gd` 或等价文件。
 
----
-
-## 1. Parse Arguments
-
-**Modes:**
-- `/test-helpers [system-name]` — generate helpers for a specific system
-  (e.g., `/test-helpers combat`)
-- `/test-helpers all` — generate helpers for all systems with test files
-- `/test-helpers scaffold` — generate only the base helper library (no
-  system-specific helpers); use this on first run
-- No argument — run `scaffold` if no helpers exist, else `all`
+**何时运行：**
+- 在 `/test-setup` 创建基础测试基础设施后
+- 当编写新系统类别的测试发现没有可用于隔离的辅助函数时
+- 当现有辅助函数覆盖了错误的责任范围（覆盖太多或太少）
 
 ---
 
-## 2. Detect Engine and Language
+## 第 1 阶段：解析参数
 
-Read `.claude/docs/technical-preferences.md` and extract:
-- `Engine:` value
-- `Language:` value
-- `Framework:` from the Testing section
+第一个参数是**类别**（必需）。有效的类别：
 
-If engine is not configured: "Engine not configured. Run `/setup-engine` first."
+| 类别 | 用途 | 示例辅助函数 |
+|----------|---------|---------------------|
+| `input` | 模拟玩家输入 | `simulate_press("jump")`、`simulate_motion(controller_id, vector)` |
+| `ai` | 存根 AI 决策 | `stub_decision(tree, returns="aggro")`、`stub_pathfind(path)` |
+| `physics` | 强制物理状态 | `set_body_state(body, pos, vel)`、`force_collision(body_a, body_b)` |
+| `network` | 模拟网络条件 | `simulate_latency(ms)`、`drop_packets(probability)` |
+| `rng` | 注入确定性随机性 | `seed_rng(value)`、`stub_randf_sequence([values])` |
+| `time` | 加速/冻结游戏时间 | `freeze_time()`、`advance_timer(name, delta)`、`set_time_scale(scale)` |
+| `data` | 构建测试对象 | 生成默认填充测试对象的工厂函数 |
+| `state` | 保存/加载/重置 | `save_state()`、`load_state(path)`、`reset_to_main_menu()` |
+| `render` | 截图比较 | `capture_viewport()`、`compare_screenshots(a, b, tolerance)` |
+
+如果类别缺失或无效，向用户显示此表并停止。
 
 ---
 
-## 3. Load Existing Test Patterns
+## 第 2 阶段：加载项目配置
 
-Scan the test directory for patterns already in use:
+1. 读取 `.claude/docs/technical-preferences.md` 获取：
+   - 引擎（Godot / Unity / Unreal）
+   - 依赖注入模式（如果已记录）
+   - 已配置的测试框架（例如 `GDUnit4`、`GUT v9.x`、`NUnit`、`Unreal Automation`）
 
+2. 检查现有辅助函数文件：
+   - Glob `tests/helpers/` 查找现有辅助函数
+   - 读取现有的辅助函数文件（如果有）以避免重复
+
+3. 加载引擎特定架构背景：
+   - 对于 Godot：搜索常见的模拟点（`Input.is_action_pressed`、`get_tree().create_timer`、`randf()`）
+   - 对于 Unity：搜索 `Input.GetKey` / `Input.GetButton`、`Random.value`、`Physics.Raycast`
+   - 对于 Unreal：搜索 `UInputComponent`、`FMath::RandRange`、`GetWorld()->GetTimerManager()`
+
+---
+
+## 第 3 阶段：设计辅助函数 API
+
+设计特定于所选类别、引擎和测试框架的辅助函数。每个辅助函数必须：
+
+1. 在其职责范围内**可组合**（多个辅助函数可以串联使用，无副作用）
+2. **隔离良好** — 不影响未设计测试的区域
+3. **可逆** — 测试可以重置辅助函数修改的任何状态
+4. **IDE 可发现** — 命名遵循项目约定
+
+输出设计摘要：
 ```
-Glob pattern="tests/**/*_test.*" (all test files)
+为 [类别] 设计的辅助函数（[引擎] + [框架]）：
+- [函数名] — 做什么，为什么需要它
+- [函数名] — 做什么，为什么需要它
+- reset_test_[category]() — 撤销所有模拟/存根
 ```
 
-For a representative sample (up to 5 files), read the test files and extract:
-- Setup patterns (how `before_each` / `setUp` / fixtures are written)
-- Common assertion patterns (what is being asserted most often)
-- Object creation patterns (how game objects or scenes are instantiated in tests)
-- Mock/stub patterns (how dependencies are replaced)
+向用户展示设计。这应该是一个快速的模式检查——如果有人为的因素，最好在编写之前捕获。
 
-This ensures generated helpers match the project's existing style, not a
-generic template.
-
-Also read:
-- `design/gdd/systems-index.md` — to know which systems exist
-- In-scope GDD(s) — to understand what data types and values need testing
-- `docs/architecture/tr-registry.yaml` — to map requirements to tested systems
+询问："接受此辅助函数设计吗？"接受：判定：**设计已批准** — 继续。拒绝：询问用户要更改什么。
 
 ---
 
-## 4. Generate Engine-Specific Helpers
+## 第 4 阶段：生成辅助函数代码
 
-### Godot 4 (GDUnit4 / GDScript)
+使用引擎适当的模式和约定编写辅助函数。
 
-**Base helper** (`tests/helpers/game_assertions.gd`):
+### Godot / GDScript 模式
 
 ```gdscript
-## Game-specific assertion utilities for [Project Name] tests.
-## Extends GdUnitAssertions with domain-specific helpers.
-##
-## Usage:
-##   var assert = GameAssertions.new()
-##   assert.health_in_range(entity, 0, entity.max_health)
+# tests/helpers/[category].gd
+extends Node
 
-class_name GameAssertions
-extends RefCounted
+## 辅助：[类别特定描述]
+## 示例：uses [engine-specific pattern]
+class_name [Category]TestHelper
 
-## Assert a value is within the inclusive range [min_val, max_val].
-## Use for any formula output that has defined bounds in a GDD.
-static func assert_in_range(
-    value: float,
-    min_val: float,
-    max_val: float,
-    label: String = "value"
-) -> void:
-    assert(
-        value >= min_val and value <= max_val,
-        "%s %.2f is outside expected range [%.2f, %.2f]" % [label, value, min_val, max_val]
-    )
-
-## Assert a signal was emitted during a callable block.
-## Usage: assert_signal_emitted(entity, "health_changed", func(): entity.take_damage(10))
-static func assert_signal_emitted(
-    obj: Object,
-    signal_name: String,
-    action: Callable
-) -> void:
-    var emitted := false
-    obj.connect(signal_name, func(_args): emitted = true)
-    action.call()
-    assert(emitted, "Expected signal '%s' to be emitted, but it was not." % signal_name)
-
-## Assert that a callable does NOT emit a signal.
-static func assert_signal_not_emitted(
-    obj: Object,
-    signal_name: String,
-    action: Callable
-) -> void:
-    var emitted := false
-    obj.connect(signal_name, func(_args): emitted = true)
-    action.call()
-    assert(not emitted, "Expected signal '%s' NOT to be emitted, but it was." % signal_name)
-
-## Assert a node exists at path within a parent.
-static func assert_node_exists(parent: Node, path: NodePath) -> void:
-    assert(
-        parent.has_node(path),
-        "Expected node at path '%s' to exist." % str(path)
-    )
+# [每个辅助函数的文档化方法]
 ```
 
-**Factory helper** (`tests/helpers/game_factory.gd`):
+**关键模式：**
+- 使用 `class_name` 使辅助函数可全局访问
+- 场景级可访问性使用 `autoload`（对于影响 InputMap 等的辅助函数 — 不要使用 `autoload` 作为通用全局测试状态）
+- 使用 `static func` 提取不需要场景树的纯逻辑辅助函数
+- 通过 `var _original_was_handled = handler.is_connected(...)` 模式提供显式清理
+- 使用 `add_child()` 实例化辅助函数，用 `remove_child()` 清理
 
+**GdUnit4 语法：**
 ```gdscript
-## Factory functions for creating test game objects.
-## Returns minimal objects configured for unit testing (no scene tree required).
-##
-## Usage: var player = GameFactory.make_player(health: 100)
+@warning_ignore("unused_parameter")
+func before() -> void:
+    helper = InputTestHelper.new()
+    add_child(helper)
 
-class_name GameFactory
-extends RefCounted
+@warning_ignore("unused_parameter")
+func after() -> void:
+    helper.reset_test_input()
+    remove_child(helper)
 
-## Create a minimal player-like object for testing.
-## Override fields as needed.
-static func make_player(health: int = 100) -> Node:
-    var player = Node.new()
-    player.set_meta("health", health)
-    player.set_meta("max_health", health)
-    return player
+@warning_ignore("unused_parameter")
+func test_simulate_press_triggers_action(
+    test_parameter: GdUnitTestParameterDto,
+    test_helpers: GdUnitTestHelpers
+) -> void:
+    helper.simulate_press("jump")
+    assert_bool(get_parent().has_signal("jump_pressed")).is_true()
 ```
 
-**Scene helper** (`tests/helpers/scene_runner_helper.gd`):
-
-```gdscript
-## Utilities for scene-based integration tests.
-## Wraps GdUnitSceneRunner for common patterns.
-
-class_name SceneRunnerHelper
-extends GdUnitTestSuite
-
-## Load a scene and wait one frame for _ready() to complete.
-func load_scene_and_wait(scene_path: String) -> Node:
-    var scene = load(scene_path).instantiate()
-    add_child(scene)
-    await get_tree().process_frame
-    return scene
-```
-
----
-
-### Unity (NUnit / C#)
-
-**Base helper** (`tests/helpers/GameAssertions.cs`):
+### Unity / C# 模式
 
 ```csharp
-using NUnit.Framework;
-using UnityEngine;
-
-/// <summary>
-/// Game-specific assertion utilities for [Project Name] tests.
-/// Extends NUnit's Assert with domain-specific helpers.
-/// </summary>
-public static class GameAssertions
+// tests/helpers/[Category]TestHelper.cs
+namespace Tests.Helpers
 {
-    /// <summary>
-    /// Assert a value is within an inclusive range [min, max].
-    /// Use for any formula output defined in GDD Formulas sections.
-    /// </summary>
-    public static void AssertInRange(float value, float min, float max, string label = "value")
+    public static class InputTestHelper
     {
-        Assert.That(value, Is.InRange(min, max),
-            $"{label} ({value:F2}) is outside expected range [{min:F2}, {max:F2}]");
-    }
-
-    /// <summary>Assert a UnityEvent or C# event was raised during an action.</summary>
-    public static void AssertEventRaised(ref bool wasCalled, System.Action action, string eventName)
-    {
-        wasCalled = false;
-        action();
-        Assert.IsTrue(wasCalled, $"Expected event '{eventName}' to be raised, but it was not.");
-    }
-
-    /// <summary>Assert a component exists on a GameObject.</summary>
-    public static void AssertHasComponent<T>(GameObject obj) where T : Component
-    {
-        var component = obj.GetComponent<T>();
-        Assert.IsNotNull(component,
-            $"Expected GameObject '{obj.name}' to have component {typeof(T).Name}.");
+        // 纯静态逻辑辅助函数
+        public static void SimulateAction(string actionName) { ... }
+        // 需要拆卸的：继承 IDisposable
     }
 }
 ```
 
-**Factory helper** (`tests/helpers/GameFactory.cs`):
+**关键模式：**
+- 纯逻辑辅助函数使用 `public static class`
+- 有状态的辅助函数实现 `IDisposable`（在 `[TearDown]` 中使用 `using`）
+- 对纯逻辑辅助函数使用 `[Test]` 带 `TestHelper` 后缀
+- 在 `constants/` 中测试常量与在 `helpers/` 中的辅助函数不同
 
+**Unity Test Framework 语法（NUnit 3.x）：**
 ```csharp
-using UnityEngine;
-
-/// <summary>
-/// Factory methods for creating minimal test objects without loading scenes.
-/// </summary>
-public static class GameFactory
+[TestFixture]
+public class MovementTests
 {
-    /// <summary>Create a minimal GameObject with a named component for testing.</summary>
-    public static GameObject MakeGameObject(string name = "TestObject")
+    private InputTestHelper _inputHelper;
+
+    [SetUp]
+    public void SetUp()
     {
-        var go = new GameObject(name);
-        return go;
+        _inputHelper = new InputTestHelper();
     }
 
-    /// <summary>
-    /// Create a ScriptableObject of type T for data-driven tests.
-    /// Dispose with Object.DestroyImmediate after test.
-    /// </summary>
-    public static T MakeScriptableObject<T>() where T : ScriptableObject
+    [TearDown]
+    public void TearDown()
     {
-        return ScriptableObject.CreateInstance<T>();
+        _inputHelper.Dispose();
+    }
+
+    [Test]
+    public void SimulateAction_TriggersMovement()
+    {
+        _inputHelper.SimulateAction("Jump");
+        Assert.That(/* ... */);
     }
 }
 ```
 
----
-
-### Unreal Engine (C++)
-
-**Base helper** (`tests/helpers/GameTestHelpers.h`):
+### Unreal Engine / C++ 模式
 
 ```cpp
+// tests/helpers/[Category]TestHelper.h
 #pragma once
-
 #include "CoreMinimal.h"
-#include "Misc/AutomationTest.h"
 
-/**
- * Game-specific assertion macros and helpers for [Project Name] automation tests.
- * Include in any test file that needs domain-specific assertions.
- *
- * Usage:
- *   GAME_TEST_ASSERT_IN_RANGE(TestName, DamageValue, 10.0f, 50.0f, TEXT("Damage"));
- */
-
-// Assert a float value is within inclusive range [Min, Max]
-#define GAME_TEST_ASSERT_IN_RANGE(TestName, Value, Min, Max, Label) \
-    TestTrue( \
-        FString::Printf(TEXT("%s (%.2f) in range [%.2f, %.2f]"), Label, Value, Min, Max), \
-        (Value) >= (Min) && (Value) <= (Max) \
-    )
-
-// Assert a UObject pointer is valid (not null, not garbage collected)
-#define GAME_TEST_ASSERT_VALID(TestName, Ptr, Label) \
-    TestTrue( \
-        FString::Printf(TEXT("%s is valid"), Label), \
-        IsValid(Ptr) \
-    )
-
-// Assert an Actor is in the world (spawned successfully)
-#define GAME_TEST_ASSERT_SPAWNED(TestName, ActorPtr, ClassName) \
-    TestNotNull( \
-        FString::Printf(TEXT("Spawned actor of class %s"), TEXT(#ClassName)), \
-        ActorPtr \
-    )
-
-/**
- * Helper to create a minimal test world.
- * Remember to call World->DestroyWorld(false) in teardown.
- */
-namespace GameTestHelpers
+class F[Category]TestHelper
 {
-    inline UWorld* CreateTestWorld(const FString& WorldName = TEXT("TestWorld"))
+public:
+    void SimulatePress(const FName& ActionName);
+    void Reset();
+private:
+    // 用于清理的原始状态
+};
+```
+
+**关键模式：**
+- `[SetUp]` 步骤创建 FATEST_HELPER 实例作为类成员
+- `[TearDown]` 步骤在实例上调用 `.Reset()` 并置 null
+- 对纯逻辑辅助函数使用 `static` 方法
+- 通过 `IInputProcessor` 或自定义模拟接口模拟输入（不要继承 `PlayerController`）
+
+**Unreal Automation Spec 语法：**
+```cpp
+BEGIN_DEFINE_SPEC(FCombatTestHelperSpec, "Helpers.Combat",
+    EAutomationTestFlags::ProductFilter | EAutomationTestFlags::ApplicationContextMask)
+FInputTestHelper InputHelper;
+END_DEFINE_SPEC(FCombatTestHelperSpec)
+
+void FCombatTestHelperSpec::Define()
+{
+    BeforeEach([this]()
     {
-        UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
-        FWorldContext& WorldContext = GEngine->CreateNewWorldContext(EWorldType::Game);
-        WorldContext.SetCurrentWorld(World);
-        return World;
-    }
+        InputHelper = FInputTestHelper();
+    });
+
+    AfterEach([this]()
+    {
+        InputHelper.Reset();
+    });
+
+    It("should trigger attack on button press", [this]()
+    {
+        InputHelper.SimulatePress("Attack");
+        // ...验证
+    });
 }
 ```
 
 ---
 
-## 5. Generate System-Specific Helpers
+## 第 5 阶段：写入文件
 
-For `[system-name]` or `all` modes, generate a helper per system:
+使用引擎适当的文件路径：
 
-Read the system's GDD to extract:
-- Data types (entity types, component names)
-- Formula variables and their bounds
-- Common test scenarios mentioned in Edge Cases
+| Engine | Helper Path Format |
+|--------|-------------------|
+| Godot | `tests/helpers/[category].gd` |
+| Unity | `tests/helpers/[Category]TestHelper.cs` |
+| Unreal | `Source/[Project]/Tests/Helpers/[Category]TestHelper.h` + `.cpp` |
 
-Generate `tests/helpers/[system]_factory.[ext]` with factory functions
-specific to that system's objects.
+询问："我可以将 [类别] 辅助函数文件写入 [路径] 吗？"
 
-Example pattern for a `combat` system (Godot/GDScript):
+在确认前等待，然后写入。判定：**COMPLETE** — 辅助函数文件已创建。
+
+如果用户拒绝，在此停止。判定：**BLOCKED** — 用户拒绝写入。
+
+---
+
+## 第 6 阶段：编写用法示例
+
+在辅助函数文件中包含内联示例，展示如何在测试中使用它们：
 
 ```gdscript
-## Factory and assertion helpers for Combat system tests.
-## Generated by /test-helpers combat on [date].
-## Based on: design/gdd/combat.md
-
-class_name CombatTestFactory
-extends RefCounted
-
-const DAMAGE_MIN := 0
-const DAMAGE_MAX := 999  # From GDD: damage formula upper bound
-
-## Create a minimal attacker object for damage formula tests.
-static func make_attacker(attack: float = 10.0, crit_chance: float = 0.0) -> Node:
-    var attacker = Node.new()
-    attacker.set_meta("attack", attack)
-    attacker.set_meta("crit_chance", crit_chance)
-    return attacker
-
-## Create a minimal target object for damage receive tests.
-static func make_target(defense: float = 0.0, health: float = 100.0) -> Node:
-    var target = Node.new()
-    target.set_meta("defense", defense)
-    target.set_meta("health", health)
-    target.set_meta("max_health", health)
-    return target
-
-## Assert damage output is within GDD-specified bounds.
-static func assert_damage_in_bounds(damage: float) -> void:
-    GameAssertions.assert_in_range(damage, DAMAGE_MIN, DAMAGE_MAX, "damage")
+## Example usage in a test:
+## ```gdscript
+## func before() -> void:
+##     helper = InputTestHelper.new()
+##     add_child(helper)
+##
+## func test_double_jump_is_consumed() -> void:
+##     helper.simulate_press("jump")
+##     helper.simulate_hold("jump", frames=3)
+##     helper.simulate_release("jump")
+##     helper.simulate_press("jump")
+##     # 第二个跳跃不应处理
+##     assert_int(get_node("../Player").jump_count).is_equal(1)
+## ```
 ```
 
 ---
 
-## 6. Write Output
+## 协作协议
 
-Present a summary of what will be created:
-
-```
-## Test Helpers to Create
-
-Base helpers (engine: [engine]):
-- tests/helpers/game_assertions.[ext]
-- tests/helpers/game_factory.[ext]
-[engine-specific extras]
-
-System helpers ([mode]):
-- tests/helpers/[system]_factory.[ext]  ← from [system] GDD
-```
-
-Ask: "May I write these helper files to `tests/helpers/`?"
-
-**Never overwrite existing files.** If a file already exists, report:
-"Skipping `[path]` — already exists. Remove the file manually if you want it
-regenerated."
-
-After writing: Verdict: **COMPLETE** — helper files created.
-
-"Helper files created. To use them in a test:
-- Godot: `class_name` is auto-imported — no explicit import needed
-- Unity: Add `using` directive or reference the test assembly
-- Unreal: `#include \"tests/helpers/GameTestHelpers.h\"`"
-
----
-
-## Collaborative Protocol
-
-- **Never overwrite existing helpers** — they may contain hand-written
-  customisations. Only generate new files that don't exist yet
-- **Generated code is a starting point** — the generated factory functions use
-  metadata patterns for simplicity; adapt to the actual class structure once
-  the code exists
-- **Helpers should reflect the GDD** — bounds and constants in helpers should
-  trace to GDD Formulas sections, not invented values
-- **Ask before writing** — always confirm before creating files in `tests/`
-
-## Next Steps
-
-- Run `/test-setup` if the test framework has not been scaffolded yet.
-- Use `/dev-story` to implement stories — helpers reduce boilerplate in new test files.
-- Run `/skill-test` to validate other skills that may need helper coverage.
+- **一个文件，一个类别** — 不要生成怪物辅助文件。当类别之间保持较小时，IDE 中的自动完成效果最好
+- **保持隔离** — `simulate_input()` 不应需要运行完整的游戏循环。从创建它的测试场景运行它。
+- **辅助函数在需要时模拟，绝不作为通用全局状态**。将辅助函数实例添加为测试场景的子节点（Godot）或测试夹具成员（Unity/Unreal）— 不要通过 `autoload` 或单例让所有内容可全局访问
+- **先设计，后编写** — 展示设计草图以供快速反馈（第 3 阶段）
+- **写入前询问**，然后仅在获得批准后写入
+- **引擎中立** — 始终适应检测到的引擎模式；不要重复使用跨引擎代码片段

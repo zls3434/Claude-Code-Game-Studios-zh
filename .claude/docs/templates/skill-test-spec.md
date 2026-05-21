@@ -1,96 +1,92 @@
-# Skill Test Spec: /[skill-name]
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill测试规范：/[skill-name]
 
-[One paragraph: what this skill does, when to use it, what it produces. Include
-the primary output artifact, the verdict format it uses, and which pipeline stage
-it belongs to.]
+## Skill摘要
 
----
-
-## Static Assertions (Structural)
-
-Verified automatically by `/skill-test static` — no fixture needed.
-
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings (## Phase N or numbered ## sections)
-- [ ] Contains verdict keywords: [list the ones expected, e.g., PASS, FAIL, CONCERNS]
-- [ ] Contains "May I write" collaborative protocol language (if skill writes files)
-- [ ] Has a next-step handoff at the end
+[一段话：此skill做什么，何时使用，产生什么。包含主要输出产物、使用的裁定格式以及它属于哪个管线阶段。]
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: Happy Path — [short description]
+由 `/skill-test static` 自动验证 — 无需fixture。
 
-**Fixture:** [Describe the assumed project state. Which files exist? What do they
-contain? E.g., "game-concept.md exists with all 8 required sections complete.
-systems-index.md exists. All MVP GDDs are present and individually reviewed."]
-
-**Input:** `/[skill-name] [args]`
-
-**Expected behavior:**
-1. [Phase 1 action — what the skill should read or check]
-2. [Phase 2 action — what the skill should evaluate]
-3. [Phase N action — what the skill should output]
-
-**Assertions:**
-- [ ] Skill reads [specific file] before producing output
-- [ ] Output includes verdict keyword [PASS/FAIL/etc.]
-- [ ] Output lists [specific content] from the fixture
-- [ ] Skill asks for approval before writing any file
+- [ ] 具有必需的frontmatter字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有≥2个阶段标题（## Phase N 或 编号的 ## 章节）
+- [ ] 包含裁定关键词：[列出预期的关键词，例如，PASS、FAIL、CONCERNS]
+- [ ] 包含"May I write"协作协议语言（如果skill写入文件）
+- [ ] 末尾有下一步交接指引
 
 ---
 
-### Case 2: Failure Path — [short description, e.g., "Missing required artifact"]
+## 测试用例
 
-**Fixture:** [Describe the failure state. E.g., "game-concept.md is missing.
-No files exist in design/gdd/."]
+### 用例1：快乐路径 — [简短描述]
 
-**Input:** `/[skill-name] [args]`
+**Fixture：**[描述假设的项目状态。哪些文件存在？它们包含什么？例如，"game-concept.md 存在且包含所有8个必需章节且完整。systems-index.md 存在。所有MVP GDD都存在且已单独审查。"]
 
-**Expected behavior:**
-1. [Phase 1: skill detects missing file]
-2. [Phase 2: skill surfaces the gap rather than assuming OK]
-3. [Output: FAIL or BLOCKED verdict with specific blocker named]
+**输入：**`/[skill-name] [args]`
 
-**Assertions:**
-- [ ] Skill does NOT output PASS when the fixture is incomplete
-- [ ] Skill names the specific missing artifact
-- [ ] Skill suggests a remediation action (e.g., "Run /[other-skill]")
-- [ ] Skill does not create files to fill in the gap without asking
+**预期行为：**
+1. [阶段1动作 — skill应该读取或检查什么]
+2. [阶段2动作 — skill应该评估什么]
+3. [阶段N动作 — skill应该输出什么]
 
----
-
-### Case 3: Edge Case — [short description, e.g., "No argument provided"]
-
-**Fixture:** [State of project files for this case]
-
-**Input:** `/[skill-name]` (no argument)
-
-**Expected behavior:**
-1. [What the skill should do when invoked without arguments]
-
-**Assertions:**
-- [ ] [assertion]
+**断言：**
+- [ ] Skill在产生输出之前读取[特定文件]
+- [ ] 输出包含裁定关键词 [PASS/FAIL/等]
+- [ ] 输出列出fixture中的[特定内容]
+- [ ] Skill在写入任何文件之前请求批准
 
 ---
 
-## Protocol Compliance
+### 用例2：失败路径 — [简短描述，例如，"缺少必需的产物"]
 
-- [ ] Uses "May I write" before all file writes
-- [ ] Presents findings or report before asking for write approval
-- [ ] Ends with a recommended next step or follow-up skill
-- [ ] Never auto-creates files without explicit user approval
-- [ ] Does not skip phases or jump straight to a verdict without checking
+**Fixture：**[描述失败状态。例如，"game-concept.md 缺失。`design/gdd/` 中无任何文件。"]
+
+**输入：**`/[skill-name] [args]`
+
+**预期行为：**
+1. [阶段1：skill检测到文件缺失]
+2. [阶段2：skill展示差距而非假设OK]
+3. [输出：FAIL 或 BLOCKED 裁定，明确列出阻塞项]
+
+**断言：**
+- [ ] Skill当fixture不完整时不输出PASS
+- [ ] Skill明确列出特定缺失的产物
+- [ ] Skill建议补救行动（例如，"运行 /[other-skill]"）
+- [ ] Skill不会在未询问的情况下创建文件来填补差距
 
 ---
 
-## Coverage Notes
+### 用例3：边界情况 — [简短描述，例如，"未提供参数"]
 
-[Document what is intentionally NOT tested in this spec and why. Examples:
-- "Case 3 (all-mode) is not covered because it runs too many checks to evaluate
-  in a single spec — test each sub-mode individually."
-- "The database integration path is not covered as it requires a live environment."
-- "Edge cases involving corrupted YAML files are deferred to a future spec."]
+**Fixture：**[此用例的项目文件状态]
+
+**输入：**`/[skill-name]`（无参数）
+
+**预期行为：**
+1. [skill在无参数调用时应该做什么]
+
+**断言：**
+- [ ] [断言]
+
+---
+
+## 协议合规
+
+- [ ] 在所有文件写入前使用"May I write"
+- [ ] 在请求写入批准之前呈现发现或报告
+- [ ] 以推荐的下一步或后续skill结尾
+- [ ] 绝不在未获得用户明确批准的情况下自动创建文件
+- [ ] 不跳过阶段或直接跳转到裁定而不检查
+
+---
+
+## 覆盖说明
+
+[记录此规范中有意未测试的内容及其原因。示例：
+- "用例3（all-mode）未覆盖，因为它在单个规范中运行太多检查而无法评估 — 单独测试每个子模式。"
+- "数据库集成路径未覆盖，因为它需要在线环境。"
+- "涉及损坏YAML文件的边界情况推迟到未来的规范。" ]

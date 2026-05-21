@@ -1,40 +1,31 @@
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 ---
-name: Feature Request
-about: Suggest a new agent, skill, hook, or improvement
-title: "[Feature] "
+name: Feature Request（功能请求）
+about: 建议此项目的一个新功能
+title: '[FEATURE] '
 labels: enhancement
 assignees: ''
 ---
 
-## Summary
+# 功能请求
 
-A brief description of what you'd like added or changed.
+## 🎯 功能描述
+<!-- 清晰简洁地描述你希望添加什么功能 -->
 
-## Type
+## 🤔 此功能解决什么问题？
+<!-- 描述如果你缺少此功能时遇到的问题 -->
 
-- [ ] New agent
-- [ ] New skill (slash command)
-- [ ] New hook
-- [ ] New rule
-- [ ] New template
-- [ ] Improvement to existing component
-- [ ] Other:
+## 💡 建议方案
+<!-- 描述你对该功能的工作方式有何想法 -->
 
-## Problem / Motivation
+## 🔄 替代方案
+<!-- 你考虑过哪些替代方案？ -->
 
-What problem does this solve? What workflow does it improve?
+## 📋 依赖项
+<!-- 此功能是否依赖于其他系统或更改？请列出 -->
 
-## Proposed Solution
+## 📸 参考/示例
+<!-- 如果有，添加其他游戏或概念中的参考或示例 -->
 
-How do you think this should work? Include details like:
-- For agents: what domain, what tier, what tools
-- For skills: what the workflow looks like, what it outputs
-- For hooks: what event triggers it, what it validates
-
-## Alternatives Considered
-
-Any other approaches you've thought about.
-
-## Additional Context
-
-Examples, references, or screenshots that help explain the request.
+## 🔗 相关
+<!-- 链接到相关的设计文档、故事或 Epic -->

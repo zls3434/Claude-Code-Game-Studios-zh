@@ -1,130 +1,132 @@
-# Sound Bible: [Project Name]
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Audio Vision
+# 声音圣经：[项目名称]
 
-### Sonic Identity
-[Describe the overall audio personality of the game in 2-3 sentences. What does the game "sound like"? What emotions should the audio evoke?]
+## 音频愿景
 
-### Audio Pillars
-1. **[Pillar 1]**: [How this pillar manifests in audio]
-2. **[Pillar 2]**: [How this pillar manifests in audio]
-3. **[Pillar 3]**: [How this pillar manifests in audio]
+### 声音识别
+[用2-3句话描述游戏的整体音频个性。这个游戏"听起来像什么"？音频应该唤起什么情感？]
 
-### Reference Games / Media
-| Reference | What to Take From It | What to Avoid |
+### 音频支柱
+1. **[支柱1]**：[此支柱在音频中如何体现]
+2. **[支柱2]**：[此支柱在音频中如何体现]
+3. **[支柱3]**：[此支柱在音频中如何体现]
+
+### 参考游戏/媒体
+| 参考 | 从中借鉴什么 | 避免什么 |
 | ---- | ---- | ---- |
-| [Game/Film 1] | [Specific audio quality to emulate] | [What doesn't fit our vision] |
-| [Game/Film 2] | [Specific audio quality to emulate] | [What doesn't fit our vision] |
+| [游戏/电影1] | [要模仿的具体音频品质] | [什么不符合我们的愿景] |
+| [游戏/电影2] | [要模仿的具体音频品质] | [什么不符合我们的愿景] |
 
 ---
 
-## Music Direction
+## 音乐方向
 
-### Style and Genre
-[Primary musical style, instrumentation palette, tempo ranges]
+### 风格与类型
+[主要音乐风格、乐器调色板、速度范围]
 
-### Instrumentation Palette
-- **Core instruments**: [List the primary instruments/synths that define the sound]
-- **Accent instruments**: [Used for emphasis, transitions, special moments]
-- **Avoid**: [Instruments or styles that do NOT fit the game]
+### 乐器调色板
+- **核心乐器**：[列出定义音色的主要乐器/合成器]
+- **点缀乐器**：[用于强调、转场、特殊时刻]
+- **避免**：[不适合游戏的乐器或风格]
 
-### Adaptive Music System
-| Game State | Music Behavior | Transition |
+### 自适应音乐系统
+| 游戏状态 | 音乐行为 | 转场 |
 | ---- | ---- | ---- |
-| Exploration | [Tempo, energy, instrumentation] | [How it transitions to next state] |
-| Combat | [Tempo, energy, instrumentation] | [Trigger condition and crossfade time] |
-| Stealth/Tension | [Tempo, energy, instrumentation] | [Trigger and transition] |
-| Victory/Reward | [Stinger or transition behavior] | [Return to exploration] |
-| Menu/UI | [Style for menus] | [Fade on game start] |
+| 探索 | [速度、能量、乐器] | [如何转场到下一个状态] |
+| 战斗 | [速度、能量、乐器] | [触发条件和交叉渐变时间] |
+| 潜行/紧张 | [速度、能量、乐器] | [触发和转场] |
+| 胜利/奖励 | [短音或转场行为] | [返回探索] |
+| 菜单/UI | [菜单风格] | [游戏开始时淡出] |
 
-### Music Rules
-- [Rule about looping, e.g., "All exploration tracks must loop seamlessly after 2-4 minutes"]
-- [Rule about silence, e.g., "Allow 10-15 seconds of silence between exploration loops"]
-- [Rule about intensity, e.g., "Combat music must reach full intensity within 3 seconds of combat start"]
-- [Rule about transitions, e.g., "All music transitions use 1.5 second crossfades"]
+### 音乐规则
+- [关于循环的规则，例如："所有探索曲目必须在2-4分钟后无缝循环"]
+- [关于静音的规则，例如："探索循环之间允许10-15秒静音"]
+- [关于强度的规则，例如："战斗音乐必须在战斗开始3秒内达到完全强度"]
+- [关于转场的规则，例如："所有音乐转场使用1.5秒交叉渐变"]
 
 ---
 
-## Sound Effects
+## 音效
 
-### SFX Palette
-| Category | Description | Style Notes |
+### 音效调色板
+| 类别 | 描述 | 风格备注 |
 | ---- | ---- | ---- |
-| Player Actions | [Movement, attacks, abilities] | [Punchy, responsive, front-of-mix] |
-| Enemy Actions | [Attacks, abilities, death] | [Distinct from player, slightly recessed] |
-| UI | [Button clicks, menu transitions, notifications] | [Clean, subtle, never annoying on repeat] |
-| Environment | [Ambient loops, weather, objects] | [Immersive, layered, spatial] |
-| Feedback | [Damage taken, item pickup, level up] | [Clear, satisfying, non-fatiguing] |
+| 玩家动作 | [移动、攻击、能力] | [有力、响应迅速、位于混音前方] |
+| 敌人动作 | [攻击、能力、死亡] | [与玩家区分，略微靠后] |
+| UI | [按钮点击、菜单转场、通知] | [干净、微妙、重复时不令人厌烦] |
+| 环境 | [环境循环、天气、物体] | [沉浸式、分层、空间化] |
+| 反馈 | [承受伤害、拾取物品、升级] | [清晰、令人满足、不造成疲劳] |
 
-### Audio Feedback Priority
-When multiple sounds compete, this priority determines what plays:
-1. Player damage / critical warnings (always audible)
-2. Player actions (attacks, abilities)
-3. Enemy actions (nearby enemies first)
-4. UI feedback
-5. Environment / ambient
+### 音频反馈优先级
+当多个声音竞争时，此优先级决定播放什么：
+1. 玩家伤害 / 严重警告（始终可听到）
+2. 玩家动作（攻击、能力）
+3. 敌人动作（优先附近敌人）
+4. UI反馈
+5. 环境 / 氛围
 
-### SFX Rules
-- [Rule about repetition, e.g., "Every SFX with >3 plays/minute needs 3+ variations"]
-- [Rule about spatial audio, e.g., "All gameplay SFX must be 3D positioned, UI SFX are 2D"]
-- [Rule about ducking, e.g., "Player hit SFX ducks all other SFX by 3dB for 200ms"]
-- [Rule about response time, e.g., "Action SFX must trigger within 1 frame of the action"]
+### 音效规则
+- [关于重复的规则，例如："每分钟播放超过3次的每个SFX需要3+变体"]
+- [关于空间音频的规则，例如："所有游戏SFX必须为3D定位，UI SFX为2D"]
+- [关于闪避的规则，例如："玩家受击SFX将所有其他SFX降低3dB持续200ms"]
+- [关于响应时间的规则，例如："动作SFX必须在动作的1帧内触发"]
 
 ---
 
-## Mixing
+## 混音
 
-### Mix Bus Structure
-| Bus | Content | Target Level |
+### 混音总线结构
+| 总线 | 内容 | 目标电平 |
 | ---- | ---- | ---- |
-| Master | Everything | 0 dB |
-| Music | All music tracks | [target dBFS] |
-| SFX | All sound effects | [target dBFS] |
-| Dialogue | All voice/narration | [target dBFS] |
-| UI | All interface sounds | [target dBFS] |
-| Ambient | Environment loops | [target dBFS] |
+| 主输出 | 一切 | 0 dB |
+| 音乐 | 所有音乐轨道 | [目标 dBFS] |
+| 音效 | 所有音效 | [目标 dBFS] |
+| 对话 | 所有语音/旁白 | [目标 dBFS] |
+| UI | 所有界面音效 | [目标 dBFS] |
+| 环境 | 环境循环 | [目标 dBFS] |
 
-### Mixing Rules
-- Dialogue always takes priority — duck music and SFX during dialogue
-- Music should be felt, not dominate — if players can't hear SFX over music, music is too loud
-- Master output must never clip — use a limiter on the master bus
-- All volumes must be adjustable by the player (per bus)
-- Default mix should sound good on both speakers and headphones
+### 混音规则
+- 对话始终优先 — 在对话期间闪避音乐和音效
+- 音乐应该被感受到，而非主导 — 如果玩家在音乐中听不到音效，说明音乐太响了
+- 主输出绝对不能削波 — 在主总线上使用限制器
+- 所有音量必须可由玩家调整（每条总线独立）
+- 默认混音应在扬声器和耳机上都听起来良好
 
-### Dynamic Range
-- [Specify loudness targets, e.g., "Target -14 LUFS integrated, -1 dBTP true peak"]
-- [Specify compression policy, e.g., "Light compression on SFX bus, no compression on music"]
+### 动态范围
+- [指定响度目标，例如："目标 -14 LUFS 集成, -1 dBTP 真实峰值"]
+- [指定压缩策略，例如："音效总线上轻度压缩，音乐无压缩"]
 
 ---
 
-## Technical Specifications
+## 技术规格
 
-### Format Requirements
-| Type | Format | Sample Rate | Bit Depth | Notes |
+### 格式要求
+| 类型 | 格式 | 采样率 | 位深 | 备注 |
 | ---- | ---- | ---- | ---- | ---- |
-| Music | [OGG/WAV] | [44.1/48 kHz] | [16/24 bit] | [Streaming from disk] |
-| SFX | [WAV/OGG] | [44.1/48 kHz] | [16 bit] | [Loaded into memory] |
-| Ambient | [OGG] | [44.1 kHz] | [16 bit] | [Streaming, loopable] |
-| Dialogue | [OGG/WAV] | [44.1 kHz] | [16 bit] | [Streaming] |
+| 音乐 | [OGG/WAV] | [44.1/48 kHz] | [16/24 bit] | [从磁盘流式加载] |
+| 音效 | [WAV/OGG] | [44.1/48 kHz] | [16 bit] | [加载到内存] |
+| 环境 | [OGG] | [44.1 kHz] | [16 bit] | [流式加载，可循环] |
+| 对话 | [OGG/WAV] | [44.1 kHz] | [16 bit] | [流式加载] |
 
-### Naming Convention
+### 命名约定
 `[category]_[subcategory]_[name]_[variation].ext`
-- Example: `sfx_weapon_sword_swing_01.wav`
-- Example: `music_exploration_forest_loop.ogg`
-- Example: `amb_environment_cave_drip_loop.ogg`
+- 示例：`sfx_weapon_sword_swing_01.wav`
+- 示例：`music_exploration_forest_loop.ogg`
+- 示例：`amb_environment_cave_drip_loop.ogg`
 
-### Memory Budget
-- Total audio memory: [target, e.g., 128 MB]
-- SFX pool: [target]
-- Music streaming buffer: [target]
-- Voice streaming buffer: [target]
+### 内存预算
+- 总音频内存：[目标，例如 128 MB]
+- 音效池：[目标]
+- 音乐流式缓冲区：[目标]
+- 语音流式缓冲区：[目标]
 
 ---
 
-## Accessibility
+## 无障碍
 
-- All critical audio cues must have visual alternatives (subtitles, screen flash, icon)
-- Mono audio option for hearing-impaired players
-- Separate volume controls for all buses
-- Option to disable sudden loud sounds
-- Subtitle support for all dialogue with speaker identification
+- 所有关键音频提示必须有视觉替代方案（字幕、屏幕闪烁、图标）
+- 为听障玩家提供单声道音频选项
+- 所有总线有独立的音量控制
+- 选项：禁用突然的响亮声音
+- 所有对话支持字幕，包含说话者识别

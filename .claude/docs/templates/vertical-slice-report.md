@@ -1,169 +1,163 @@
-# Vertical Slice Report: [Concept Name]
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-> **Date**: [YYYY-MM-DD]
-> **Slice Duration**: [N days]
-> **Target Scope**: 3–5 minutes of polished, continuous gameplay
-> **Source GDD**: design/gdd/game-concept.md
+# 垂直切片报告：[概念名称]
 
----
-
-## Validation Question
-
-[The full game loop question this build was proving — both experience AND feasibility:
-"Does a player, starting from nothing, experience [core fantasy] within [N] minutes,
-without developer guidance — and can we build one such loop in [X] days at
-representative quality?"]
+> **日期**：[YYYY-MM-DD]
+> **切片持续时间**：[N天]
+> **目标范围**：3-5分钟打磨完成的连续游戏体验
+> **来源GDD**：design/gdd/game-concept.md
 
 ---
 
-## Scope Built
+## 验证问题
 
-[Systems implemented, art quality level, what was intentionally omitted.]
+[此构建正在证明的完整游戏循环问题 — 体验和可行性两方面：
+"玩家是否能在没有开发者指导的情况下，在[N]分钟内从零开始体验到[核心幻想] —
+以及我们能否在[X]天内以代表性质量构建一个这样的循环？"]
 
-**Systems included:**
-- [System 1]
-- [System 2]
+---
+
+## 构建的范围
+
+[实现的系统、美术质量级别、有意省略的内容。]
+
+**包含的系统：**
+- [系统1]
+- [系统2]
 - [...]
 
-**Art/audio quality level:** [Placeholder / Representative / Near-shipping]
-**Shortcuts taken deliberately:** [List]
-**What was cut from original scope:** [List]
+**美术/音频质量级别：**[占位符 / 代表性 / 接近发布水平]
+**有意采取的捷径：**[列表]
+**从原始范围裁剪的内容：**[列表]
 
 ---
 
-## Build Velocity Log
+## 构建速度日志
 
-[Day-by-day record of what was completed. This is your real production rate data —
-use it in sprint planning.]
+[按天记录完成的内容。这是你真实的生产率数据 — 在冲刺计划中使用。]
 
-| Day | Completed |
+| 天 | 完成内容 |
 |-----|-----------|
-| Day 1 | [What was built] |
-| Day 2 | [What was built] |
-| Day 3 | [What was built] |
+| 第1天 | [构建了什么] |
+| 第2天 | [构建了什么] |
+| 第3天 | [构建了什么] |
 | ... | ... |
 
-**Total elapsed:** [N days] for [scope summary]
-**Velocity estimate:** [N hours per equivalent scope unit — e.g., "1 day per combat
-encounter, 0.5 days per UI screen"]
+**总共耗时：**[N天] 用于 [范围摘要]
+**速度估计：**[每等效范围单位N小时 — 例如，"每个战斗遭遇1天，每个UI界面0.5天"]
 
 ---
 
-## Playtest Results
+## 试玩结果
 
-| Attribute | Value |
+| 属性 | 值 |
 |-----------|-------|
-| Total sessions | [N] |
-| Internal testers | [N] |
-| External testers | [N — people who had not seen the game, if available] |
-| Avg session length | [N minutes (target: [N] minutes)] |
-| Time to first meaningful action | [N seconds (target: [N] seconds)] |
+| 总会话数 | [N] |
+| 内部测试人员 | [N] |
+| 外部测试人员 | [N — 未见过游戏的人员，如果有的话] |
+| 平均会话时长 | [N分钟（目标：[N]分钟）] |
+| 首次有意义动作的时间 | [N秒（目标：[N]秒）] |
 
 ---
 
-## Observations
+## 观察
 
-[Specific, non-opinion observations from playtest sessions. Quote testers where useful.]
+[来自试玩会话的具体、非观点性观察。有用处的地方引用测试人员的原话。]
 
-**Where testers succeeded without guidance:**
+**测试人员在无指导下成功的部分：**
 - [...]
 
-**Where testers were confused or stuck:**
+**测试人员感到困惑或卡住的部分：**
 - [...]
 
-**Emotional reactions observed:**
+**观察到的情感反应：**
 - [...]
 
 ---
 
-## Metrics
+## 指标
 
-| Metric | Target | Actual |
+| 指标 | 目标 | 实际 |
 |--------|--------|--------|
-| Time to first meaningful action | [N sec] | [N sec] |
-| Session length | [N min] | [N min] |
-| Critical fun blockers found | 0 | [N] |
-| Pipeline blockers found | 0 | [N] |
-| Architecture surprises | 0 | [N] |
+| 首次有意义动作的时间 | [N秒] | [N秒] |
+| 会话时长 | [N分钟] | [N分钟] |
+| 发现的关键趣味阻碍 | 0 | [N] |
+| 发现的管线阻碍 | 0 | [N] |
+| 架构意外 | 0 | [N] |
 
-**Feel assessment:** [Specific — "combat feedback weak; no impact sound on hit" not "felt rough"]
-
----
-
-## Recommendation: [PROCEED / PIVOT / KILL]
-
-[One paragraph with evidence — reference the validation question directly. Did a
-player experience the core fantasy within the target time, without developer guidance?
-Can the team build at this quality on the projected schedule?]
+**感受评估：**[具体 — "战斗反馈弱；命中时无冲击音效" 而非 "感觉粗糙"]
 
 ---
 
-## If Proceeding
+## 建议：[继续 / 调整方向 / 终止]
 
-**Production requirements** (what must change from slice to production):
-- [e.g., "Replace placeholder art with shipped assets"]
-- [e.g., "Combat system needs 2 more weapon types"]
-
-**Architecture adjustments needed:**
-- [ADR to update or create]
-
-**Sprint velocity estimate based on slice data:**
-- [e.g., "1 day per enemy type, 2 days per level section, 0.5 days per UI screen"]
-
-**Scope adjustments from original design:**
-- [What the slice revealed about the true production scope]
-
-**Performance targets:** [Confirmed / Revised — list changes if revised]
-
-**Playtest note:** Run `/playtest-report` to structure additional session data
-before running `/gate-check pre-production`.
-
-**Next steps:**
-1. `/gate-check pre-production` — formally advance to Production
-2. `/create-epics layer:foundation` — plan Foundation layer epics
-3. `/create-epics layer:core` — plan Core layer epics
-4. `/sprint-plan` — use velocity data from this report in the estimate
+[一段带证据的话 — 直接引用验证问题。玩家是否在目标时间内、在没有开发者指导的情况下体验到了核心幻想？团队能否按预估时间表以该质量构建？]
 
 ---
 
-## If Pivoting
+## 如果继续
 
-[Which GDDs need revision and why — be specific about the failure mode observed.]
+**制作需求**（从切片到制作必须改变什么）：
+- [例如，"用发布级资产替换占位美术"]
+- [例如，"战斗系统需要新增2种武器类型"]
 
-**Systems requiring GDD revision:** [List]
-**Architecture decisions to revisit:** [List — use `/architecture-decision` to update]
-**Core loop change needed:** [What specifically to change]
+**需要的架构调整：**
+- [需要更新或创建的ADR]
 
-**Next steps:**
-1. `/design-system [mechanic]` — revise affected GDDs
-2. `/architecture-decision [decision]` — address architecture issues
-3. `/vertical-slice` — re-validate after revisions
+**基于切片数据的冲刺速度估计：**
+- [例如，"每个敌人类型1天，每个关卡段2天，每个UI界面0.5天"]
+
+**从原始设计的范围调整：**
+- [切片揭示了什么关于真实制作范围的]
+
+**性能目标：**[已确认 / 已修订 — 如果修订则列出变更]
+
+**试玩说明：** 在运行 `/gate-check pre-production` 之前，运行 `/playtest-report` 来结构化额外的会话数据。
+
+**后续步骤：**
+1. `/gate-check pre-production` — 正式推进到制作阶段
+2. `/create-epics layer:foundation` — 计划基础层史诗
+3. `/create-epics layer:core` — 计划核心层史诗
+4. `/sprint-plan` — 在估算中使用此报告的速度数据
 
 ---
 
-## If Killing
+## 如果调整方向
 
-[Why the full game loop does not work at this quality level. What specifically
-prevented the player from experiencing the core fantasy. What to do instead.]
+[哪些GDD需要修订以及为什么 — 要具体说明观察到的失败模式。]
 
-**Next step:** `/brainstorm` to explore a new direction, or `/prototype [new-concept]`
-to test a different concept cheaply before investing in another vertical slice.
+**需要GDD修订的系统：**[列表]
+**需要重新审视的架构决策：**[列表 — 使用 `/architecture-decision` 更新]
+**需要的核心循环变更：**[具体改变什么]
+
+**后续步骤：**
+1. `/design-system [mechanic]` — 修订受影响的GDD
+2. `/architecture-decision [decision]` — 处理架构问题
+3. `/vertical-slice` — 修订后重新验证
 
 ---
 
-## Lessons Learned
+## 如果终止
 
-- **What assumptions were broken by building to near-production quality?**
+[为什么完整游戏循环在此质量水平下行不通。是什么具体阻止了玩家体验核心幻想。取而代之做什么。]
+
+**下一步：**`/brainstorm` 探索新方向，或 `/prototype [new-concept]` 在投入另一个垂直切片之前低成本测试一个不同的概念。
+
+---
+
+## 经验教训
+
+- **构建到接近制作质量的过程中打破了哪些假设？**
   [...]
 
-- **What surprised us about the pipeline or architecture?**
+- **管线或架构方面有什么让我们惊讶的？**
   [...]
 
-- **What would we change about the slice scope if we ran this again?**
+- **如果重新运行，我们会如何改变切片范围？**
   [...]
 
 ---
 
-> *Vertical slice code location: `prototypes/[concept-name]-vertical-slice/`*
-> *This code is reference material only. Production implementation is written from scratch.*
-> *Never import or refactor this code into production.*
+> *垂直切片代码位置：`prototypes/[concept-name]-vertical-slice/`*
+> *此代码仅为参考材料。制作实现从头编写。*
+> *绝不要将此代码导入或重构到生产中。*

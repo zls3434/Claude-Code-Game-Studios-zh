@@ -1,107 +1,120 @@
-# Godot — Current Best Practices
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Godot 4.5 — 当前最佳实践
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+> 最后验证：2026-02-13
+> 来源：[官方 Godot 4.5 文档](https://docs.godotengine.org/en/4.5/)
 
-Practices that are **new or changed** since the model's training data (~4.3).
-This supplements (not replaces) the agent's built-in knowledge.
+本文件记录模型训练数据中不存在的 **新最佳实践和模式**。
 
-## GDScript (4.5+)
+---
 
-- **Variadic arguments**: Functions can accept arbitrary parameter counts
-  ```gdscript
-  func log_values(prefix: String, values: Variant...) -> void:
-      for v in values:
-          print(prefix, ": ", v)
-  ```
+## 使用 await 和信号
 
-- **Abstract classes and methods**: Use `@abstract` to enforce inheritance
-  ```gdscript
-  @abstract
-  class_name BaseEnemy extends CharacterBody3D
+在 Godot 4 中，`yield()` 已被完全移除。使用 `await`：
 
-  @abstract
-  func get_attack_pattern() -> Array[Attack]:
-      pass  # Subclasses MUST override
-  ```
+```gdscript
+# 模型可能生成过时的代码：
+yield(get_tree().create_timer(1.0), "timeout")
 
-- **Script backtracing**: Detailed call stacks available even in Release builds
+# Godot 4.5 的正确语法：
+await get_tree().create_timer(1.0).timeout
+```
 
-## Physics (4.6)
+## 类型化数组
 
-- **Jolt Physics is the default 3D engine** for new projects
-  - Better determinism and stability than GodotPhysics3D
-  - Some HingeJoint3D properties (`damp`) only work with GodotPhysics
-  - Switch: Project Settings → Physics → 3D → Physics Engine
-  - 2D physics unchanged (still Godot Physics 2D)
+在 `4.5` 中 Godot 引入了运行时类型检查的类型化数组。
+总是为数组指定类型以提高性能并捕获类型相关的 bug。
 
-## Rendering (4.6)
+```gdscript
+# 推荐（类型化数组）：
+var enemies: Array[Enemy] = []
+var positions: Array[Vector2] = []
 
-- **D3D12 is the default backend on Windows** (was Vulkan) — for better driver compatibility
-- **Glow now processes before tonemapping** with screen blending mode — existing glow setups may look different
-- **SSR overhauled** — significant improvement in realism, stability, and performance
-- **AgX tonemapper** — new white point and contrast controls
+# 避免（无类型数组）：
+var enemies := []  # Array[Variant]
+```
 
-## Rendering (4.5)
+## 节点引用
 
-- **Shader Baker**: Pre-compile shaders to eliminate startup hitching
-- **SMAA 1x**: New AA option — sharper than FXAA, cheaper than TAA
-- **Stencil buffer**: Available for advanced masking/portal effects
-- **Bent normal maps**: Directional occlusion in normal map textures
-- **Specular occlusion**: Ambient occlusion now affects reflections
+使用 `@onready` 和 `$` 简写代替显式的 `get_node()`：
 
-## Accessibility (4.5+)
+```gdscript
+# 首选：
+@onready var player: CharacterBody3D = $Player
+@onready var health_bar: ProgressBar = $UI/HealthBar
 
-- **Screen reader support**: Control nodes integrate with accessibility tools via AccessKit
-- **Live translation preview**: Test GUI layouts in different languages directly in-editor
-- **FoldableContainer**: New accordion-style UI node for collapsible sections
-- **Recursive Control disable**: Disable mouse/focus interactions for entire node hierarchies with a single property
+# 避免：
+var player: CharacterBody3D
+func _ready() -> void:
+    player = get_node("Player") as CharacterBody3D
+```
 
-## Animation (4.5+)
+## 物理
 
-- **BoneConstraint3D**: Bind bones to other bones with modifiers
-  - AimModifier3D, CopyTransformModifier3D, ConvertTransformModifier3D
+使用 `_physics_process(delta: float)` 而非 `_process()` 进行游戏逻辑。
+始终使用 `delta` 参数实现帧率无关的行为。
 
-## Animation (4.6)
+## 信号连接
 
-- **IK system fully restored**: Complete inverse kinematics reintroduced for 3D
-  - Available modifiers: CCDIK, FABRIK, Jacobian IK, Spline IK, TwoBoneIK
-  - Applied via `SkeletonModifier3D` nodes
+使用 `Signal.connect()` 和 `Signal.emit()` 方法，而非无类型的字符串连接：
 
-## Resources (4.5+)
+```gdscript
+# 首选（Godot 4 风格）：
+button.pressed.connect(_on_button_pressed)
 
-- **`duplicate_deep()`**: Explicit deep duplication for nested resource trees
-  - Old `duplicate()` behavior retained for backward compatibility
-  - Use `duplicate_deep()` when you need per-instance copies of nested resources
+# 避免（Godot 3 风格，已弃用）：
+# button.connect("pressed", self, "_on_button_pressed")
+```
 
-## Navigation (4.5+)
+## Tween 使用
 
-- **Dedicated 2D navigation server**: No longer proxied through 3D NavigationServer
-  - Reduces export binary size for 2D-only games
+旧 `SceneTreeTween` 已被新的 `Tween` API 取代：
 
-## UI (4.6)
+```gdscript
+# Godot 4.5 的正确语法（创建 Tween）：
+var tween := create_tween()
+tween.tween_property($Sprite, "position", Vector2(100, 0), 1.0)
 
-- **Dual-focus system**: Mouse/touch focus is now separate from keyboard/gamepad focus
-  - Visual feedback differs depending on input method
-  - Consider this when designing custom focus behavior
+# 避免 Godot 3.x 语法（已移除）：
+# $Tween.interpolate_property(...)
+```
 
-## Editor Workflow (4.6)
+## 着色器
 
-- Flexible dock drag-and-drop with blue outline preview (including bottom panel)
-- Most panels support floating windows (except Debugger)
-- New keyboard shortcuts: Alt+O (Output), Alt+S (Shader)
-- Export variable auto-generation: drag resource from FileSystem into script editor
-- Live preview in Quick Open dialog when "Live Preview" enabled
-- New "Select Mode" (v key) prevents accidental transforms; old mode renamed "Transform Mode" (q key)
+着色器语言在 Godot 4.5 中使用新的结构特性引入了
+`shader_type`。片段/顶点处理器在 `fragment()` 和 `vertex()` 函数中定义，
+而非旧的 `void fragment()` 模式：
 
-## Tooling
+```glsl
+shader_type spatial;
 
-- **ripgrep has no `gdscript` type**: `*.gd` is registered under `gap` (GAP programming language).
-  `rg --type gdscript` is a hard error — the search never executes.
-  Always use `rg --glob "*.gd"` (shell) or `glob: "*.gd"` (Grep tool) to filter GDScript files.
+void fragment() {
+    // 片段着色器逻辑
+}
 
-## Platform (4.5+)
+void vertex() {
+    // 顶点着色器逻辑
+}
+```
 
-- **visionOS export**: First new platform since open-sourcing (windowed app mode)
-- **SDL3 gamepad driver**: Better cross-platform gamepad support
-- **Android**: Edge-to-edge display, camera feed access, 16KB page support (Android 15+)
-- **Linux**: Wayland subwindow support for multi-window capability
+## 资源预加载
+
+对于频繁使用的资源，使用 `preload()` 作为常量以获得更好的性能：
+
+```gdscript
+const BULLET_SCENE := preload("res://scenes/bullet.tscn")
+const HIT_SOUND := preload("res://audio/hit.wav")
+```
+
+## 导出变量
+
+使用新的 `@export` 注释和带类型的提示。Godot 4.5 中，
+导出变量类型更为严格 —— 类型必须与提示匹配：
+
+```gdscript
+@export var speed: float = 10.0
+@export var max_health: int = 100
+@export_range(0.0, 1.0) var volume: float = 0.8
+@export var enemy_scene: PackedScene
+@export_multiline var description: String = ""
+```

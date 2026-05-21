@@ -1,159 +1,156 @@
 ---
 name: team-live-ops
-description: "Orchestrate the live-ops team for post-launch content planning: coordinates live-ops-designer, economy-designer, analytics-engineer, community-manager, writer, and narrative-director to design and plan a season, event, or live content update."
-argument-hint: "[season name or event description] [--review full|lean|solo]"
+description: "编排线上运营团队进行发布后内容规划：协调 live-ops-designer、economy-designer、analytics-engineer、community-manager、writer 和 narrative-director 来设计和规划一个赛季、活动或线上内容更新。"
+argument-hint: "[赛季名称或活动描述] [--review full|lean|solo]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Task, AskUserQuestion, TodoWrite
 model: sonnet
 ---
-**Argument check:** If no season name or event description is provided, output:
-> "Usage: `/team-live-ops [season name or event description]` — Provide the name or description of the season or live event to plan."
-Then stop immediately without spawning any subagents or reading any files.
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-When this skill is invoked with a valid argument, orchestrate the live-ops team through a structured planning pipeline.
+**参数检查：** 如果未提供赛季名称或活动描述，输出：
+> "用法：`/team-live-ops [赛季名称或活动描述]` — 提供要规划的赛季或线上活动的名称或描述。"
+然后立即停止，不生成任何子 Agent 或读取任何文件。
 
-**Decision Points:** At each phase transition, use `AskUserQuestion` to present
-the user with the subagent's proposals as selectable options. Write the agent's
-full analysis in conversation, then capture the decision with concise labels.
-The user must approve before moving to the next phase.
+当此 Skill 以有效参数调用时，通过结构化规划流水线编排线上运营团队。
 
-## Phase 0: Resolve Review Mode
+**决策点：** 在每个阶段过渡时，使用 `AskUserQuestion` 将子 Agent 的提案作为可选项展示给用户。将 Agent 的完整分析写到对话中，然后用简洁的标签捕获决策。用户必须在进入下一阶段前批准。
 
-1. If `--review [mode]` was passed as an argument, use that mode.
-2. Else read `production/review-mode.txt` — use whatever is written there.
-3. Else default to `lean`.
+## 第 0 阶段：解析审查模式
 
-Modes:
-- `full` — spawn all director and lead gates as described
-- `lean` — skip director gates unless they are PHASE-GATE type (CD-PHASE-GATE, TD-PHASE-GATE, PR-PHASE-GATE, AD-PHASE-GATE)
-- `solo` — skip all director gate spawning entirely; run the skill without any agent gates
+1. 如果传入 `--review [mode]` 参数，使用该模式。
+2. 否则读取 `production/review-mode.txt` — 使用其中写入的内容。
+3. 否则默认 `lean`。
 
-Store the resolved mode for use in all subsequent phases.
+模式：
+- `full` — 按描述生成所有主管和牵头关卡
+- `lean` — 跳过主管关卡，除非它们是 PHASE-GATE 类型（CD-PHASE-GATE、TD-PHASE-GATE、PR-PHASE-GATE、AD-PHASE-GATE）
+- `solo` — 完全跳过所有主管关卡生成；在没有任何 Agent 关卡的情况下运行 Skill
 
-## Team Composition
-- **live-ops-designer** — Season structure, event cadence, retention mechanics, battle pass
-- **economy-designer** — Live economy balance, store rotation, currency pricing, pity timers
-- **analytics-engineer** — Success metrics, A/B test design, event tracking, dashboard specs
-- **community-manager** — Player-facing announcements, event descriptions, seasonal messaging
-- **narrative-director** — Seasonal narrative theme, story arc, world event framing
-- **writer** — Event descriptions, reward item names, seasonal flavor text, announcement copy
+存储解析后的模式以供所有后续阶段使用。
 
-## How to Delegate
+## 团队组成
+- **live-ops-designer** — 赛季结构、活动节奏、留存机制、战斗通行证
+- **economy-designer** — 线上经济平衡、商店轮换、货币定价、保底计时器
+- **analytics-engineer** — 成功指标、A/B 测试设计、活动追踪、仪表盘规格
+- **community-manager** — 面向玩家的公告、活动描述、赛季消息
+- **narrative-director** — 赛季叙事主题、故事弧、世界事件框架
+- **writer** — 活动描述、奖励物品名称、赛季风味文本、公告文案
 
-Use the Task tool to spawn each team member as a subagent:
-- `subagent_type: live-ops-designer` — Season/event structure and retention mechanics
-- `subagent_type: economy-designer` — Live economy balance and reward pricing
-- `subagent_type: analytics-engineer` — Success metrics, A/B tests, event instrumentation
-- `subagent_type: community-manager` — Player-facing communication and messaging
-- `subagent_type: narrative-director` — Seasonal theme and narrative framing
-- `subagent_type: writer` — All player-facing text: event descriptions, item names, copy
+## 如何委托
 
-Always provide full context in each agent's prompt (game concept path, existing season docs, ethics policy path, current economy state). Launch independent agents in parallel where the pipeline allows it (Phases 3 and 4 can run simultaneously).
+使用 Task 工具将每个团队成员作为子 Agent 生成：
+- `subagent_type: live-ops-designer` — 赛季/活动结构和留存机制
+- `subagent_type: economy-designer` — 线上经济平衡和奖励定价
+- `subagent_type: analytics-engineer` — 成功指标、A/B 测试、活动仪器化
+- `subagent_type: community-manager` — 面向玩家的沟通和消息
+- `subagent_type: narrative-director` — 赛季主题和叙事框架
+- `subagent_type: writer` — 所有面向玩家的文本：活动描述、物品名称、文案
 
-## Pipeline
+始终向每个 Agent 的提示提供完整上下文（游戏概念路径、已有赛季文档、道德政策路径、当前经济状态）。在流水线允许的地方并行启动独立 Agent（第 3 和第 4 阶段可以同时运行）。
 
-### Phase 1: Season/Event Scoping
-Delegate to **live-ops-designer**:
-- Define the season or event: type (seasonal, limited-time event, challenge), duration, theme direction
-- Outline the content list: what's new (modes, items, challenges, story beats)
-- Define the retention hook: what brings players back daily/weekly during this season
-- Identify resource budget: how much new content needs to be created vs. reused
-- Output: season brief with scope, content list, and retention mechanic overview
+## 流水线
 
-### Phase 2: Narrative Theme
-Delegate to **narrative-director**:
-- Read the season brief from Phase 1
-- Design the seasonal narrative theme: how does this event connect to the game world?
-- Define the central story hook players will discover during the event
-- Identify which existing lore threads this season can advance
-- Output: narrative framing document (theme, story hook, lore connections)
+### 第 1 阶段：赛季/活动范围划定
+委托给 **live-ops-designer**：
+- 定义赛季或活动：类型（赛季、限时活动、挑战）、持续时间、主题方向
+- 概述内容列表：有什么新内容（模式、物品、挑战、故事节拍）
+- 定义留存钩子：是什么让玩家在此赛季期间每天/每周回归
+- 识别资源预算：有多少新内容需要创建 vs. 复用
+- 输出：附范围、内容列表和留存机制概述的赛季简报
 
-### Phase 3: Economy Design (parallel with Phase 2 if theme is clear)
-Delegate to **economy-designer**:
-- Read the season brief and existing economy rules from `design/live-ops/economy-rules.md`
-- Design the reward track: free tier progression, premium tier value proposition
-- Plan the in-season economy: seasonal currency, store rotation, pricing
-- Define pity timer mechanics and bad-luck protection for any random elements
-- Verify no pay-to-win items in premium track
-- Output: economy design doc with reward tables, pricing, and currency flow
+### 第 2 阶段：叙事主题
+委托给 **narrative-director**：
+- 读取第 1 阶段的赛季简报
+- 设计赛季叙事主题：此活动如何连接到游戏世界？
+- 定义玩家在活动期间将发现的核心故事钩子
+- 识别哪些现有传说线可以被此赛季推进
+- 输出：叙事框架文档（主题、故事钩子、传说关联）
 
-### Phase 4: Analytics and Success Metrics (parallel with Phase 3)
-Delegate to **analytics-engineer**:
-- Read the season brief
-- Define success metrics: participation rate target, retention lift target, battle pass completion rate
-- Design any A/B tests to run during the season (e.g., different reward cadences)
-- Specify new telemetry events needed for this season's content
-- Output: analytics plan with success criteria and instrumentation requirements
+### 第 3 阶段：经济设计（如果主题已明确，可与第 2 阶段并行）
+委托给 **economy-designer**：
+- 读取赛季简报和 `design/live-ops/economy-rules.md` 中现有的经济规则
+- 设计奖励轨道：免费层级进度、付费层级价值主张
+- 规划赛季内经济：赛季货币、商店轮换、定价
+- 为任何随机元素定义保底计时器机制和坏运气保护
+- 验证付费轨道中无付费即赢物品
+- 输出：附奖励表、定价和货币流动的经济设计文档
 
-### Phase 5: Content Writing (parallel)
-Delegate in parallel:
-- **narrative-director** (if needed): Write any in-game narrative text (cutscene scripts, NPC dialogue, world event descriptions) for the season
-- **writer**: Write all player-facing text — event names, reward item descriptions, challenge objective text, seasonal flavor text
-- Both should read the narrative framing doc from Phase 2
+### 第 4 阶段：分析和成功指标（与第 3 阶段并行）
+委托给 **analytics-engineer**：
+- 读取赛季简报
+- 定义成功指标：参与率目标、留存提升目标、战斗通行证完成率
+- 设计赛季期间要运行的任何 A/B 测试（例如不同的奖励节奏）
+- 指定本赛季内容所需的新遥测事件
+- 输出：附成功标准和仪器化需求的分析计划
 
-### Phase 6: Player Communication Plan
-Delegate to **community-manager**:
-- Read the season brief, economy design, and narrative framing
-- Draft the season launch announcement (tone, key highlights, platform-specific versions)
-- Plan the communication cadence: pre-launch teaser, launch day post, mid-season reminder, final week FOMO push
-- Draft known-issues section placeholder for day-1 patch notes
-- Output: communication calendar with draft copy for each touchpoint
+### 第 5 阶段：内容写作（并行）
+并行委托：
+- **narrative-director**（如需要）：为赛季编写任何游戏内叙事文本（过场脚本、NPC 对话、世界事件描述）
+- **writer**：编写所有面向玩家的文本 — 活动名称、奖励物品描述、挑战目标文本、赛季风味文本
+- 两者都应读取第 2 阶段的叙事框架文档
 
-### Phase 7: Review and Sign-off
-Collect outputs from all phases and present a consolidated season plan:
-- Season brief (Phase 1)
-- Narrative framing (Phase 2)
-- Economy design and reward tables (Phase 3)
-- Analytics plan and success metrics (Phase 4)
-- Written content inventory (Phase 5)
-- Communication calendar (Phase 6)
+### 第 6 阶段：玩家沟通计划
+委托给 **community-manager**：
+- 读取赛季简报、经济设计和叙事框架
+- 起草赛季发布公告（语调、关键亮点、平台特定版本）
+- 规划沟通节奏：发布前预告、发布日帖子、赛季中期提醒、最后一周 FOMO 推动
+- 起草 Day-1 补丁说明的已知问题部分占位符
+- 输出：附每个接触点草稿文案的沟通日历
 
-Present a summary to the user with:
-- **Content scope**: what is being created
-- **Economy health check**: does the reward track feel fair and non-predatory?
-- **Analytics readiness**: are success criteria defined and instrumented?
-- **Ethics review**: check the Phase 3 economy design against `design/live-ops/ethics-policy.md`
-  - If the file does not exist: flag "ETHICS REVIEW SKIPPED: `design/live-ops/ethics-policy.md` not found. Economy design was not reviewed against an ethics policy. Recommend creating one before production begins." Include this flag in the season design output document. Add to next steps: create `design/live-ops/ethics-policy.md`.
-  - If the file exists and a violation is found: flag "ETHICS FLAG: [element] in Phase 3 economy design violates [policy rule]. Approval is blocked until this is resolved." Do NOT issue a COMPLETE verdict or write output documents. Use `AskUserQuestion` with options: revise economy design / override with documented rationale / cancel. If user chooses to revise: re-spawn economy-designer to produce a corrected design, then return to Phase 7 review. If user selects Cancel: end with Verdict: BLOCKED — "Live ops design cancelled due to unresolved ethics violation. Resolve the flagged issues and re-run /team-live-ops."
-- **Open questions**: decisions still needed before production begins
+### 第 7 阶段：审查与签收
+收集所有阶段的输出并呈现整合的赛季计划：
+- 赛季简报（第 1 阶段）
+- 叙事框架（第 2 阶段）
+- 经济设计和奖励表（第 3 阶段）
+- 分析计划和成功指标（第 4 阶段）
+- 书面内容清单（第 5 阶段）
+- 沟通日历（第 6 阶段）
 
-Ask the user to approve the season plan before delegating to production teams. Issue the COMPLETE verdict only after the user approves and no unresolved ethics violations remain. If an ethics violation is unresolved, end with Verdict: **BLOCKED**.
+向用户呈现摘要，包含：
+- **内容范围**：正在创建什么
+- **经济健康检查**：奖励轨道是否感觉公平且非掠夺性？
+- **分析就绪**：成功标准是否已定义并仪器化？
+- **道德审查**：对照 `design/live-ops/ethics-policy.md` 检查第 3 阶段的经济设计
+  - 如果文件不存在：标记"道德审查已跳过：`design/live-ops/ethics-policy.md` 未找到。经济设计未根据道德政策进行审查。建议在生产开始前创建一个。"将此标记包含在赛季设计输出文档中。添加到后续步骤：创建 `design/live-ops/ethics-policy.md`。
+  - 如果文件存在并发现违规：标记"道德标记：[element] 在第 3 阶段经济设计中违反 [policy rule]。批准被阻塞，直到此问题解决。"不要发出 COMPLETE 判定或写入输出文档。使用 `AskUserQuestion` 提供选项：修改经济设计 / 以书面理由覆盖 / 取消。如果用户选择修改：重新生成 economy-designer 生成修正设计，然后返回第 7 阶段审查。如果用户选择取消：以判定：BLOCKED — "线上运营设计因未解决的道德违规而取消。解决标记的问题并重新运行 /team-live-ops。"结束。
+- **未决问题**：生产开始前仍需决策的事项
 
-## Output Documents
+在委托给生产团队之前请用户批准赛季计划。仅在用户批准且没有未解决的道德违规后才发出 COMPLETE 判定。如果存在未解决的道德违规，以判定：**BLOCKED** 结束。
 
-All documents save to `design/live-ops/`:
-- `seasons/S[N]_[name].md` — Season design document (from Phase 1-3)
-- `seasons/S[N]_[name]_analytics.md` — Analytics plan (from Phase 4)
-- `seasons/S[N]_[name]_comms.md` — Communication calendar (from Phase 6)
+## 输出文档
 
-## Error Recovery Protocol
+所有文档保存到 `design/live-ops/`：
+- `seasons/S[N]_[name].md` — 赛季设计文档（来自第 1-3 阶段）
+- `seasons/S[N]_[name]_analytics.md` — 分析计划（来自第 4 阶段）
+- `seasons/S[N]_[name]_comms.md` — 沟通日历（来自第 6 阶段）
 
-If any spawned agent (via Task) returns BLOCKED, errors, or cannot complete:
+## 错误恢复协议
 
-1. **Surface immediately**: Report "[AgentName]: BLOCKED — [reason]" to the user before continuing to dependent phases
-2. **Assess dependencies**: Check whether the blocked agent's output is required by subsequent phases. If yes, do not proceed past that dependency point without user input.
-3. **Offer options** via AskUserQuestion with choices:
-   - Skip this agent and note the gap in the final report
-   - Retry with narrower scope
-   - Stop here and resolve the blocker first
-4. **Always produce a partial report** — output whatever was completed. Never discard work because one agent blocked.
+如果任何生成的 Agent（通过 Task）返回 BLOCKED、出错或无法完成：
 
-If a BLOCKED state is unresolvable, end with Verdict: **BLOCKED** instead of COMPLETE.
+1. **立即呈现**：在继续到依赖阶段之前报告"[AgentName]：BLOCKED — [reason]"
+2. **评估依赖**：检查被阻塞 Agent 的输出是否被后续阶段所需。如果是，未经用户输入不得继续超过该依赖点。
+3. **提供选项** 通过 AskUserQuestion 并提供选择：
+   - 跳过此 Agent 并在最终报告中注明缺口
+   - 以更窄范围重试
+   - 在此停止并先解决阻塞项
+4. **始终生成部分报告** — 输出已完成的内容。不要因为一个 Agent 阻塞就丢弃工作。
 
-## File Write Protocol
+如果 BLOCKED 状态无法解决，以判定：**BLOCKED** 而非 COMPLETE 结束。
 
-All file writes (season design docs, analytics plans, communication calendars) are
-delegated to sub-agents spawned via Task. Each sub-agent enforces the
-"May I write to [path]?" protocol. This orchestrator does not write files directly.
+## 文件写入协议
 
-## Output
+所有文件写入（赛季设计文档、分析计划、沟通日历）都委托给通过 Task 生成的子 Agent。每个子 Agent 强制执行"我可以写入 [path] 吗？"协议。此编排器不直接写入文件。
 
-A summary covering: season theme and scope, economy design highlights, success metrics, content list, communication plan, and any open decisions needing user input before production.
+## 输出
 
-Verdict: **COMPLETE** — season plan produced and handed off for production.
+一份摘要，涵盖：赛季主题与范围、经济设计亮点、成功指标、内容列表、沟通计划以及任何需要用户输入才能进行生产的未决决策。
 
-## Next Steps
+判定：**COMPLETE** — 赛季计划已生成并移交生产。
 
-- Run `/design-review` on the season design document for consistency validation.
-- Run `/sprint-plan` to schedule content creation work for the season.
-- Run `/team-release` when the season content is ready to deploy.
+## 后续步骤
+
+- 对赛季设计文档运行 `/design-review` 进行一致性验证。
+- 运行 `/sprint-plan` 为赛季排期内容创作工作。
+- 赛季内容准备好部署时运行 `/team-release`。

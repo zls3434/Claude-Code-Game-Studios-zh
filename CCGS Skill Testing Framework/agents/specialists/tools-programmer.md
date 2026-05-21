@@ -1,79 +1,78 @@
-# Agent Test Spec: tools-programmer
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Agent Summary
-Domain: Editor extensions, content authoring tools, debug utilities, and pipeline automation scripts.
-Does NOT own: game code (gameplay-programmer, ui-programmer, etc.), engine core systems (engine-programmer).
-Model tier: Sonnet (default).
-No gate IDs assigned.
+# Agent Test Spec：tools-programmer
 
----
-
-## Static Assertions (Structural)
-
-- [ ] `description:` field is present and domain-specific (references editor tools / pipeline / debug utilities)
-- [ ] `allowed-tools:` list includes Read, Write, Edit, Bash, Glob, Grep
-- [ ] Model tier is Sonnet (default for specialists)
-- [ ] Agent definition does not claim authority over game source code or engine internals
+## Agent 摘要
+领域：内部工具和编辑器 — 关卡编辑器工具、数据转换工具、管线自动化、资产处理脚本
+不拥有：游戏机制或功能、视觉资产创建、设计决策
+Model tier：Sonnet（默认）。
+未分配 Gate ID。
 
 ---
 
-## Test Cases
+## 静态断言（结构性）
 
-### Case 1: In-domain request — appropriate output
-**Input:** "Create a custom editor tool for placing enemy patrol waypoints in the level."
-**Expected behavior:**
-- Produces an editor extension spec and code scaffold for the configured engine (e.g., Godot EditorPlugin, Unity Editor window, Unreal Detail Customization)
-- Tool allows designer to click-place waypoints in the scene/viewport
-- Waypoints are serialized as engine-native resource (not hardcoded) so level-designer can edit without code
-- Includes undo/redo support per editor plugin best practices
-- Does NOT modify the AI pathfinding runtime code (that belongs to ai-programmer)
-
-### Case 2: Out-of-domain request — redirects correctly
-**Input:** "Implement the enemy melee combo system in code."
-**Expected behavior:**
-- Does NOT produce gameplay mechanic code
-- Explicitly states that combat system implementation belongs to `gameplay-programmer`
-- Redirects the request to `gameplay-programmer`
-- May note it can build a debug overlay tool to visualize combo state if useful during development
-
-### Case 3: Runtime data access — coordination required
-**Input:** "The waypoint editor tool needs to read game data at runtime to validate patrol routes against the AI budget."
-**Expected behavior:**
-- Identifies that runtime data access from an editor plugin requires a defined, safe interface to the game's runtime systems
-- Coordinates with `engine-programmer` to establish a read-only data access pattern (e.g., a resource validation API)
-- Does NOT directly read internal engine or game memory structures without an agreed interface
-- Documents the required interface before implementing the tool
-
-### Case 4: Engine version breakage
-**Input:** "After the engine upgrade, the waypoint editor tool crashes on startup."
-**Expected behavior:**
-- Checks the engine version reference (`docs/engine-reference/`) for breaking changes in editor plugin APIs
-- Identifies the specific API or signal that changed in the new version
-- Produces a targeted fix for the breaking change
-- Notes any other tools that may be affected by the same API change
-
-### Case 5: Context pass — art pipeline requirements
-**Input:** Art pipeline requirements provided in context: "All texture imports must set compression to VRAM Compressed, generate mipmaps, and tag with a LOD group." Request: "Build an asset import tool that enforces these settings."
-**Expected behavior:**
-- References all three requirements from the context: VRAM compression, mipmap generation, LOD group tagging
-- Produces an import tool that validates and applies all three settings on import
-- Adds a warning or error report for assets that fail to meet the specified settings
-- Does NOT change the art pipeline requirements themselves (those belong to art-director / technical-artist)
+- [ ] `description:` 字段存在且领域特定（编辑器工具、管线、脚本）
+- [ ] `allowed-tools:` 列表匹配 agent 角色（读写工具脚本，Bash — 如适用）
+- [ ] Model tier 为 Sonnet（specialist 默认）
+- [ ] Agent 定义不声称对游戏机制拥有权限
 
 ---
 
-## Protocol Compliance
+## 测试用例
 
-- [ ] Stays within declared domain (editor tools, pipeline scripts, debug utilities)
-- [ ] Redirects game code requests to appropriate programmer agents
-- [ ] Returns structured findings (tool specs, editor extension code, pipeline scripts)
-- [ ] Coordinates with engine-programmer before accessing runtime data from editor context
-- [ ] Checks engine version reference before using editor plugin APIs
-- [ ] Builds tools to enforce requirements, does not author the requirements themselves
+### Case 1：域内请求 — 适当的输出
+**输入：** "需要一个脚本将物品数据的 CSV 转换为引擎资源文件。CSV 包含物品 ID、名称、稀有度、属性。"
+**预期行为：**
+- 产出 CSV → 引擎资源转换脚本：
+  - 读取 CSV 头映射到资源字段
+  - 验证必需字段 (ID、名称、稀有度)
+  - 输出引擎格式的资源文件 (.tres 或等效)
+  - 错误处理：字段缺失、重复 ID
+
+### Case 2：领域外请求 — 适当重定向
+**输入：** "基于此脚本生成的资源文件，编写消耗品的游戏逻辑。"
+**预期行为：**
+- 重定向到 gameplay-programmer
+
+### Case 3：批量资产处理
+**输入：** "我们有 150 个纹理需要统一缩小到 512x512 并转换为 .webp 格式。"
+**预期行为：**
+- 产出批量纹理处理脚本 (ImageMagick / Python PIL / 引擎特定命令)
+  - 读取所有 .png → 调整大小至 512x512 → 导出 .webp
+  - 保留目录结构
+  - 包含提前终止、错误处理和进度报告
+
+### Case 4：编辑器工具 — 关卡数据可视化
+**输入：** "希望一个游戏内编辑器覆盖层，显示关卡中的敌人巡逻路径。"
+**预期行为：**
+- 实现编辑器覆盖层：
+  - 使用屏幕调试绘制调用绘制巡逻路径点和连接线
+  - 仅当编辑器标记设置时激活
+  - 当巡逻路径更新时动态重绘
+
+### Case 5：上下文传递 — 引擎工具 API
+**输入上下文：** 引擎为 Unity。编辑器工具 API：EditorWindow、Handles.DrawLine()、AssetDatabase.CreateAsset()、Selection.activeGameObject。
+**输入：** "使用编辑器 API 构建一个工具来可视化我们的巡逻路径。"
+**预期行为：**
+- 使用提供的 Unity 特定 API 实现：
+  - EditorWindow 用于工具面板
+  - Handles.DrawLine() 用于路径线
+  - Selection.activeGameObject 用于选择敌人
+  - AssetDatabase 用于持续保存
 
 ---
 
-## Coverage Notes
-- Waypoint editor tool (Case 1) should have a smoke test verifying it loads without errors in the editor
-- Runtime data access (Case 3) confirms the agent respects the engine-programmer's ownership of core APIs
-- Art pipeline context (Case 5) verifies the agent builds to match provided specs rather than inventing requirements
+## 协议合规性
+
+- [ ] 停留在声明领域内（编辑器工具、管线脚本、自动化）
+- [ ] 将游戏逻辑重定向到 gameplay-programmer
+- [ ] 产出带有适当错误处理的脚本
+- [ ] 使用来自上下文的引擎特定编辑器 API
+
+---
+
+## 覆盖说明
+- Case 3（批量处理）要求验证正确性（输入/输出计数、文件大小）
+- Case 5 要求引擎上下文在运行前可用；是上下文测试中最重要的
+- 无自动化运行器；手动审查或通过 `/skill-test`
