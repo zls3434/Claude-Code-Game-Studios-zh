@@ -1,214 +1,203 @@
-# Skill Test Spec: /adopt
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill 测试规范：/adopt
 
-`/adopt` audits an existing project's artifacts — GDDs, ADRs, stories, infrastructure
-files, and `technical-preferences.md` — for format compliance with the template's
-skill pipeline. It classifies every gap by severity (BLOCKING / HIGH / MEDIUM / LOW),
-composes a numbered, ordered migration plan, and writes it to `docs/adoption-plan-[date].md`
-after explicit user approval via `AskUserQuestion`.
+## Skill 摘要
 
-This skill is distinct from `/project-stage-detect` (which checks what exists).
-`/adopt` checks whether what exists will actually work with the template's skills.
+`/adopt` 审核现有项目的工件——GDD、ADR、故事、基础设施文件以及 `technical-preferences.md`——检查其格式是否符合模板的 skill 流水线要求。它将每个差距按严重程度分类（BLOCKING / HIGH / MEDIUM / LOW），编写一份有序编号的迁移计划，并在通过 `AskUserQuestion` 获得用户明确批准后写入 `docs/adoption-plan-[date].md`。
 
-No director gates apply. The skill does NOT invoke any director agents.
+此 skill 与 `/project-stage-detect`（检查存在什么）不同。`/adopt` 检查存在的东西是否能与模板的 skills 实际配合使用。
+
+不适用 director gate。此 skill 不会调用任何 director agent。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构层面）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains severity tier keywords: BLOCKING, HIGH, MEDIUM, LOW
-- [ ] Contains "May I write" or `AskUserQuestion` language before writing the adoption plan
-- [ ] Has a next-step handoff at the end (e.g., offering to fix the highest-priority gap immediately)
-
----
-
-## Director Gate Checks
-
-None. `/adopt` is a brownfield audit utility. No director gates apply.
+- [ ] 具有必需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有 ≥2 个阶段标题
+- [ ] 包含严重程度层级关键词：BLOCKING、HIGH、MEDIUM、LOW
+- [ ] 在写入采纳计划之前包含 "May I write" 或 `AskUserQuestion` 语言
+- [ ] 结尾有下一步交接（例如，提供立即修复最高优先级差距的选项）
 
 ---
 
-## Test Cases
+## Director Gate 检查
 
-### Case 1: Happy Path — All GDDs compliant, no gaps, COMPLIANT
-
-**Fixture:**
-- `design/gdd/` contains 3 GDD files; each has all 8 required sections with content
-- `docs/architecture/adr-0001.md` exists with `## Status`, `## Engine Compatibility`,
-  and all other required sections
-- `production/stage.txt` exists
-- `docs/architecture/tr-registry.yaml` and `docs/architecture/control-manifest.md` exist
-- Engine configured in `technical-preferences.md`
-
-**Input:** `/adopt`
-
-**Expected behavior:**
-1. Skill emits "Scanning project artifacts..." then reads all artifacts silently
-2. Reports detected phase, GDD count, ADR count, story count
-3. Phase 2 audit: all 3 GDDs have all 8 sections, Status field present and valid
-4. ADR audit: all required sections present
-5. Infrastructure audit: all critical files exist
-6. Phase 3: zero BLOCKING, zero HIGH, zero MEDIUM, zero LOW gaps
-7. Summary reports: "No blocking gaps — this project is template-compatible"
-8. Uses `AskUserQuestion` to ask about writing the plan; user selects write
-9. Adoption plan is written to `docs/adoption-plan-[date].md`
-10. Phase 7 offers next action: no blocking gaps, offers options for next steps
-
-**Assertions:**
-- [ ] Skill reads silently before presenting any output
-- [ ] "Scanning project artifacts..." appears before the silent read phase
-- [ ] Gap counts show 0 BLOCKING, 0 HIGH, 0 MEDIUM (or only LOW)
-- [ ] `AskUserQuestion` is used before writing the adoption plan
-- [ ] Adoption plan file is written to `docs/adoption-plan-[date].md`
-- [ ] Phase 7 offers a specific next action (not just a list)
+无。`/adopt` 是一个棕地审核工具。不适用 director gate。
 
 ---
 
-### Case 2: Non-Compliant Documents — GDDs missing sections, NEEDS MIGRATION
+## 测试用例
 
-**Fixture:**
-- `design/gdd/` contains 2 GDD files:
-  - `combat.md` — missing `## Acceptance Criteria` and `## Formulas` sections
-  - `movement.md` — all 8 sections present
-- One ADR (`adr-0001.md`) is missing `## Status` section
-- `docs/architecture/tr-registry.yaml` does not exist
+### 用例 1：Happy Path — 所有 GDD 合规，无差距，COMPLIANT
 
-**Input:** `/adopt`
+**Fixture：**
+- `design/gdd/` 包含 3 个 GDD 文件；每个都有完整的 8 个必需 section 及内容
+- `docs/architecture/adr-0001.md` 存在，包含 `## Status`、`## Engine Compatibility` 及所有其他必需 section
+- `production/stage.txt` 存在
+- `docs/architecture/tr-registry.yaml` 和 `docs/architecture/control-manifest.md` 存在
+- 引擎已在 `technical-preferences.md` 中配置
 
-**Expected behavior:**
-1. Skill scans all artifacts
-2. Phase 2 audit finds:
-   - `combat.md`: 2 missing sections (Acceptance Criteria, Formulas)
-   - `adr-0001.md`: missing `## Status` — BLOCKING impact
-   - `tr-registry.yaml`: missing — HIGH impact
-3. Phase 3 classifies:
-   - BLOCKING: `adr-0001.md` missing `## Status` (story-readiness silently passes)
-   - HIGH: `tr-registry.yaml` missing; `combat.md` missing Acceptance Criteria (can't generate stories)
-   - MEDIUM: `combat.md` missing Formulas
-4. Phase 4 builds ordered migration plan:
-   - Step 1 (BLOCKING): Add `## Status` to `adr-0001.md` — command: `/architecture-decision retrofit`
-   - Step 2 (HIGH): Run `/architecture-review` to bootstrap tr-registry.yaml
-   - Step 3 (HIGH): Add Acceptance Criteria to `combat.md` — command: `/design-system retrofit`
-   - Step 4 (MEDIUM): Add Formulas to `combat.md`
-5. Gap Preview shows BLOCKING items as bullets (actual file names), HIGH/MEDIUM as counts
-6. `AskUserQuestion` asks to write the plan; writes after approval
-7. Phase 7 offers to fix the highest-priority gap (ADR Status) immediately
+**输入：** `/adopt`
 
-**Assertions:**
-- [ ] BLOCKING gaps are listed as explicit file-name bullets in the Gap Preview
-- [ ] HIGH and MEDIUM shown as counts in Gap Preview
-- [ ] Migration plan items are in BLOCKING-first order
-- [ ] Each plan item includes the fix command or manual steps
-- [ ] `AskUserQuestion` is used before writing
-- [ ] Phase 7 offers to immediately retrofit the first BLOCKING item
+**预期行为：**
+1. Skill 输出 "Scanning project artifacts..."，然后静默读取所有工件
+2. 报告检测到的阶段、GDD 数量、ADR 数量、故事数量
+3. 阶段 2 审核：所有 3 个 GDD 均具有全部 8 个 section，Status 字段存在且有效
+4. ADR 审核：所有必需 section 均存在
+5. 基础设施审核：所有关键文件均存在
+6. 阶段 3：零 BLOCKING、零 HIGH、零 MEDIUM、零 LOW 差距
+7. 摘要报告："No blocking gaps — this project is template-compatible"
+8. 使用 `AskUserQuestion` 询问是否写入计划；用户选择写入
+9. 采纳计划写入 `docs/adoption-plan-[date].md`
+10. 阶段 7 提供下一步操作：无阻塞差距，提供后续步骤选项
+
+**断言：**
+- [ ] Skill 在展示任何输出之前先静默读取
+- [ ] "Scanning project artifacts..." 在静默读取阶段之前显示
+- [ ] 差距计数显示 0 BLOCKING、0 HIGH、0 MEDIUM（或仅有 LOW）
+- [ ] 在写入采纳计划之前使用 `AskUserQuestion`
+- [ ] 采纳计划文件写入 `docs/adoption-plan-[date].md`
+- [ ] 阶段 7 提供一个具体的下一步操作（不仅仅是列表）
 
 ---
 
-### Case 3: Mixed State — Some docs compliant, some not, partial report
+### 用例 2：不合规文档 — GDD 缺少 section，NEEDS MIGRATION
 
-**Fixture:**
-- 4 GDD files: 2 fully compliant, 2 with gaps (one missing Tuning Knobs, one missing Edge Cases)
-- ADRs: 3 files — 2 compliant, 1 missing `## ADR Dependencies`
-- Stories: 5 files — 3 have TR-ID references, 2 do not
-- Infrastructure: all critical files present; `technical-preferences.md` fully configured
+**Fixture：**
+- `design/gdd/` 包含 2 个 GDD 文件：
+  - `combat.md` — 缺少 `## Acceptance Criteria` 和 `## Formulas` section
+  - `movement.md` — 所有 8 个 section 均存在
+- 一个 ADR（`adr-0001.md`）缺少 `## Status` section
+- `docs/architecture/tr-registry.yaml` 不存在
 
-**Input:** `/adopt`
+**输入：** `/adopt`
 
-**Expected behavior:**
-1. Skill audits all artifact types
-2. Audit summary shows totals: "4 GDDs (2 fully compliant, 2 with gaps); 3 ADRs
-   (2 fully compliant, 1 with gaps); 5 stories (3 with TR-IDs, 2 without)"
-3. Gap classification:
-   - No BLOCKING gaps
-   - HIGH: 1 ADR missing `## ADR Dependencies`
-   - MEDIUM: 2 GDDs with missing sections; 2 stories missing TR-IDs
-   - LOW: none
-4. Migration plan lists HIGH gap first, then MEDIUM gaps in order
-5. Note included: "Existing stories continue to work — do not regenerate stories
-   that are in progress or done"
-6. `AskUserQuestion` to write plan; writes after approval
+**预期行为：**
+1. Skill 扫描所有工件
+2. 阶段 2 审核发现：
+   - `combat.md`：缺少 2 个 section（Acceptance Criteria、Formulas）
+   - `adr-0001.md`：缺少 `## Status` — BLOCKING 影响
+   - `tr-registry.yaml`：缺失 — HIGH 影响
+3. 阶段 3 分类：
+   - BLOCKING：`adr-0001.md` 缺少 `## Status`（story-readiness 会静默通过）
+   - HIGH：`tr-registry.yaml` 缺失；`combat.md` 缺少 Acceptance Criteria（无法生成故事）
+   - MEDIUM：`combat.md` 缺少 Formulas
+4. 阶段 4 构建有序迁移计划：
+   - 步骤 1（BLOCKING）：向 `adr-0001.md` 添加 `## Status` — 命令：`/architecture-decision retrofit`
+   - 步骤 2（HIGH）：运行 `/architecture-review` 引导生成 tr-registry.yaml
+   - 步骤 3（HIGH）：向 `combat.md` 添加 Acceptance Criteria — 命令：`/design-system retrofit`
+   - 步骤 4（MEDIUM）：向 `combat.md` 添加 Formulas
+5. 差距预览以项目符号显示 BLOCKING 项（实际文件名），HIGH/MEDIUM 以计数形式显示
+6. `AskUserQuestion` 询问是否写入计划；批准后写入
+7. 阶段 7 提供立即修复最高优先级差距（ADR Status）的选项
 
-**Assertions:**
-- [ ] Per-artifact compliance tallies are shown (N compliant, M with gaps)
-- [ ] Existing story compatibility note is included in the plan
-- [ ] No BLOCKING gaps results in no BLOCKING section in migration plan
-- [ ] HIGH gap precedes MEDIUM gaps in plan ordering
-- [ ] `AskUserQuestion` is used before writing
-
----
-
-### Case 4: No Artifacts Found — Fresh project, guidance to run /start
-
-**Fixture:**
-- Repository has no files in `design/gdd/`, `docs/architecture/`, `production/epics/`
-- `production/stage.txt` does not exist
-- `src/` directory does not exist or has fewer than 10 files
-- No game-concept.md, no systems-index.md
-
-**Input:** `/adopt`
-
-**Expected behavior:**
-1. Phase 1 existence check finds no artifacts
-2. Skill infers "Fresh" — no brownfield work to migrate
-3. Uses `AskUserQuestion`:
-   - "This looks like a fresh project — no existing artifacts found. `/adopt` is for
-     projects with work to migrate. What would you like to do?"
-   - Options: "Run `/start`", "My artifacts are in a non-standard location", "Cancel"
-4. Skill stops — does not proceed to audit regardless of user selection
-
-**Assertions:**
-- [ ] `AskUserQuestion` is used (not a plain text message) when no artifacts are found
-- [ ] `/start` is presented as a named option
-- [ ] Skill stops after the question — no audit phases run
-- [ ] No adoption plan file is written
+**断言：**
+- [ ] BLOCKING 差距在差距预览中以明确的文件名项目符号列出
+- [ ] HIGH 和 MEDIUM 在差距预览中以计数形式显示
+- [ ] 迁移计划项按 BLOCKING 优先的顺序排列
+- [ ] 每个计划项包含修复命令或手动步骤
+- [ ] 写入前使用 `AskUserQuestion`
+- [ ] 阶段 7 提供立即修复第一个 BLOCKING 项的选项
 
 ---
 
-### Case 5: Director Gate Check — No gate; adopt is a utility audit skill
+### 用例 3：混合状态 — 部分文档合规，部分不合规，部分报告
 
-**Fixture:**
-- Project with a mix of compliant and non-compliant GDDs
+**Fixture：**
+- 4 个 GDD 文件：2 个完全合规，2 个有差距（一个缺少 Tuning Knobs，一个缺少 Edge Cases）
+- ADR：3 个文件 — 2 个合规，1 个缺少 `## ADR Dependencies`
+- 故事：5 个文件 — 3 个有 TR-ID 引用，2 个没有
+- 基础设施：所有关键文件存在；`technical-preferences.md` 已完全配置
 
-**Input:** `/adopt`
+**输入：** `/adopt`
 
-**Expected behavior:**
-1. Skill completes full audit and produces migration plan
-2. No director agents are spawned at any point
-3. No gate IDs (CD-*, TD-*, AD-*, PR-*) appear in output
-4. No `/gate-check` is invoked during the skill run
+**预期行为：**
+1. Skill 审核所有工件类型
+2. 审核摘要显示总计："4 GDDs (2 fully compliant, 2 with gaps); 3 ADRs (2 fully compliant, 1 with gaps); 5 stories (3 with TR-IDs, 2 without)"
+3. 差距分类：
+   - 无 BLOCKING 差距
+   - HIGH：1 个 ADR 缺少 `## ADR Dependencies`
+   - MEDIUM：2 个 GDD 缺少 section；2 个故事缺少 TR-ID
+   - LOW：无
+4. 迁移计划先列出 HIGH 差距，然后按顺序列出 MEDIUM 差距
+5. 包含说明："Existing stories continue to work — do not regenerate stories that are in progress or done"
+6. `AskUserQuestion` 写入计划；批准后写入
 
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Skill reaches plan-writing or cancellation without any gate verdict
-
----
-
-## Protocol Compliance
-
-- [ ] Emits "Scanning project artifacts..." before silent read phase
-- [ ] Reads all artifacts silently before presenting any results
-- [ ] Shows Adoption Audit Summary and Gap Preview before asking to write
-- [ ] Uses `AskUserQuestion` before writing the adoption plan file
-- [ ] Adoption plan written to `docs/adoption-plan-[date].md` — not to any other path
-- [ ] Migration plan items ordered: BLOCKING first, HIGH second, MEDIUM third, LOW last
-- [ ] Phase 7 always offers a single specific next action (not a generic list)
-- [ ] Never regenerates existing artifacts — only fills gaps in what exists
-- [ ] Does not invoke director gates at any point
+**断言：**
+- [ ] 显示每种工件的合规统计（N 个合规，M 个有差距）
+- [ ] 计划中包含现有故事兼容性说明
+- [ ] 无 BLOCKING 差距导致迁移计划中无 BLOCKING section
+- [ ] HIGH 差距在计划排序中先于 MEDIUM 差距
+- [ ] 写入前使用 `AskUserQuestion`
 
 ---
 
-## Coverage Notes
+### 用例 4：无工件 — 新项目，引导运行 /start
 
-- The `gdds`, `adrs`, `stories`, and `infra` argument modes narrow the audit scope;
-  each follows the same pattern as the full audit but limited to that artifact type.
-  Not separately fixture-tested here.
-- The systems-index.md parenthetical status value check (BLOCKING) is a special case
-  that triggers an immediate fix offer before writing the plan; not separately tested.
-- The review-mode.txt prompt (Phase 6b) runs after plan writing if `production/review-mode.txt`
-  does not exist; not separately tested here.
+**Fixture：**
+- 仓库中 `design/gdd/`、`docs/architecture/`、`production/epics/` 无文件
+- `production/stage.txt` 不存在
+- `src/` 目录不存在或文件少于 10 个
+- 无 game-concept.md、无 systems-index.md
+
+**输入：** `/adopt`
+
+**预期行为：**
+1. 阶段 1 存在性检查未发现工件
+2. Skill 推断为 "Fresh" — 无棕地工作需要迁移
+3. 使用 `AskUserQuestion`：
+   - "This looks like a fresh project — no existing artifacts found. `/adopt` is for projects with work to migrate. What would you like to do?"
+   - 选项："Run `/start`"、"My artifacts are in a non-standard location"、"Cancel"
+4. Skill 停止 — 无论用户选择什么，都不会进入审核阶段
+
+**断言：**
+- [ ] 未发现工件时使用 `AskUserQuestion`（而非纯文本消息）
+- [ ] `/start` 作为命名选项呈现
+- [ ] Skill 在问题之后停止 — 不运行审核阶段
+- [ ] 不写入采纳计划文件
+
+---
+
+### 用例 5：Director Gate 检查 — 无 gate；adopt 是一个工具审核 skill
+
+**Fixture：**
+- 项目包含合规与不合规 GDD 的混合
+
+**输入：** `/adopt`
+
+**预期行为：**
+1. Skill 完成完整审核并生成迁移计划
+2. 在任何时候都不生成 director agent
+3. 输出中不出现 gate ID（CD-*、TD-*、AD-*、PR-*）
+4. skill 运行期间不调用 `/gate-check`
+
+**断言：**
+- [ ] 不调用任何 director gate
+- [ ] 不出现 gate 跳过消息
+- [ ] Skill 在到达计划写入或取消时没有任何 gate 判决
+
+---
+
+## 协议合规性
+
+- [ ] 在静默读取阶段之前输出 "Scanning project artifacts..."
+- [ ] 在展示任何结果之前静默读取所有工件
+- [ ] 在询问是否写入之前显示采纳审核摘要和差距预览
+- [ ] 在写入采纳计划文件之前使用 `AskUserQuestion`
+- [ ] 采纳计划写入 `docs/adoption-plan-[date].md` — 不写入其他路径
+- [ ] 迁移计划项排序：BLOCKING 优先，HIGH 其次，MEDIUM 第三，LOW 最后
+- [ ] 阶段 7 始终提供一个具体的下一步操作（而非通用列表）
+- [ ] 绝不重新生成现有工件 — 仅填补存在内容的差距
+- [ ] 任何时候都不调用 director gate
+
+---
+
+## 覆盖说明
+
+- `gdds`、`adrs`、`stories` 和 `infra` 参数模式会缩小审核范围；每种模式遵循与完整审核相同的模式，但仅限于该工件类型。此处不单独 fixture 测试。
+- systems-index.md 的括号状态值检查（BLOCKING）是一个特殊情况，会在写入计划之前触发立即修复提议；不单独测试。
+- review-mode.txt 提示（阶段 6b）在计划写入后且 `production/review-mode.txt` 不存在时运行；此处不单独测试。

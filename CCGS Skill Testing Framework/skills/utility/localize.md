@@ -1,176 +1,163 @@
-# Skill Test Spec: /localize
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill 测试规范：/localize
 
-`/localize` manages the full localization pipeline: it extracts all player-facing
-strings from source files, manages translation files in `assets/localization/`,
-and validates completeness across all locale files. For new languages, it creates
-a locale file skeleton with all current strings as keys and empty values. For
-existing locale files, it produces a diff showing additions, removals, and
-changed keys.
+## Skill 摘要
 
-Translation files are written to `assets/localization/[locale-code].csv` (or
-engine-appropriate format) after a "May I write" ask. No director gates apply.
-Verdicts: LOCALIZATION COMPLETE (all locales are complete) or GAPS FOUND (at
-least one locale is missing string keys).
+`/localize` 管理完整的本地化流水线：它从源文件中提取所有面向玩家的字符串，管理 `assets/localization/` 中的翻译文件，并验证所有语言环境文件的完整性。对于新语言，它创建一个包含所有当前字符串键和空值的语言环境文件骨架。对于现有语言环境文件，它生成差异报告，显示新增、删除和更改的键。
+
+翻译文件在经过 "May I write" 询问后写入 `assets/localization/[locale-code].csv`（或引擎适用的格式）。不适用 director gate。判决：LOCALIZATION COMPLETE（所有语言环境均完整）或 GAPS FOUND（至少一个语言环境缺少字符串键）。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构层面）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: LOCALIZATION COMPLETE, GAPS FOUND
-- [ ] Contains "May I write" collaborative protocol language before writing locale files
-- [ ] Has a next-step handoff (e.g., send locale skeletons to translators)
-
----
-
-## Director Gate Checks
-
-None. `/localize` is a pipeline utility. No director gates apply. Localization
-lead agent may review separately but is not invoked within this skill.
+- [ ] 具有必需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有 ≥2 个阶段标题
+- [ ] 包含判决关键词：LOCALIZATION COMPLETE、GAPS FOUND
+- [ ] 在写入语言环境文件前包含 "May I write" 协作协议语言
+- [ ] 有下一步交接（例如，将语言环境骨架发送给翻译人员）
 
 ---
 
-## Test Cases
+## Director Gate 检查
 
-### Case 1: New Language — String Extraction and Locale Skeleton Created
-
-**Fixture:**
-- Source code in `src/` contains player-facing strings (UI text, tutorial messages)
-- Existing locale: `assets/localization/en.csv`
-- No French locale exists
-
-**Input:** `/localize fr`
-
-**Expected behavior:**
-1. Skill extracts all player-facing strings from source files
-2. Skill finds the same strings in `en.csv` as a reference
-3. Skill generates `fr.csv` skeleton with all string keys and empty values
-4. Skill asks "May I write to `assets/localization/fr.csv`?"
-5. File written on approval; verdict is GAPS FOUND (file created but empty values)
-6. Skill notes: "fr.csv created — send to translator to fill values"
-
-**Assertions:**
-- [ ] All string keys from `en.csv` are present in `fr.csv`
-- [ ] All values in `fr.csv` are empty (not copied from English)
-- [ ] "May I write" is asked before creating the file
-- [ ] Verdict is GAPS FOUND (file is created but untranslated)
+无。`/localize` 是一个流水线工具。不适用 director gate。本地化主管 agent 可单独审查，但不在本 skill 内调用。
 
 ---
 
-### Case 2: Existing Locale Diff — Additions, Removals, and Changes Listed
+## 测试用例
 
-**Fixture:**
-- `assets/localization/fr.csv` exists with 20 string keys translated
-- Source code has changed: 3 new strings added, 1 string removed, 2 strings
-  with changed English source text
+### 用例 1：新语言 — 字符串提取并创建语言环境骨架
 
-**Input:** `/localize fr`
+**Fixture：**
+- `src/` 中的源代码包含面向玩家的字符串（UI 文本、教程消息）
+- 现有语言环境：`assets/localization/en.csv`
+- 不存在法语语言环境
 
-**Expected behavior:**
-1. Skill extracts current strings from source
-2. Skill diffs against existing `fr.csv`
-3. Skill produces diff report:
-   - 3 new keys (need translation — listed as empty in fr.csv)
-   - 1 removed key (marked as obsolete — suggest removal)
-   - 2 changed keys (English source changed — French may need update, flagged)
-4. Skill asks "May I update `assets/localization/fr.csv`?"
-5. File updated with new empty keys added, obsolete keys marked; verdict is GAPS FOUND
+**输入：** `/localize fr`
 
-**Assertions:**
-- [ ] New keys appear as empty in the updated file (not auto-translated)
-- [ ] Removed keys are flagged as obsolete (not silently deleted)
-- [ ] Changed source strings are flagged for translator review
-- [ ] Verdict is GAPS FOUND (new empty keys exist)
+**预期行为：**
+1. Skill 从源文件中提取所有面向玩家的字符串
+2. Skill 在 `en.csv` 中找到相同字符串作为参考
+3. Skill 生成包含所有字符串键和空值的 `fr.csv` 骨架
+4. Skill 询问 "May I write to `assets/localization/fr.csv`?"
+5. 批准后写入文件；判决为 GAPS FOUND（文件已创建但值为空）
+6. Skill 备注："fr.csv created — send to translator to fill values"
 
----
-
-### Case 3: String Missing in One Locale — GAPS FOUND With Missing Key List
-
-**Fixture:**
-- 3 locale files exist: `en.csv`, `fr.csv`, `de.csv`
-- `de.csv` is missing 4 keys that exist in both `en.csv` and `fr.csv`
-
-**Input:** `/localize`
-
-**Expected behavior:**
-1. Skill reads all 3 locale files and cross-references keys
-2. `de.csv` is missing 4 keys
-3. Skill produces GAPS FOUND report listing the 4 missing keys by locale:
-   "de.csv missing: [key1], [key2], [key3], [key4]"
-4. Skill offers to add the missing keys as empty values to `de.csv`
-5. After approval: file updated; verdict remains GAPS FOUND (values still empty)
-
-**Assertions:**
-- [ ] Missing keys are listed explicitly (not just a count)
-- [ ] Missing keys are attributed to the specific locale file
-- [ ] Verdict is GAPS FOUND (not LOCALIZATION COMPLETE)
-- [ ] Missing keys are added as empty (not auto-translated from English)
+**断言：**
+- [ ] `en.csv` 中的所有字符串键均出现在 `fr.csv` 中
+- [ ] `fr.csv` 中的所有值均为空（非从英文复制）
+- [ ] 创建文件前询问 "May I write"
+- [ ] 判决为 GAPS FOUND（文件已创建但未翻译）
 
 ---
 
-### Case 4: Translation File Has Syntax Error — Error With Line Reference
+### 用例 2：现有语言环境差异 — 列出新增、删除和更改
 
-**Fixture:**
-- `assets/localization/fr.csv` has a malformed line at line 47
-  (missing quote closure)
+**Fixture：**
+- `assets/localization/fr.csv` 存在，包含 20 个已翻译的字符串键
+- 源代码已更改：新增 3 个字符串，删除 1 个字符串，2 个字符串的英文源文本已更改
 
-**Input:** `/localize fr`
+**输入：** `/localize fr`
 
-**Expected behavior:**
-1. Skill reads `fr.csv` and encounters a parse error at line 47
-2. Skill outputs: "Parse error in fr.csv at line 47: [error detail]"
-3. Skill cannot diff or validate the file until the error is fixed
-4. Skill does NOT attempt to overwrite or auto-fix the malformed file
-5. Skill suggests fixing the file manually and re-running `/localize`
+**预期行为：**
+1. Skill 从源代码中提取当前字符串
+2. Skill 与现有 `fr.csv` 进行差异对比
+3. Skill 生成差异报告：
+   - 3 个新键（需要翻译 — 在 fr.csv 中列为空）
+   - 1 个已删除键（标记为 obsolete — 建议移除）
+   - 2 个已更改键（英文源已更改 — 法文可能需要更新，已标记）
+4. Skill 询问 "May I update `assets/localization/fr.csv`?"
+5. 更新的文件添加了新的空键，标记了废弃键；判决为 GAPS FOUND
 
-**Assertions:**
-- [ ] Error message includes line number (line 47)
-- [ ] Error detail describes the nature of the parse error
-- [ ] Skill does NOT overwrite or modify the malformed file
-- [ ] Manual fix + re-run is suggested as remediation
-
----
-
-### Case 5: Director Gate Check — No gate; localization is a pipeline utility
-
-**Fixture:**
-- Source code with player-facing strings
-
-**Input:** `/localize fr`
-
-**Expected behavior:**
-1. Skill extracts strings and manages locale files
-2. No director agents are spawned
-3. No gate IDs appear in output
-
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Verdict is LOCALIZATION COMPLETE or GAPS FOUND — no gate verdict
+**断言：**
+- [ ] 新键在更新文件中显示为空值（非自动翻译）
+- [ ] 已删除键被标记为 obsolete（非静默删除）
+- [ ] 更改的源字符串被标记供翻译审查
+- [ ] 判决为 GAPS FOUND（存在新的空键）
 
 ---
 
-## Protocol Compliance
+### 用例 3：一个语言环境缺少字符串 — GAPS FOUND，附缺失键列表
 
-- [ ] Extracts strings from source before operating on locale files
-- [ ] Creates new locale files with all keys as empty values (not auto-translated)
-- [ ] Diffs existing locale files against current source strings
-- [ ] Flags missing keys by locale and by key name
-- [ ] Asks "May I write" before creating or updating any locale file
-- [ ] Verdict is LOCALIZATION COMPLETE (all locales fully translated) or GAPS FOUND
+**Fixture：**
+- 存在 3 个语言环境文件：`en.csv`、`fr.csv`、`de.csv`
+- `de.csv` 缺少 4 个同时存在于 `en.csv` 和 `fr.csv` 的键
+
+**输入：** `/localize`
+
+**预期行为：**
+1. Skill 读取全部 3 个语言环境文件并进行键交叉引用
+2. `de.csv` 缺少 4 个键
+3. Skill 生成 GAPS FOUND 报告，按语言环境列出 4 个缺失键："de.csv missing: [key1], [key2], [key3], [key4]"
+4. Skill 提供将缺失键以空值添加到 `de.csv` 的选项
+5. 批准后：文件更新；判决仍为 GAPS FOUND（值仍为空）
+
+**断言：**
+- [ ] 缺失键被明确列出（不仅仅是计数）
+- [ ] 缺失键归属于特定的语言环境文件
+- [ ] 判决为 GAPS FOUND（非 LOCALIZATION COMPLETE）
+- [ ] 缺失键以空值添加（非从英文自动翻译）
 
 ---
 
-## Coverage Notes
+### 用例 4：翻译文件有语法错误 — 错误附行号引用
 
-- LOCALIZATION COMPLETE is only achievable when all locale files have all keys
-  with non-empty values; new-language skeleton creation always results in GAPS FOUND.
-- Engine-specific locale formats (Godot `.translation`, Unity `.po` files) are
-  handled by the skill body; `.csv` is used as the canonical format in tests.
-- The case where source strings change at a very high rate (continuous integration
-  of new UI text) is not tested; the diff logic handles this case.
+**Fixture：**
+- `assets/localization/fr.csv` 在第 47 行有格式错误的行（缺少引号闭合）
+
+**输入：** `/localize fr`
+
+**预期行为：**
+1. Skill 读取 `fr.csv` 并在第 47 行遇到解析错误
+2. Skill 输出："Parse error in fr.csv at line 47: [error detail]"
+3. Skill 在错误修复前无法进行差异或验证文件
+4. Skill 不尝试覆盖或自动修复格式错误的文件
+5. Skill 建议手动修复文件并重新运行 `/localize`
+
+**断言：**
+- [ ] 错误消息包含行号（line 47）
+- [ ] 错误详情描述了解析错误的性质
+- [ ] Skill 不覆盖或修改格式错误的文件
+- [ ] 建议手动修复 + 重新运行作为补救措施
+
+---
+
+### 用例 5：Director Gate 检查 — 无 gate；localization 是一个流水线工具
+
+**Fixture：**
+- 包含面向玩家字符串的源代码
+
+**输入：** `/localize fr`
+
+**预期行为：**
+1. Skill 提取字符串并管理语言环境文件
+2. 不生成任何 director agent
+3. 输出中不出现 gate ID
+
+**断言：**
+- [ ] 不调用任何 director gate
+- [ ] 不出现 gate 跳过消息
+- [ ] 判决为 LOCALIZATION COMPLETE 或 GAPS FOUND — 无 gate 判决
+
+---
+
+## 协议合规性
+
+- [ ] 在操作语言环境文件之前从源代码中提取字符串
+- [ ] 创建新语言环境文件时所有键为空值（非自动翻译）
+- [ ] 对现有语言环境文件与当前源字符串进行差异对比
+- [ ] 按语言环境和键名称标记缺失键
+- [ ] 创建或更新任何语言环境文件前询问 "May I write"
+- [ ] 判决为 LOCALIZATION COMPLETE（所有语言环境完全翻译）或 GAPS FOUND
+
+---
+
+## 覆盖说明
+
+- LOCALIZATION COMPLETE 仅在所有语言环境文件包含全部非空值键时才可实现；新语言骨架创建始终导致 GAPS FOUND。
+- 引擎特定的语言环境格式（Godot `.translation`、Unity `.po` 文件）由 skill 正文处理；`.csv` 在测试中用作规范格式。
+- 源字符串以极高频率更改的情况（新 UI 文本的持续集成）不测试；差异逻辑可处理此情况。

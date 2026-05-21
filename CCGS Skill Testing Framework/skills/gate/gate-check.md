@@ -1,200 +1,188 @@
-# Skill Test Spec: /gate-check
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill 测试规范：/gate-check
 
-`/gate-check` validates whether the project is ready to advance to the next
-development phase. It checks for required artifacts, runs quality checks, asks
-the user about unverifiable items, and produces a PASS/CONCERNS/FAIL verdict.
-On PASS with user confirmation, it writes the new stage name to
-`production/stage.txt`. It governs all 6 phase transitions and is the most
-critical gate-keeping skill in the pipeline.
+## Skill 概要
+
+`/gate-check` 验证项目是否准备好进入下一个开发阶段。它检查必需的产物、运行质量检查、向用户询问无法自动验证的项目，并生成 PASS/CONCERNS/FAIL 判定。当判定为 PASS 且获得用户确认后，它将新阶段名称写入 `production/stage.txt`。它管理全部6个阶段转换，是流水线中最关键的守门 skill。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构层面）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证 — 无需 fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings (numbered Phase N or ## sections)
-- [ ] Contains verdict keywords: PASS, CONCERNS, FAIL
-- [ ] Contains "May I write" collaborative protocol language
-- [ ] Has a next-step handoff at the end (Follow-Up Actions section)
-
----
-
-## Test Cases
-
-### Case 1: Happy Path — All Concept artifacts present, advancing to Systems Design
-
-**Fixture:**
-- `design/gdd/game-concept.md` exists, has content including all required sections
-- `design/gdd/game-pillars.md` exists (or pillars defined within concept doc)
-- No systems index yet (which is correct for this stage)
-
-**Input:** `/gate-check systems-design`
-
-**Expected behavior:**
-1. Skill reads `design/gdd/game-concept.md` and verifies it has content
-2. Skill checks for game pillars (in concept or separate file)
-3. Skill checks quality items (core loop described, target audience identified)
-4. Skill outputs structured checklist with all items marked
-5. Skill presents PASS/CONCERNS/FAIL verdict
-6. If PASS: skill asks "May I update `production/stage.txt` to 'Systems Design'?"
-
-**Assertions:**
-- [ ] Skill uses Glob or Read to verify `design/gdd/game-concept.md` exists before marking it checked
-- [ ] Output includes a "Required Artifacts" section with check status per item
-- [ ] Output includes a "Quality Checks" section with check status per item
-- [ ] Output includes a "Verdict" line with one of PASS / CONCERNS / FAIL
-- [ ] Skill asks about unverifiable quality items (e.g., "Has this been reviewed?") rather than assuming PASS
-- [ ] Skill asks "May I write" before updating `production/stage.txt`
-- [ ] Skill does NOT write `production/stage.txt` without explicit user confirmation
+- [ ] 包含必需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含 ≥2 个阶段标题（编号为 Phase N 或 ## 章节）
+- [ ] 包含判定关键词：PASS、CONCERNS、FAIL
+- [ ] 包含"我可以写入"协作协议用语
+- [ ] 末尾有下一步交接（后续操作章节）
 
 ---
 
-### Case 2: Failure Path — Missing required artifacts for Concept → Systems Design
+## 测试用例
 
-**Fixture:**
-- `design/gdd/game-concept.md` does NOT exist
-- No game pillars document exists
-- `design/gdd/` directory is empty or absent
+### 用例1：Happy Path — 所有 Concept 产物均已就位，进入 Systems Design 阶段
 
-**Input:** `/gate-check systems-design`
+**Fixture：**
+- `design/gdd/game-concept.md` 存在，内容包含所有必需章节
+- `design/gdd/game-pillars.md` 存在（或游戏支柱在概念文档中已定义）
+- 尚无系统索引（该阶段正确状态）
 
-**Expected behavior:**
-1. Skill attempts to read `design/gdd/game-concept.md` — file not found
-2. Skill marks required artifact as missing (not present)
-3. Skill outputs FAIL verdict
-4. Skill lists blocker: "No game concept document found"
-5. Skill suggests remediation: run `/brainstorm` to create one
+**输入：** `/gate-check systems-design`
 
-**Assertions:**
-- [ ] Verdict is FAIL (not PASS or CONCERNS) when required artifacts are missing
-- [ ] Output explicitly names `design/gdd/game-concept.md` as missing
-- [ ] Output includes a "Blockers" section with at least 1 item
-- [ ] Output recommends `/brainstorm` as the remediation action
-- [ ] Skill does NOT write `production/stage.txt` when verdict is FAIL
+**预期行为：**
+1. Skill 读取 `design/gdd/game-concept.md` 并验证其包含内容
+2. Skill 检查游戏支柱（在概念文档中或单独文件中）
+3. Skill 检查质量项（核心循环已描述、目标受众已确定）
+4. Skill 输出结构化检查清单，所有项目均已标记
+5. Skill 给出 PASS/CONCERNS/FAIL 判定
+6. 若 PASS：skill 询问"我可以将 `production/stage.txt` 更新为 'Systems Design' 吗？"
 
----
-
-### Case 3: No Argument — Auto-detect current stage
-
-**Fixture:**
-- `production/stage.txt` contains `Concept`
-- `design/gdd/game-concept.md` exists with content
-- No systems index yet
-
-**Input:** `/gate-check` (no argument)
-
-**Expected behavior:**
-1. Skill reads `production/stage.txt` to determine current stage
-2. Skill determines the next gate is Concept → Systems Design
-3. Skill proceeds with the Systems Design gate checks
-4. Output clearly states which transition is being validated
-
-**Assertions:**
-- [ ] Skill reads `production/stage.txt` (or uses project-stage-detect heuristics) to determine current stage
-- [ ] Output header names both current and target phases (e.g., "Gate Check: Concept → Systems Design")
-- [ ] Skill does not ask the user which gate to check if current stage is determinable
+**断言：**
+- [ ] Skill 使用 Glob 或 Read 验证 `design/gdd/game-concept.md` 存在再标记为已检查
+- [ ] 输出包含"必需产物"章节，逐项显示检查状态
+- [ ] 输出包含"质量检查"章节，逐项显示检查状态
+- [ ] 输出包含"判定"行，值为 PASS / CONCERNS / FAIL 之一
+- [ ] Skill 对无法自动验证的质量项（如"此项是否已评审？"），采用向用户提问方式而非假定 PASS
+- [ ] Skill 在更新 `production/stage.txt` 前询问"我可以写入"
+- [ ] Skill 未经用户明确确认不写入 `production/stage.txt`
 
 ---
 
-### Case 4: Edge Case — Manual check items flagged correctly
+### 用例2：失败路径 — Concept → Systems Design 所需产物缺失
 
-**Fixture:**
-- All required artifacts for Concept → Systems Design are present
-- No playtest or review record exists (can't auto-verify quality checks)
+**Fixture：**
+- `design/gdd/game-concept.md` 不存在
+- 无游戏支柱文档
+- `design/gdd/` 目录为空或不存在
 
-**Input:** `/gate-check systems-design`
+**输入：** `/gate-check systems-design`
 
-**Expected behavior:**
-1. Skill verifies all artifact files exist
-2. Skill encounters quality check: "Game concept reviewed (not MAJOR REVISION NEEDED)"
-3. Since no review record exists, skill marks item as MANUAL CHECK NEEDED
-4. Skill asks the user: "Has the game concept been reviewed for design quality?"
-5. Skill waits for user input before finalizing verdict
+**预期行为：**
+1. Skill 尝试读取 `design/gdd/game-concept.md` — 文件未找到
+2. Skill 将必需产物标记为缺失（不存在）
+3. Skill 输出 FAIL 判定
+4. Skill 列出阻塞项："未找到游戏概念文档"
+5. Skill 建议补救措施：运行 `/brainstorm` 创建一个
 
-**Assertions:**
-- [ ] Items that cannot be auto-verified are marked `[?] MANUAL CHECK NEEDED` rather than assumed PASS
-- [ ] Skill uses a question to the user for at least one unverifiable quality item
-- [ ] Skill does not mark unverifiable items as PASS by default
+**断言：**
+- [ ] 当必需产物缺失时，判定为 FAIL（而非 PASS 或 CONCERNS）
+- [ ] 输出明确指明 `design/gdd/game-concept.md` 缺失
+- [ ] 输出包含"阻塞项"章节，至少1项
+- [ ] 输出建议 `/brainstorm` 作为补救操作
+- [ ] 当判定为 FAIL 时，Skill 不写入 `production/stage.txt`
+
+---
+
+### 用例3：无参数 — 自动检测当前阶段
+
+**Fixture：**
+- `production/stage.txt` 内容为 `Concept`
+- `design/gdd/game-concept.md` 存在且有内容
+- 尚无系统索引
+
+**输入：** `/gate-check`（无参数）
+
+**预期行为：**
+1. Skill 读取 `production/stage.txt` 确定当前阶段
+2. Skill 确定下一个关卡是 Concept → Systems Design
+3. Skill 继续进行 Systems Design 关卡检查
+4. 输出明确指出正在验证哪个阶段转换
+
+**断言：**
+- [ ] Skill 读取 `production/stage.txt`（或使用 project-stage-detect 启发式方法）确定当前阶段
+- [ ] 输出头部同时列出当前和目标阶段（例如"关卡检查：Concept → Systems Design"）
+- [ ] 若可确定当前阶段，Skill 不询问用户要检查哪个关卡
+
+---
+
+### 用例4：边界情况 — 人工检查项正确标记
+
+**Fixture：**
+- Concept → Systems Design 所需的所有产物均已就位
+- 不存在试玩或评审记录（无法自动验证质量检查）
+
+**输入：** `/gate-check systems-design`
+
+**预期行为：**
+1. Skill 验证所有产物文件存在
+2. Skill 遇到质量检查项："游戏概念已评审（非 MAJOR REVISION NEEDED）"
+3. 由于不存在评审记录，Skill 将该项标记为 MANUAL CHECK NEEDED
+4. Skill 询问用户："游戏概念的设计质量是否已经过评审？"
+5. Skill 等待用户输入后再最终确定判定
+
+**断言：**
+- [ ] 无法自动验证的项目标记为 `[?] MANUAL CHECK NEEDED`，而非假定 PASS
+- [ ] Skill 对至少一个无法验证的质量项向用户提问
+- [ ] Skill 不默认将无法验证的项目标记为 PASS
 
 ---
 
 ---
 
-### Case 5: Director Gate — lean vs full vs solo mode
+### 用例5：Director Gate — lean vs full vs solo 模式
 
-**Fixture:**
-- `production/session-state/review-mode.txt` exists (or equivalent state file)
-- All required artifacts for the target gate are present
-- `design/gdd/game-concept.md` exists
+**Fixture：**
+- `production/session-state/review-mode.txt` 存在（或等效状态文件）
+- 目标关卡的所有必需产物均已就位
+- `design/gdd/game-concept.md` 存在
 
-**Case 5a — full mode:**
-- `review-mode.txt` contains `full`
+**用例5a — full 模式：**
+- `review-mode.txt` 内容为 `full`
 
-**Input:** `/gate-check systems-design` (with full mode active)
+**输入：** `/gate-check systems-design`（full 模式激活）
 
-**Expected behavior:**
-1. Skill reads review mode — determines `full`
-2. Skill spawns all 4 PHASE-GATE director prompts in parallel:
-   - CD-PHASE-GATE (creative-director)
-   - TD-PHASE-GATE (technical-director)
-   - PR-PHASE-GATE (producer)
-   - AD-PHASE-GATE (art-director)
-3. If one director returns CONCERNS → overall gate verdict is at minimum CONCERNS
-4. All 4 verdicts are collected before producing final output
+**预期行为：**
+1. Skill 读取 review mode — 确定为 `full`
+2. Skill 并行启动全部4个 PHASE-GATE director 提示：
+   - CD-PHASE-GATE（创意总监）
+   - TD-PHASE-GATE（技术总监）
+   - PR-PHASE-GATE（制作人）
+   - AD-PHASE-GATE（美术总监）
+3. 若任一 director 返回 CONCERNS → 整体关卡判定至少为 CONCERNS
+4. 收集全部4个判定后再生成最终输出
 
-**Assertions (5a):**
-- [ ] Skill reads review-mode before deciding which directors to spawn
-- [ ] All 4 PHASE-GATE director prompts are spawned (not just 1 or 2)
-- [ ] Directors are spawned in parallel (simultaneous, not sequential)
-- [ ] A CONCERNS verdict from any one director propagates to overall verdict
-- [ ] Verdict is NOT auto-PASS if any director returns CONCERNS or REJECT
+**断言（5a）：**
+- [ ] Skill 在决定启动哪些 director 之前读取 review-mode
+- [ ] 全部4个 PHASE-GATE director 提示均被启动（非仅1或2个）
+- [ ] Director 并行启动（同时执行，非顺序执行）
+- [ ] 任一 director 的 CONCERNS 判定会传递到整体判定
+- [ ] 若任一 director 返回 CONCERNS 或 REJECT，判定不会自动为 PASS
 
-**Case 5b — solo mode:**
-- `review-mode.txt` contains `solo`
+**用例5b — solo 模式：**
+- `review-mode.txt` 内容为 `solo`
 
-**Input:** `/gate-check systems-design` (with solo mode active)
+**输入：** `/gate-check systems-design`（solo 模式激活）
 
-**Expected behavior:**
-1. Skill reads review mode — determines `solo`
-2. Each director is noted as skipped: "[CD-PHASE-GATE] skipped — Solo mode"
-3. Gate verdict is derived from artifact/quality checks only
-4. No director gates spawn
+**预期行为：**
+1. Skill 读取 review mode — 确定为 `solo`
+2. 每个 director 均标注为跳过："[CD-PHASE-GATE] 已跳过 — Solo 模式"
+3. 关卡判定仅基于产物/质量检查得出
+4. 不启动任何 director gate
 
-**Assertions (5b):**
-- [ ] No director gates are spawned in solo mode
-- [ ] Each skipped gate is explicitly noted in output: "[GATE-ID] skipped — Solo mode"
-- [ ] Verdict is based on artifact and quality checks only
+**断言（5b）：**
+- [ ] solo 模式下不启动任何 director gate
+- [ ] 每个跳过的 gate 在输出中明确标注："[GATE-ID] 已跳过 — Solo 模式"
+- [ ] 判定仅基于产物和质量检查
 
-**Note on Case 3 correction:**
-The Case 3 assertions previously stated "Skill does not ask the user which gate to check
-if current stage is determinable." This is correct. However, the skill DOES use
-AskUserQuestion to confirm the auto-detected transition before running full checks —
-this is a confirmation step, not a gate selection. Assertions for Case 3 should not
-treat this confirmation as a failure.
+**关于用例3的修正说明：**
+用例3的断言中此前指出"若可确定当前阶段，Skill 不询问用户要检查哪个关卡。"这是正确的。然而，Skill 确实会使用 AskUserQuestion 在执行完整检查之前确认自动检测到的阶段转换 — 这是一个确认步骤，而非关卡选择。用例3的断言不应将此确认视为失败。
 
 ---
 
-## Protocol Compliance
+## 协议合规
 
-- [ ] Uses "May I write" before updating `production/stage.txt`
-- [ ] Presents the full checklist report before asking for write approval
-- [ ] Ends with a "Follow-Up Actions" section listing next steps per verdict
-- [ ] Never advances the stage without explicit user confirmation
-- [ ] Never auto-creates `production/stage.txt` if it doesn't exist without asking
+- [ ] 在更新 `production/stage.txt` 前使用"我可以写入"
+- [ ] 在请求写入批准前展示完整的检查清单报告
+- [ ] 末尾包含"后续操作"章节，按判定列出下一步
+- [ ] 未经用户明确确认绝不推进阶段
+- [ ] 若 `production/stage.txt` 不存在，未经询问绝不自动创建
 
 ---
 
-## Coverage Notes
+## 覆盖范围说明
 
-- The Production → Polish and Polish → Release gates are not covered here
-  because they require complex multi-artifact setups (sprint plans, playtest
-  data, QA sign-off); these are deferred to dedicated follow-up specs.
-- The "CONCERNS" verdict path (minor gaps, not blocking) is not explicitly
-  tested here; it falls between Case 1 and Case 2 and follows the same pattern.
-- The Vertical Slice validation block (Pre-Production → Production gate) is not
-  covered because it requires a playable build context that cannot be expressed
-  as a document fixture.
+- Production → Polish 和 Polish → Release 关卡未在此覆盖，因它们需要复杂的多产物设置（sprint 计划、试玩数据、QA 签字确认）；这些将推迟到后续专门的规范中。
+- "CONCERNS"判定路径（轻微差距，非阻塞性）未在此显式测试；它介于用例1和用例2之间，遵循相同模式。
+- 垂直切片验证块（Pre-Production → Production 关卡）未覆盖，因为它需要可运行的构建上下文，无法用文档 fixture 表达。

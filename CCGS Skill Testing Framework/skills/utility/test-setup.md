@@ -1,173 +1,169 @@
-# Skill Test Spec: /test-setup
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill 测试规范：/test-setup
 
-`/test-setup` scaffolds the test framework for the project based on the
-configured engine. It creates the `tests/` directory structure defined in
-`coding-standards.md` (unit/, integration/, performance/, playtest/) and
-generates the appropriate test runner configuration for the detected engine:
-GdUnit4 config for Godot, Unity Test Runner asmdef for Unity, or Unreal headless
-runner for Unreal Engine.
+## Skill 摘要
 
-Each file or directory created is gated behind a "May I write" ask. If the test
-framework already exists, the skill verifies the configuration rather than
-reinitializing. No director gates apply. The verdict is COMPLETE when the
-scaffold is in place.
+`/test-setup` 为项目搭建测试基础设施。它创建 `tests/` 目录结构，安装所选引擎的测试框架（Godot = GDUnit4，Unity = Test Framework NUnit，Unreal = Automation Framework），生成单元、集成和性能测试的示例测试文件，并创建 `production/qa/ci-config.yaml` CI 配置文件。
+
+该 skill 读取 `technical-preferences.md` 以确定引擎和语言，从而选择合适的框架。每种类型的示例测试文件在创建前需要 "May I write"。如果 `tests/` 目录已存在，skill 提供扩展选项而非覆盖。不适用 director gate。判决：SETUP COMPLETE（所有脚手架已创建）或 PARTIAL（某些文件已存在并跳过）。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构层面）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keyword: COMPLETE
-- [ ] Contains "May I write" collaborative protocol language before creating files
-- [ ] Has a next-step handoff (e.g., `/test-helpers` to generate helper utilities)
-
----
-
-## Director Gate Checks
-
-None. `/test-setup` is a scaffolding utility. No director gates apply.
+- [ ] 具有必需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有 ≥2 个阶段标题
+- [ ] 包含判决关键词：SETUP COMPLETE、PARTIAL
+- [ ] 包含 "May I write" 语言（用于测试框架和配置文件的创建）
+- [ ] 有下一步交接（例如，`/qa-plan` 开始定义测试，`/smoke-check` 运行测试）
 
 ---
 
-## Test Cases
+## Director Gate 检查
 
-### Case 1: Happy Path — Godot project, scaffolds GdUnit4 test structure
-
-**Fixture:**
-- `technical-preferences.md` has engine set to Godot 4, language GDScript
-- `tests/` directory does not exist yet
-
-**Input:** `/test-setup`
-
-**Expected behavior:**
-1. Skill reads engine from `technical-preferences.md` → Godot 4 + GDScript
-2. Skill drafts the test directory structure: tests/unit/, tests/integration/,
-   tests/performance/, tests/playtest/, and a GdUnit4 runner config file
-3. Skill asks "May I write the tests/ directory structure?"
-4. Directories and GdUnit4 runner script created on approval
-5. Skill confirms the runner script matches the CI command in coding-standards.md:
-   `godot --headless --script tests/gdunit4_runner.gd`
-6. Verdict is COMPLETE
-
-**Assertions:**
-- [ ] All 4 subdirectories (unit/, integration/, performance/, playtest/) are created
-- [ ] GdUnit4 runner config is generated
-- [ ] Runner script path matches coding-standards.md CI command
-- [ ] "May I write" is asked before creating any files
-- [ ] Verdict is COMPLETE
+无。`/test-setup` 是一个测试基础设施 skill。不适用 director gate。
 
 ---
 
-### Case 2: Unity Project — Scaffolds Unity Test Runner with asmdef
+## 测试用例
 
-**Fixture:**
-- `technical-preferences.md` has engine set to Unity, language C#
-- `tests/` directory does not exist
+### 用例 1：新项目，Godot + GDScript — GDUnit4 脚手架，SETUP COMPLETE
 
-**Input:** `/test-setup`
+**Fixture：**
+- `technical-preferences.md` 引擎设为 Godot 4，Language = GDScript
+- `tests/` 目录不存在
+- `production/qa/` 目录存在
 
-**Expected behavior:**
-1. Skill reads engine → Unity + C#
-2. Skill creates `Tests/` directory with Unity conventions (capitalized)
-3. Skill generates `Tests/Tests.asmdef` and `Tests/Editor/EditorTests.asmdef`
-4. EditMode and PlayMode test runner modes are configured
-5. Skill asks "May I write the Tests/ directory structure?"
-6. Verdict is COMPLETE
+**输入：** `/test-setup`
 
-**Assertions:**
-- [ ] Unity-specific `Tests/` structure is created (not the Godot structure)
-- [ ] `.asmdef` files are generated
-- [ ] EditMode and PlayMode runner config is present
-- [ ] Verdict is COMPLETE
+**预期行为：**
+1. Skill 检测到引擎为 Godot 4
+2. Skill 选择 GDUnit4 作为测试框架
+3. Skill 创建目录结构：`tests/unit/`、`tests/integration/`、`tests/performance/`
+4. Skill 询问 "May I write to `tests/gdunit4_runner.gd`?" 然后写入运行器脚本
+5. Skill 询问 "May I write to `tests/unit/example_health_test.gd`?" 然后写入具有健康系统通用测试模式的示例单元测试
+6. Skill 依次创建每个示例文件：unit (2 个 Example Pattern 文件)、integration (1 个 Example Pattern)、performance (1 个 Example Pattern)
+7. Skill 询问 "May I write to `production/qa/ci-config.yaml`?" 然后写入配置 GDUnit4 的 CI 配置
+8. 所有文件创建并写入后，判决为 SETUP COMPLETE
 
----
-
-### Case 3: Test Framework Already Exists — Verifies config, not re-initialized
-
-**Fixture:**
-- `tests/unit/`, `tests/integration/` exist
-- GdUnit4 runner script exists (Godot project)
-
-**Input:** `/test-setup`
-
-**Expected behavior:**
-1. Skill detects existing tests/ structure
-2. Skill reports: "Test framework already exists — verifying configuration"
-3. Skill checks: runner script path, directory completeness, CI command alignment
-4. If all checks pass: reports "Configuration verified — no changes needed"
-5. If checks fail (e.g., missing tests/performance/): reports specific gap and
-   asks "May I add the missing directories?"
-
-**Assertions:**
-- [ ] Skill does NOT reinitialize when framework exists
-- [ ] Verification checks are performed on existing structure
-- [ ] Only missing parts trigger a "May I write" ask
-- [ ] Verdict is COMPLETE whether everything was OK or gaps were fixed
+**断言：**
+- [ ] GDUnit4 被选用于 Godot（非 NUnit 或 UE Automation）
+- [ ] 创建了 tests/ 子目录结构：unit/、integration/、performance/
+- [ ] 创建了运行器脚本和示例测试文件
+- [ ] 每次文件写入前询问 "May I write"
+- [ ] 判决为 SETUP COMPLETE
 
 ---
 
-### Case 4: No Engine Configured — Redirects to /setup-engine
+### 用例 2：Tests 目录已存在 — 提供扩展选项，PARTIAL
 
-**Fixture:**
-- `technical-preferences.md` contains only placeholders (engine not set)
+**Fixture：**
+- `technical-preferences.md` 引擎设为 Godot
+- `tests/unit/` 目录已存在，包含 1 个测试文件
+- `tests/integration/` 和 `tests/performance/` 不存在
 
-**Input:** `/test-setup`
+**输入：** `/test-setup`
 
-**Expected behavior:**
-1. Skill reads `technical-preferences.md` and finds engine placeholder
-2. Skill reports: "Engine not configured — cannot scaffold engine-specific test framework"
-3. Skill suggests running `/setup-engine` first
-4. No directories or files are created
+**预期行为：**
+1. Skill 检测到 `tests/` 已存在
+2. Skill 报告："Tests directory already exists. Existing structure: [summary]"
+3. Skill 展示选项：仅创建缺失的目录/文件（扩展）、替换全部、取消
+4. 用户选择 "Create missing only"
+5. Skill 创建缺失的 `tests/integration/` 和 `tests/performance/`
+6. 在缺失目录中写入示例文件
+7. 现有测试目录和文件不变
+8. 判决为 PARTIAL（某些部分已存在）
 
-**Assertions:**
-- [ ] Error message explicitly states engine is not configured
-- [ ] `/setup-engine` is suggested as the next step
-- [ ] No write tool is called
-- [ ] Verdict is not COMPLETE (blocked state)
-
----
-
-### Case 5: Director Gate Check — No gate; test-setup is a scaffolding utility
-
-**Fixture:**
-- Engine configured, tests/ does not exist
-
-**Input:** `/test-setup`
-
-**Expected behavior:**
-1. Skill scaffolds and writes all test framework files
-2. No director agents are spawned
-3. No gate IDs appear in output
-
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No gate skip messages appear
-- [ ] Verdict is COMPLETE without any gate check
+**断言：**
+- [ ] 检测到现有 tests/ 目录
+- [ ] 提供扩展 vs. 替换选项
+- [ ] 选择扩展时现有文件不变
+- [ ] 判决为 PARTIAL
 
 ---
 
-## Protocol Compliance
+### 用例 3：Unity 引擎 + C# — NUnit 脚手架
 
-- [ ] Reads engine from `technical-preferences.md` before generating any scaffold
-- [ ] Generates engine-appropriate test runner config (not generic)
-- [ ] Creates all 4 subdirectories from coding-standards.md
-- [ ] Asks "May I write" before creating files
-- [ ] Detects existing framework and offers verification (not reinitialization)
-- [ ] Verdict is COMPLETE when scaffold is in place
+**Fixture：**
+- `technical-preferences.md` 引擎设为 Unity，Language = C#
+- `tests/` 目录不存在
+
+**输入：** `/test-setup`
+
+**预期行为：**
+1. Skill 检测到引擎为 Unity
+2. Skill 选择 Unity Test Framework (NUnit)
+3. 生成 C# 测试文件（.cs 文件）和 `.asmdef` 程序集定义文件
+4. 命名约定默认使用 C# 标准（类用 PascalCase）
+5. 创建文件前对每个文件询问 "May I write"
+6. 判决为 SETUP COMPLETE
+
+**断言：**
+- [ ] NUnit 被选用于 Unity（非 GDUnit4）
+- [ ] 生成 `.cs` 和 `.asmdef` 测试文件
+- [ ] 命名约定遵循 C#（PascalCase）
+- [ ] 判决为 SETUP COMPLETE
 
 ---
 
-## Coverage Notes
+### 用例 4：Unreal Engine — UE Automation Framework 脚手架
 
-- Unreal Engine test scaffolding (headless runner with `-nullrhi`) follows the
-  same pattern as Cases 1 and 2 and is not separately fixture-tested.
-- CI integration file generation (e.g., `.github/workflows/test.yml`) is
-  referenced but not assertion-tested here — it may be a separate skill concern.
-- The case where tests/ exists but is from a different engine (e.g., Unity tests
-  in a now-Godot project) is not tested; the skill would detect the mismatch
-  and offer to reconcile.
+**Fixture：**
+- `technical-preferences.md` 引擎设为 Unreal Engine 5
+- `tests/` 目录不存在
+
+**输入：** `/test-setup`
+
+**预期行为：**
+1. Skill 检测到引擎为 Unreal
+2. Skill 选择 UE Automation Framework
+3. 生成 C++ 测试文件（.cpp 和 .h 文件）
+4. 创建测试目录布局和示例文件
+5. 判决为 SETUP COMPLETE
+
+**断言：**
+- [ ] UE Automation 被选用于 Unreal（非 GDUnit4 或 NUnit）
+- [ ] 生成 `.cpp` 和 `.h` 测试文件
+- [ ] 判决为 SETUP COMPLETE
+
+---
+
+### 用例 5：Director Gate 检查 — 无 gate；test-setup 是基础设施
+
+**Fixture：**
+- 任何引擎配置
+
+**输入：** `/test-setup`
+
+**预期行为：**
+1. Skill 搭建测试基础设施
+2. 在任何时候都不生成 director agent
+3. 输出中不出现 gate ID
+
+**断言：**
+- [ ] 不调用任何 director gate
+- [ ] 不出现 gate 跳过消息
+- [ ] 判决为 SETUP COMPLETE 或 PARTIAL — 无 gate 判决
+
+---
+
+## 协议合规性
+
+- [ ] 从 `technical-preferences.md` 确定引擎/语言
+- [ ] 为所选引擎选择正确的框架（Godot=GDUnit4、Unity=NUnit、Unreal=UE Automation）
+- [ ] 为每种测试类型生成示例文件
+- [ ] 写入 CI 配置文件 `production/qa/ci-config.yaml`
+- [ ] 创建文件前询问 "May I write"
+- [ ] tests/ 已存在时提供扩展选项
+- [ ] 判决为 SETUP COMPLETE 或 PARTIAL
+
+---
+
+## 覆盖说明
+
+- 每个示例文件内容被标记为 `Example Pattern` — 这些不是功能测试，且不在此处更新验证。
+- CI 配置内容根据引擎而异（Godot = `godot --headless` 命令，Unity = `unity-editor -runTests`）；确切的命令不进行断言测试。
+- `production/qa/` 不存在时，skill 在写入 ci-config.yaml 之前创建它；不单独 fixture 测试。

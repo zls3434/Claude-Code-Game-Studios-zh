@@ -1,209 +1,195 @@
-# Skill Test Spec: /team-level
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
+# Skill 测试规格：/team-level
 
-## Skill Summary
+## Skill 摘要
 
-Orchestrates the full level design team for a single level or area. Coordinates
-narrative-director, world-builder, level-designer, systems-designer, art-director,
-accessibility-specialist, and qa-tester through five sequential steps with one
-parallel phase (Step 4). Compiles all team outputs into a single level design
-document saved to `design/levels/[level-name].md`. Uses `AskUserQuestion` at each
-step transition. Delegates all file writes to sub-agents. Produces a summary report
-with verdict COMPLETE / BLOCKED and handoffs to `/design-review`, `/dev-story`,
-`/qa-plan`.
+为单个关卡或区域编排完整的关卡设计团队。通过五个顺序步骤（含一个并行阶段——步骤 4）协调 narrative-director、world-builder、level-designer、systems-designer、art-director、accessibility-specialist 和 qa-tester。将所有团队输出编译为一份统一的关卡设计文档，保存至 `design/levels/[level-name].md`。在每个步骤转换处使用 `AskUserQuestion`。将所有文件写入委托给子 Agent。产出带有裁定 COMPLETE / BLOCKED 的总结报告，并向 `/design-review`、`/dev-story`、`/qa-plan` 移交。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构）
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase/step headings (Step 1 through Step 5 are all present)
-- [ ] Contains verdict keywords: COMPLETE, BLOCKED
-- [ ] Contains "May I write" or "File Write Protocol" — writes delegated to sub-agents, orchestrator does not write files directly
-- [ ] Has a next-step handoff at the end (references `/design-review`, `/dev-story`, `/qa-plan`)
-- [ ] Error Recovery Protocol section is present with all four recovery steps
-- [ ] Uses `AskUserQuestion` at step transitions for user approval before proceeding
-- [ ] Step 4 is explicitly marked as parallel (art-director and accessibility-specialist run simultaneously)
-- [ ] Context gathering reads: `design/gdd/game-concept.md`, `design/gdd/game-pillars.md`, `design/levels/`, `design/narrative/`, and relevant world-building docs
-- [ ] Team Composition lists all seven roles (narrative-director, world-builder, level-designer, systems-designer, art-director, accessibility-specialist, qa-tester)
-- [ ] accessibility-specialist output includes severity ratings (BLOCKING / RECOMMENDED / NICE TO HAVE)
-- [ ] Final level design document saved to `design/levels/[level-name].md`
-
----
-
-## Test Cases
-
-### Case 1: Happy Path — All team members produce outputs, document compiled and saved
-
-**Fixture:**
-- `design/gdd/game-concept.md` exists and is populated
-- `design/gdd/game-pillars.md` exists
-- `design/levels/` directory exists (may contain other level docs)
-- `design/narrative/` directory exists with relevant narrative docs
-
-**Input:** `/team-level forest dungeon`
-
-**Expected behavior:**
-1. Context gathering — orchestrator reads game-concept.md, game-pillars.md, existing level docs in `design/levels/`, narrative docs in `design/narrative/`, and world-building docs for the forest region
-2. Step 1 — narrative-director spawned: defines narrative purpose, key characters, dialogue triggers, emotional arc; world-builder spawned: provides lore context, environmental storytelling opportunities, world rules; `AskUserQuestion` confirms Step 1 outputs before Step 2
-3. Step 2 — level-designer spawned: designs spatial layout (critical path, optional paths, secrets), pacing curve, encounters, puzzles, entry/exit points and connections to adjacent areas; `AskUserQuestion` confirms layout before Step 3
-4. Step 3 — systems-designer spawned: specifies enemy compositions, loot tables, difficulty balance, area-specific mechanics, resource distribution; `AskUserQuestion` confirms systems before Step 4
-5. Step 4 — art-director and accessibility-specialist spawned in parallel; art-director: visual theme, color palette, lighting, asset list, VFX needs; accessibility-specialist: navigation clarity, colorblind safety, cognitive load check — each concern rated BLOCKING / RECOMMENDED / NICE TO HAVE; `AskUserQuestion` presents both outputs before Step 5
-6. Step 5 — qa-tester spawned: test cases for critical path, boundary/edge cases (sequence breaks, softlocks), playtest checklist, acceptance criteria
-7. Orchestrator compiles all team outputs into level design document format; sub-agent asked "May I write to `design/levels/forest-dungeon.md`?"; file saved
-8. Summary report: area overview, encounter count, estimated asset list, narrative beats, cross-team dependencies, verdict: COMPLETE
-9. Next steps listed: `/design-review design/levels/forest-dungeon.md`, `/dev-story`, `/qa-plan`
-
-**Assertions:**
-- [ ] All five sources read during context gathering before any agent is spawned
-- [ ] narrative-director and world-builder both spawned in Step 1 (may be sequential or parallel — both must complete before Step 2)
-- [ ] `AskUserQuestion` called at each step gate (minimum: after Step 1, Step 2, Step 3, Step 4)
-- [ ] Step 4 agents (art-director, accessibility-specialist) launched simultaneously
-- [ ] All file writes delegated to sub-agents — orchestrator does not write directly
-- [ ] Level doc saved to `design/levels/forest-dungeon.md` (slugified from argument)
-- [ ] Verdict COMPLETE in final summary report
-- [ ] Next steps include `/design-review`, `/dev-story`, `/qa-plan`
-- [ ] Summary report includes: area overview, encounter count, estimated asset list, narrative beats
+- [ ] 具有必需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有 ≥2 个阶段/步骤标题（步骤 1 到步骤 5 全部存在）
+- [ ] 包含裁定关键词：COMPLETE、BLOCKED
+- [ ] 包含 "May I write" 或 "文件写入协议"——写入委托给子 Agent，编排者不直接写入文件
+- [ ] 末尾有下一步交接（引用 `/design-review`、`/dev-story`、`/qa-plan`）
+- [ ] 错误恢复协议章节存在，包含全部四个恢复步骤
+- [ ] 步骤转换处使用 `AskUserQuestion` 获取用户批准再继续
+- [ ] 步骤 4 明确标记为并行（art-director 和 accessibility-specialist 同时运行）
+- [ ] 上下文收集读取：`design/gdd/game-concept.md`、`design/gdd/game-pillars.md`、`design/levels/`、`design/narrative/` 及相关世界构建文档
+- [ ] 团队组成列出全部七个角色（narrative-director、world-builder、level-designer、systems-designer、art-director、accessibility-specialist、qa-tester）
+- [ ] accessibility-specialist 输出包含严重程度分级（BLOCKING / RECOMMENDED / NICE TO HAVE）
+- [ ] 最终关卡设计文档保存至 `design/levels/[level-name].md`
 
 ---
 
-### Case 2: Blocked Agent (world-builder) — Partial report produced with gap noted
+## 测试用例
 
-**Fixture:**
-- `design/gdd/game-concept.md` exists
-- World-building docs for the forest region do NOT exist
-- world-builder agent returns BLOCKED: "No world-building docs found for the forest region — cannot provide lore context"
+### 用例 1：正常路径 — 所有团队成员产出输出，文档编译并保存
 
-**Input:** `/team-level forest dungeon`
+**测试环境配置（Fixture）：**
+- `design/gdd/game-concept.md` 存在且已填充
+- `design/gdd/game-pillars.md` 存在
+- `design/levels/` 目录存在（可能包含其他关卡文档）
+- `design/narrative/` 目录存在，包含相关叙事文档
 
-**Expected behavior:**
-1. Context gathering completes; missing world-building docs noted
-2. Step 1 — narrative-director completes successfully; world-builder spawned and returns BLOCKED
-3. Error Recovery Protocol triggered: "world-builder: BLOCKED — no world-building docs for forest region"
-4. `AskUserQuestion` presented with options:
-   - (a) Skip world-builder and note the lore gap in the level doc
-   - (b) Retry with narrower scope (world-builder focuses only on what can be inferred from game-concept.md)
-   - (c) Stop here and create world-building docs first
-5. If user chooses (a): pipeline continues with Steps 2–5 using narrative-director context only; level doc compiled with a clearly marked gap section: "World-building context: NOT PROVIDED — see open dependency"
-6. Final report produced: partial outputs documented, world-builder section marked BLOCKED, overall verdict: BLOCKED
+**输入：** `/team-level forest dungeon`
 
-**Assertions:**
-- [ ] BLOCKED surface message appears immediately when world-builder fails — before Step 2 begins without user input
-- [ ] `AskUserQuestion` offers at minimum three options (skip / retry / stop)
-- [ ] Partial report produced — narrative-director's completed work is not discarded
-- [ ] Level doc (if compiled) contains an explicit gap notation for the missing world-building context
-- [ ] Overall verdict is BLOCKED (not COMPLETE) when world-builder remains unresolved
-- [ ] Skill does NOT silently fabricate lore content to fill the gap
+**预期行为：**
+1. 上下文收集——编排者读取 game-concept.md、game-pillars.md、`design/levels/` 中的已有关卡文档、`design/narrative/` 中的叙事文档、以及森林区域的世界构建文档
+2. 步骤 1——启动 narrative-director：定义叙事目的、关键角色、对话触发器、情感弧线；启动 world-builder：提供世界观背景、环境叙事机会、世界规则；`AskUserQuestion` 在步骤 2 前确认步骤 1 输出
+3. 步骤 2——启动 level-designer：设计空间布局（关键路径、可选路径、秘密区域）、节奏曲线、遭遇战、谜题、入口/出口点及与相邻区域的连接；`AskUserQuestion` 在步骤 3 前确认布局
+4. 步骤 3——启动 systems-designer：指定敌人组合、掉落表、难度平衡、区域特定机制、资源分布；`AskUserQuestion` 在步骤 4 前确认系统
+5. 步骤 4——art-director 和 accessibility-specialist 并行启动；art-director：视觉主题、调色板、光照、资源清单、VFX 需求；accessibility-specialist：导航清晰度、色盲安全性、认知负荷检查——每项关注分级为 BLOCKING / RECOMMENDED / NICE TO HAVE；`AskUserQuestion` 在步骤 5 前展示两个输出
+6. 步骤 5——启动 qa-tester：关键路径测试用例、边界/边缘情况（序列中断、软锁）、试玩检查清单、验收标准
+7. 编排者将所有团队输出编译为关卡设计文档格式；子 Agent 询问 "May I write to `design/levels/forest-dungeon.md`?"；文件保存
+8. 总结报告：区域概述、遭遇战数量、预估资源清单、叙事节拍、跨团队依赖项，裁定：COMPLETE
+9. 列出下一步：`/design-review design/levels/forest-dungeon.md`、`/dev-story`、`/qa-plan`
 
----
-
-### Case 3: No Argument — Usage guidance shown
-
-**Fixture:**
-- Any project state
-
-**Input:** `/team-level` (no argument)
-
-**Expected behavior:**
-1. Skill detects no argument provided
-2. Outputs usage message explaining the required argument (level name or area to design)
-3. Provides example invocations: `/team-level tutorial`, `/team-level forest dungeon`, `/team-level final boss arena`
-4. Skill exits without reading any project files or spawning any subagents
-
-**Assertions:**
-- [ ] Skill does NOT spawn any subagents when no argument is given
-- [ ] Usage message includes the argument-hint format from frontmatter
-- [ ] At least one example of a valid invocation is shown
-- [ ] No GDD or level files read before failing
-- [ ] Verdict is NOT shown (pipeline never starts)
+**断言：**
+- [ ] 在启动任何 Agent 前，上下文收集阶段读取全部五个来源
+- [ ] narrative-director 和 world-builder 均在步骤 1 中启动（可顺序或并行——两者均须在步骤 2 前完成）
+- [ ] 每个步骤关卡调用 `AskUserQuestion`（最少：步骤 1、步骤 2、步骤 3、步骤 4 之后）
+- [ ] 步骤 4 Agent（art-director、accessibility-specialist）同时启动
+- [ ] 所有文件写入委托给子 Agent——编排者不直接写入
+- [ ] 关卡文档保存至 `design/levels/forest-dungeon.md`（参数经 slug 化）
+- [ ] 最终总结报告中裁定为 COMPLETE
+- [ ] 下一步包含 `/design-review`、`/dev-story`、`/qa-plan`
+- [ ] 总结报告包含：区域概述、遭遇战数量、预估资源清单、叙事节拍
 
 ---
 
-### Case 4: Accessibility Review Gate — Blocking concern surfaces before sign-off
+### 用例 2：Agent 阻塞（world-builder）——产出带差距标注的部分报告
 
-**Fixture:**
-- Steps 1–3 complete successfully
-- `design/accessibility-requirements.md` committed tier: Enhanced
-- accessibility-specialist (Step 4, parallel) flags a BLOCKING concern: the critical path through the forest dungeon requires players to distinguish between two environmental hazards (toxic pools vs. shallow water) using color alone — no shape, icon, or audio cue differentiates them
+**测试环境配置（Fixture）：**
+- `design/gdd/game-concept.md` 存在
+- 森林区域的世界构建文档不存在
+- world-builder Agent 返回 BLOCKED："未找到森林区域的世界构建文档——无法提供世界观背景"
 
-**Input:** `/team-level forest dungeon`
+**输入：** `/team-level forest dungeon`
 
-**Expected behavior:**
-1. Steps 1–3 complete; Step 4 parallel phase begins
-2. accessibility-specialist returns: BLOCKING concern — "Critical path hazard distinction relies on color only (toxic pools vs. shallow water). Shape, icon, or audio cue required per Enhanced accessibility tier."
-3. art-director returns Step 4 output (complete)
-4. Skill presents both Step 4 results via `AskUserQuestion` — BLOCKING concern highlighted prominently
-5. `AskUserQuestion` offers:
-   - (a) Return to level-designer + art-director to redesign hazard visual/audio language before Step 5
-   - (b) Document as a known accessibility gap and proceed to Step 5 with the concern logged
-6. Skill does NOT silently proceed past the BLOCKING concern
-7. If user chooses (a): level-designer and art-director revision spawned; re-run Step 4 accessibility check
-8. Final report includes BLOCKING concern and its resolution status regardless of user choice
+**预期行为：**
+1. 上下文收集完成；标注了缺失的世界构建文档
+2. 步骤 1——narrative-director 成功完成；启动 world-builder，返回 BLOCKED
+3. 触发错误恢复协议："world-builder：BLOCKED — 无森林区域的世界构建文档"
+4. `AskUserQuestion` 展示选项：
+   - (a) 跳过 world-builder，在关卡文档中标注世界观差距
+   - (b) 以更窄范围重试（world-builder 仅聚焦于可从 game-concept.md 推断的内容）
+   - (c) 在此停止，先创建世界构建文档
+5. 若用户选择 (a)：流水线继续步骤 2–5，仅使用 narrative-director 的上下文；编译关卡文档，附带有明确标记的差距章节："世界构建上下文：未提供 — 参见开放依赖项"
+6. 产出最终报告：记录部分输出，world-builder 章节标记为 BLOCKED，总体裁定：BLOCKED
 
-**Assertions:**
-- [ ] BLOCKING accessibility concern is not treated as advisory — it is surfaced as a blocker
-- [ ] `AskUserQuestion` presents the specific concern text (not just "accessibility issue found")
-- [ ] Step 5 (qa-tester) does NOT begin without user acknowledging the BLOCKING concern
-- [ ] Revision path offered: level-designer + art-director can be sent back before proceeding
-- [ ] Final report includes the accessibility concern and its resolution status
-- [ ] art-director's completed output is NOT discarded when accessibility-specialist blocks
-
----
-
-### Case 5: Circular Level Reference — Adjacent area dependency flagged
-
-**Fixture:**
-- Steps 1–3 in progress
-- level-designer (Step 2) produces a layout that specifies entry/exit points connecting to "the crystal caves" (an adjacent area)
-- `design/levels/crystal-caves.md` does NOT exist — the crystal caves area has not been designed yet
-
-**Input:** `/team-level forest dungeon`
-
-**Expected behavior:**
-1. Step 2 — level-designer produces layout including: "West exit connects to crystal-caves entry point A"
-2. Orchestrator (or level-designer subagent) checks `design/levels/` for `crystal-caves.md`; file not found
-3. Dependency gap surfaced: "Level references crystal-caves as an adjacent area but `design/levels/crystal-caves.md` does not exist"
-4. `AskUserQuestion` presented with options:
-   - (a) Proceed with a placeholder reference — note the dependency in the level doc as UNRESOLVED
-   - (b) Pause and run `/team-level crystal caves` first to establish that area
-5. Skill does NOT invent crystal caves content to satisfy the reference
-6. If user chooses (a): level doc compiled with the west exit marked "→ crystal-caves (UNRESOLVED — area not yet designed)"; flagged in the open dependencies section of the summary report
-7. Final report includes open cross-level dependencies section
-
-**Assertions:**
-- [ ] Skill detects the missing adjacent area by checking `design/levels/` — does not assume it will be created later
-- [ ] Skill does NOT fabricate crystal caves content (lore, layout, connections) to resolve the reference
-- [ ] `AskUserQuestion` offers a "design crystal caves first" option referencing `/team-level`
-- [ ] If user proceeds with placeholder, level doc explicitly marks the west exit as UNRESOLVED
-- [ ] Summary report includes an open cross-level dependencies section listing unresolved references
-- [ ] Circular or forward references do not cause the skill to loop or crash
+**断言：**
+- [ ] world-builder 失败时立即出现 BLOCKED 呈现消息——步骤 2 不在无用户输入的情况下开始
+- [ ] `AskUserQuestion` 提供至少三个选项（跳过 / 重试 / 停止）
+- [ ] 产出部分报告——narrative-director 的已完成工作不被丢弃
+- [ ] 关卡文档（若编译）包含对缺失世界构建上下文的明确差距标注
+- [ ] 当 world-builder 未解决时，总体裁定为 BLOCKED（非 COMPLETE）
+- [ ] Skill 不静默虚构世界观内容来填补差距
 
 ---
 
-## Protocol Compliance
+### 用例 3：无参数 — 显示使用说明
 
-- [ ] `AskUserQuestion` used at each step transition — user approves before pipeline advances
-- [ ] All file writes delegated to sub-agents via Task — orchestrator does not call Write or Edit directly
-- [ ] Error Recovery Protocol followed: surface → assess → offer options → partial report
-- [ ] Step 4 agents (art-director, accessibility-specialist) launched in parallel per skill spec
-- [ ] Partial report always produced even when agents are BLOCKED
-- [ ] Accessibility BLOCKING concerns surface before sign-off and require explicit user acknowledgment
-- [ ] Verdict is one of COMPLETE / BLOCKED
-- [ ] Next steps present at end: `/design-review`, `/dev-story`, `/qa-plan`
+**测试环境配置（Fixture）：**
+- 任意项目状态
+
+**输入：** `/team-level`（无参数）
+
+**预期行为：**
+1. Skill 检测到未提供参数
+2. 输出使用消息，解释必需参数（要设计的关卡名称或区域）
+3. 提供示例调用：`/team-level tutorial`、`/team-level forest dungeon`、`/team-level final boss arena`
+4. Skill 退出，不读取任何项目文件或启动任何子 Agent
+
+**断言：**
+- [ ] 无参数时 Skill 不启动任何子 Agent
+- [ ] 使用消息包含 frontmatter 中的 argument-hint 格式
+- [ ] 至少展示一个有效调用示例
+- [ ] 失败前未读取 GDD 或关卡文件
+- [ ] 不显示裁定（流水线从未开始）
 
 ---
 
-## Coverage Notes
+### 用例 4：无障碍审查关卡 — 阻塞性关注在签收前浮现
 
-- narrative-director and world-builder in Step 1 may be sequential or parallel — the skill spec
-  spawns both but does not mandate simultaneous launch; coverage of parallel Step 1 would require
-  an explicit timing assertion fixture.
-- The "Retry with narrower scope" option in the blocked world-builder case (Case 2) — the
-  retry behavior itself is not tested in depth; its full path is analogous to the blocked agent
-  pattern covered in Case 2 and in other team-* specs.
-- systems-designer (Step 3) block scenarios are not separately tested; the same Error Recovery
-  Protocol applies and the pattern is validated by Case 2.
-- Step 4 parallel ordering (art-director completing before or after accessibility-specialist)
-  does not affect outcomes — both must return before Step 5 regardless of order.
-- The level doc slug convention (argument → filename) is implicitly tested by Case 1
-  (`forest dungeon` → `forest-dungeon.md`); multi-word slugification edge cases (special
-  characters, very long names) are not covered.
+**测试环境配置（Fixture）：**
+- 步骤 1–3 成功完成
+- `design/accessibility-requirements.md` 已承诺等级：Enhanced
+- accessibility-specialist（步骤 4，并行）标记一个 BLOCKING 关注：玩家需要通过颜色区分两项环境危害（毒池 vs 浅水）但无形状、图标或音频提示加以区分
+
+**输入：** `/team-level forest dungeon`
+
+**预期行为：**
+1. 步骤 1–3 完成；步骤 4 并行阶段开始
+2. accessibility-specialist 返回：BLOCKING 关注 — "关键路径危害区分仅依赖颜色（毒池 vs 浅水）。根据 Enhanced 无障碍等级，需要形状、图标或音频提示。"
+3. art-director 返回步骤 4 输出（完成）
+4. Skill 通过 `AskUserQuestion` 展示两个步骤 4 结果——BLOCKING 关注突出高亮
+5. `AskUserQuestion` 提供：
+   - (a) 返回 level-designer + art-director 在步骤 5 前重新设计危害视觉/音频语言
+   - (b) 记录为已知无障碍差距，携带此关注继续步骤 5
+6. Skill 不静默越过 BLOCKING 关注
+7. 若用户选择 (a)：启动 level-designer 和 art-director 修订；重新运行步骤 4 无障碍检查
+8. 无论用户选择如何，最终报告包含 BLOCKING 关注及其解决状态
+
+**断言：**
+- [ ] BLOCKING 无障碍关注不被视为建议——作为阻塞项呈现
+- [ ] `AskUserQuestion` 展示具体关注文本（而不仅是"发现无障碍问题"）
+- [ ] 步骤 5（qa-tester）在用户确认 BLOCKING 关注前不开始
+- [ ] 提供修订路径：可在继续前将 level-designer + art-director 送回
+- [ ] 最终报告包含无障碍关注及其解决状态
+- [ ] accessibility-specialist 阻塞时不丢弃 art-director 的已完成输出
+
+---
+
+### 用例 5：关卡循环引用 — 标记相邻区域依赖
+
+**测试环境配置（Fixture）：**
+- 步骤 1–3 进行中
+- level-designer（步骤 2）生成的布局指定了连接到 "the crystal caves"（相邻区域）的入口/出口
+- `design/levels/crystal-caves.md` 不存在——crystal caves 区域尚未被设计
+
+**输入：** `/team-level forest dungeon`
+
+**预期行为：**
+1. 步骤 2——level-designer 产出布局，包含："西侧出口连接至 crystal-caves 入口点 A"
+2. 编排者（或 level-designer 子 Agent）检查 `design/levels/` 中是否有 `crystal-caves.md`；文件未找到
+3. 呈现依赖差距："关卡引用了 crystal-caves 作为相邻区域，但 `design/levels/crystal-caves.md` 不存在"
+4. `AskUserQuestion` 展示选项：
+   - (a) 使用占位引用继续——在关卡文档中标注依赖为 UNRESOLVED
+   - (b) 暂停，先运行 `/team-level crystal caves` 建立该区域
+5. Skill 不凭空创造 crystal caves 内容来满足引用
+6. 若用户选择 (a)：编译关卡文档，西侧出口标记为 "→ crystal-caves（UNRESOLVED — 区域尚未设计）"；在总结报告的开放依赖章节中标记
+7. 最终报告包含开放跨关卡依赖章节
+
+**断言：**
+- [ ] Skill 通过检查 `design/levels/` 检测到缺失的相邻区域——不假定之后会创建
+- [ ] Skill 不凭空创造 crystal caves 内容（世界观、布局、连接）来解决引用
+- [ ] `AskUserQuestion` 提供引用 `/team-level` 的"先设计 crystal caves"选项
+- [ ] 若用户以占位引用继续，关卡文档明确将西侧出口标记为 UNRESOLVED
+- [ ] 总结报告包含列出未解决引用的开放跨关卡依赖章节
+- [ ] 循环或前向引用不会导致 Skill 循环或崩溃
+
+---
+
+## 协议合规
+
+- [ ] 每个步骤转换处使用 `AskUserQuestion`——用户批准后再推进流水线
+- [ ] 所有文件写入通过 Task 委托给子 Agent——编排者不直接调用 Write 或 Edit
+- [ ] 遵循错误恢复协议：呈现 → 评估 → 提供选项 → 部分报告
+- [ ] 步骤 4 Agent（art-director、accessibility-specialist）按 Skill 规范并行启动
+- [ ] 即使 Agent 处于 BLOCKED 状态，始终产出部分报告
+- [ ] 无障碍 BLOCKING 关注在签收前呈现，并需要明确的用户确认
+- [ ] 裁定为 COMPLETE / BLOCKED 之一
+- [ ] 末尾有下一步：`/design-review`、`/dev-story`、`/qa-plan`
+
+---
+
+## 覆盖说明
+
+- 步骤 1 中 narrative-director 和 world-builder 可顺序或并行——Skill 规范启动两者但不强制同时启动；并行步骤 1 的覆盖需要一个明确的时间断言 fixture。
+- 阻塞 world-builder 用例（Case 2）中的"以更窄范围重试"选项——重试行为本身未深度测试；其完整路径与其他 team-* 规格中的阻塞 Agent 模式类似。
+- systems-designer（步骤 3）阻塞场景未单独测试；同样的错误恢复协议适用，模式由 Case 2 验证。
+- 步骤 4 并行顺序（art-director 在 accessibility-specialist 之前或之后完成）不影响结果——无论顺序如何，两者都必须在步骤 5 前返回。
+- 关卡文档 slug 约定（参数 → 文件名）由 Case 1 隐式测试（`forest dungeon` → `forest-dungeon.md`）；多词 slug 化边界情况（特殊字符、超长名称）未被覆盖。

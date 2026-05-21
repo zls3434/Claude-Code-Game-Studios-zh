@@ -1,178 +1,166 @@
-# Skill Test Spec: /playtest-report
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill 测试规范：/playtest-report
 
-`/playtest-report` generates a structured playtest report from session notes or
-user input. The report is organized into four sections: Feel/Accessibility,
-Bugs Observed, Design Feedback, and Next Steps. When multiple testers participated,
-the skill aggregates feedback and distinguishes majority opinions from minority
-ones. The skill links to existing bug reports when a reported bug matches a file
-in `production/bugs/`.
+## Skill 摘要
 
-Reports are written to `production/qa/playtest-[date].md` after a "May I write"
-ask. No director gates apply here — the CD-PLAYTEST director gate (if needed) is
-a separate invocation. The verdict is COMPLETE when the report is written.
+`/playtest-report` 根据会话笔记或用户输入生成结构化试玩报告。报告组织为四个 section：Feel/Accessibility、Bugs Observed、Design Feedback 和 Next Steps。当多名测试者参与时，skill 汇总反馈并区分多数意见与少数意见。当报告的 bug 与 `production/bugs/` 中的文件匹配时，skill 链接到现有 bug 报告。
+
+报告在经过 "May I write" 询问后写入 `production/qa/playtest-[date].md`。此处不适用 director gate — CD-PLAYTEST director gate（如需要）是单独调用。报告写入后判决为 COMPLETE。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构层面）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keyword: COMPLETE
-- [ ] Contains "May I write" collaborative protocol language before writing the report
-- [ ] Has a next-step handoff (e.g., `/bug-report` for new issues found, `/design-review` for feedback)
-
----
-
-## Director Gate Checks
-
-None. `/playtest-report` is a documentation utility. The CD-PLAYTEST gate is a
-separate invocation and not part of this skill.
+- [ ] 具有必需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有 ≥2 个阶段标题
+- [ ] 包含判决关键词：COMPLETE
+- [ ] 在写入报告前包含 "May I write" 协作协议语言
+- [ ] 有下一步交接（例如，`/bug-report` 用于发现的新问题，`/design-review` 用于反馈）
 
 ---
 
-## Test Cases
+## Director Gate 检查
 
-### Case 1: Happy Path — User provides playtest notes, structured report produced
-
-**Fixture:**
-- User provides typed playtest notes from a single session
-- Notes cover: game feel, one bug (framerate drop), and a design concern
-  (tutorial too long)
-- `production/bugs/` exists but is empty (bug not yet reported)
-
-**Input:** `/playtest-report` (user pastes session notes)
-
-**Expected behavior:**
-1. Skill reads the provided notes and structures them into the 4-section template
-2. Feel/Accessibility: extracts feel observations
-3. Bugs: notes the framerate drop with available repro details
-4. Design Feedback: notes the tutorial length concern
-5. Next Steps: suggests `/bug-report` for the framerate issue and `/design-review`
-   for the tutorial feedback
-6. Skill asks "May I write to `production/qa/playtest-2026-04-06.md`?"
-7. Report is written on approval; verdict is COMPLETE
-
-**Assertions:**
-- [ ] All 4 sections are present in the report
-- [ ] Bug is listed in the Bugs section (not the Design Feedback section)
-- [ ] Next Steps are appropriate (bug report for crash, design review for feedback)
-- [ ] "May I write" is asked before writing
-- [ ] Verdict is COMPLETE
+无。`/playtest-report` 是一个文档工具。CD-PLAYTEST gate 是单独调用，不属于此 skill。
 
 ---
 
-### Case 2: Empty Input — Guided prompting through each section
+## 测试用例
 
-**Fixture:**
-- No notes provided by user at invocation
+### 用例 1：Happy Path — 用户提供试玩笔记，生成结构化报告
 
-**Input:** `/playtest-report`
+**Fixture：**
+- 用户提供来自单次会话的试玩笔记
+- 笔记涵盖：游戏感受、一个 bug（帧率下降）和一个设计问题（教程太长）
+- `production/bugs/` 存在但为空（bug 尚未报告）
 
-**Expected behavior:**
-1. Skill detects empty input
-2. Skill prompts through each section:
+**输入：** `/playtest-report`（用户粘贴会话笔记）
+
+**预期行为：**
+1. Skill 读取提供的笔记并将其结构化到 4-section 模板中
+2. Feel/Accessibility：提取感受观察
+3. Bugs：记录帧率下降及可用的重现详情
+4. Design Feedback：记录教程长度问题
+5. Next Steps：建议对帧率问题使用 `/bug-report`，对教程反馈使用 `/design-review`
+6. Skill 询问 "May I write to `production/qa/playtest-2026-04-06.md`?"
+7. 批准后写入报告；判决为 COMPLETE
+
+**断言：**
+- [ ] 报告中存在所有 4 个 section
+- [ ] Bug 列在 Bugs section 中（而非 Design Feedback section）
+- [ ] Next Steps 适当（bug report 用于崩溃，design review 用于反馈）
+- [ ] 写入前询问 "May I write"
+- [ ] 判决为 COMPLETE
+
+---
+
+### 用例 2：空输入 — 引导式逐一填写每个 section
+
+**Fixture：**
+- 调用时用户未提供笔记
+
+**输入：** `/playtest-report`
+
+**预期行为：**
+1. Skill 检测到空输入
+2. Skill 逐一引导填写每个 section：
    a. "Describe the overall feel and any accessibility observations"
    b. "Were any bugs observed? Describe them"
    c. "What design feedback did testers provide?"
-3. User answers each prompt
-4. Skill compiles report from answers and asks "May I write"
-5. Report written on approval; verdict is COMPLETE
+3. 用户回答每个提示
+4. Skill 根据回答汇编报告并询问 "May I write"
+5. 批准后写入报告；判决为 COMPLETE
 
-**Assertions:**
-- [ ] At least 3 guiding questions are asked (one per main section)
-- [ ] Report is not created until all sections have input (or user explicitly skips one)
-- [ ] Verdict is COMPLETE after file is written
-
----
-
-### Case 3: Multiple Testers — Aggregated feedback with majority/minority notes
-
-**Fixture:**
-- User provides notes from 3 testers
-- 2/3 testers found the controls "intuitive"
-- 1/3 tester found the UI font too small
-- All 3 noted the same bug (player stuck on ledge)
-
-**Input:** `/playtest-report` (3-tester session)
-
-**Expected behavior:**
-1. Skill identifies 3 distinct tester perspectives in the input
-2. Control intuitiveness → noted as "Majority (2/3): controls intuitive"
-3. Font size → noted as "Minority (1/3): UI font size concern"
-4. Stuck-on-ledge bug → noted as "All testers: player stuck on ledge (confirmed)"
-5. Skill generates aggregated report with majority/minority labels
-6. Report written after "May I write" approval; verdict is COMPLETE
-
-**Assertions:**
-- [ ] Majority opinion (2/3) is labeled as majority
-- [ ] Minority opinion (1/3) is labeled as minority
-- [ ] Unanimously reported bug is noted as confirmed by all testers
-- [ ] Verdict is COMPLETE
+**断言：**
+- [ ] 至少提出 3 个引导性问题（每个主要 section 一个）
+- [ ] 在所有 section 获得输入（或用户明确跳过某个）之前不创建报告
+- [ ] 文件写入后判决为 COMPLETE
 
 ---
 
-### Case 4: Bug Matches Existing Report — Links to existing file
+### 用例 3：多名测试者 — 汇总反馈附多数/少数说明
 
-**Fixture:**
-- `production/bugs/bug-2026-03-30-player-stuck-ledge.md` exists
-- User's playtest notes describe "player gets stuck on ledges near walls"
+**Fixture：**
+- 用户提供 3 名测试者的笔记
+- 2/3 测试者认为操控 "intuitive"
+- 1/3 测试者认为 UI 字体太小
+- 全部 3 名均发现同一 bug（玩家卡在平台上）
 
-**Input:** `/playtest-report`
+**输入：** `/playtest-report`（3 名测试者会话）
 
-**Expected behavior:**
-1. Skill structures the report and identifies the stuck-on-ledge bug
-2. Skill scans `production/bugs/` and finds `bug-2026-03-30-player-stuck-ledge.md`
-3. In the Bugs section, the report includes: "See existing report:
-   production/bugs/bug-2026-03-30-player-stuck-ledge.md"
-4. Skill does NOT suggest creating a new bug report for this issue
-5. Report written; verdict is COMPLETE
+**预期行为：**
+1. Skill 从输入中识别 3 个不同测试者视角
+2. 操控直观性 → 标记为 "Majority (2/3): controls intuitive"
+3. 字体大小 → 标记为 "Minority (1/3): UI font size concern"
+4. 卡在平台上 bug → 标记为 "All testers: player stuck on ledge (confirmed)"
+5. Skill 生成附多数/少数标签的汇总报告
+6. 经 "May I write" 批准后写入报告；判决为 COMPLETE
 
-**Assertions:**
-- [ ] Existing bug report is found and linked in the playtest report
-- [ ] `/bug-report` is NOT suggested for the already-reported issue
-- [ ] Cross-reference to existing file appears in the Bugs section
-- [ ] Verdict is COMPLETE
-
----
-
-### Case 5: Director Gate Check — No gate; CD-PLAYTEST is a separate invocation
-
-**Fixture:**
-- Playtest notes provided
-
-**Input:** `/playtest-report`
-
-**Expected behavior:**
-1. Skill generates and writes the playtest report
-2. No director agents are spawned (CD-PLAYTEST is not invoked here)
-3. No gate IDs appear in output
-
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No CD-PLAYTEST gate skip message appears
-- [ ] Verdict is COMPLETE without any gate check
+**断言：**
+- [ ] 多数意见（2/3）标记为 majority
+- [ ] 少数意见（1/3）标记为 minority
+- [ ] 所有测试者一致报告的 bug 标记为所有测试者确认
+- [ ] 判决为 COMPLETE
 
 ---
 
-## Protocol Compliance
+### 用例 4：Bug 匹配现有报告 — 链接到现有文件
 
-- [ ] Structures output into all 4 sections (Feel, Bugs, Design Feedback, Next Steps)
-- [ ] Labels majority vs. minority opinions when multiple testers are involved
-- [ ] Cross-references existing bug reports when bugs match
-- [ ] Asks "May I write to `production/qa/playtest-[date].md`?" before writing
-- [ ] Verdict is COMPLETE when report is written
+**Fixture：**
+- `production/bugs/bug-2026-03-30-player-stuck-ledge.md` 存在
+- 用户试玩笔记描述 "player gets stuck on ledges near walls"
+
+**输入：** `/playtest-report`
+
+**预期行为：**
+1. Skill 结构化报告并识别出卡在平台上的 bug
+2. Skill 扫描 `production/bugs/` 并找到 `bug-2026-03-30-player-stuck-ledge.md`
+3. 在 Bugs section 中，报告包含："See existing report: production/bugs/bug-2026-03-30-player-stuck-ledge.md"
+4. Skill 不建议为此问题创建新 bug 报告
+5. 报告写入；判决为 COMPLETE
+
+**断言：**
+- [ ] 找到现有 bug 报告并在试玩报告中链接
+- [ ] 对已报告问题不建议 `/bug-report`
+- [ ] 交叉引用到现有文件出现在 Bugs section 中
+- [ ] 判决为 COMPLETE
 
 ---
 
-## Coverage Notes
+### 用例 5：Director Gate 检查 — 无 gate；CD-PLAYTEST 是单独调用
 
-- The CD-PLAYTEST director gate (creative director reviews playtest insights
-  for design implications) is a separate invocation and is not tested here.
-- Video recording or screenshot attachments are not tested; the report is a
-  text-only document.
-- The case where a tester's identity is unknown (anonymous feedback) follows
-  the same aggregation pattern as Case 3 without tester labels.
+**Fixture：**
+- 提供试玩笔记
+
+**输入：** `/playtest-report`
+
+**预期行为：**
+1. Skill 生成并写入试玩报告
+2. 不生成任何 director agent（此处不调用 CD-PLAYTEST）
+3. 输出中不出现 gate ID
+
+**断言：**
+- [ ] 不调用任何 director gate
+- [ ] 不出现 CD-PLAYTEST gate 跳过消息
+- [ ] 判决为 COMPLETE，无任何 gate 检查
+
+---
+
+## 协议合规性
+
+- [ ] 将输出结构化为全部 4 个 section（Feel、Bugs、Design Feedback、Next Steps）
+- [ ] 涉及多名测试者时标记多数 vs. 少数意见
+- [ ] Bug 匹配时交叉引用现有 bug 报告
+- [ ] 写入前询问 "May I write to `production/qa/playtest-[date].md`?"
+- [ ] 报告写入后判决为 COMPLETE
+
+---
+
+## 覆盖说明
+
+- CD-PLAYTEST director gate（创意总监审查试玩见解以获取设计意义）是单独调用，此处不测试。
+- 视频录制或截图附件不测试；报告是纯文本文档。
+- 测试者身份未知的情况（匿名反馈）遵循与用例 3 相同的汇总模式，无测试者标签。

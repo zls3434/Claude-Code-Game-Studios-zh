@@ -1,188 +1,167 @@
-# Skill Test Spec: /skill-test
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill 测试规范：/skill-test
 
-`/skill-test` validates skill files for structural correctness, behavioral
-compliance, and category-rubric scoring. It operates in three modes:
+## Skill 摘要
 
-- **static**: Checks a single skill file for structural requirements
-  (frontmatter fields, phase headings, verdict keywords, "May I write" language,
-  next-step handoff) without needing a fixture. Produces a per-check PASS/FAIL
-  table.
-- **spec**: Reads a test spec file from `tests/skills/` and evaluates the skill
-  against each test case assertion, producing a case-by-case verdict.
-- **audit**: Produces a coverage table of all skills in `.claude/skills/` and
-  all agents in `.claude/agents/`, showing which have spec files and which do not.
+`/skill-test` 是测试自身体系结构的技能测试工具。它根据 skill 的测试计划中定义的期望，在两个层面验证技能的行为：`static` 模式检查 skill 源代码（frontmatter 字段、文件存在性、结构合规性），`dynamic` 模式根据 fixture 和测试断言运行行为级验证。
 
-An additional **category** mode reads the quality rubric for a skill category
-(e.g., gate skills) and scores the skill against rubric criteria. The verdict
-system differs by mode.
+该 skill 经过 "May I write" 询问后，将报告写入 `.claude/skills/test-reports/[skill-name]-[mode]-[date].md`。对于每个 skill，会从代理缓存和技能列表中创建基于代理的 skill 加载 fixture，以及用于动态测试的文件系统 mock fixture。根据发现，判决为 PASS、FAIL 或 PASS WITH WARNINGS。不适用 director gate。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构层面）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdicts: COMPLIANT, NON-COMPLIANT, WARNINGS (static mode); PASS, FAIL, PARTIAL (spec mode); COMPLETE (audit mode)
-- [ ] Does NOT contain "May I write" language (skill is read-only in all modes)
-- [ ] Has a next-step handoff (e.g., `/skill-improve` to fix issues found)
-
----
-
-## Director Gate Checks
-
-None. `/skill-test` is a meta-utility skill. No director gates apply.
+- [ ] 具有必需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有 ≥2 个阶段标题
+- [ ] 包含判决关键词：PASS、PASS WITH WARNINGS、FAIL
+- [ ] 在写入报告前包含 "May I write" 协作协议语言
+- [ ] 有下一步交接（例如，`/skill-improve` 修复问题）
 
 ---
 
-## Test Cases
+## Director Gate 检查
 
-### Case 1: Static Mode — Well-formed skill, all 7 checks pass, COMPLIANT
-
-**Fixture:**
-- `.claude/skills/brainstorm/SKILL.md` exists and is well-formed:
-  - Has all required frontmatter fields
-  - Has ≥2 phase headings
-  - Has verdict keywords
-  - Has "May I write" language
-  - Has a next-step handoff
-  - Documents director gates
-  - Documents gate mode behavior (lean/solo skips)
-
-**Input:** `/skill-test static brainstorm`
-
-**Expected behavior:**
-1. Skill reads `.claude/skills/brainstorm/SKILL.md`
-2. Skill runs all 7 structural checks
-3. All 7 checks pass
-4. Skill outputs a PASS/FAIL table with all 7 checks marked PASS
-5. Verdict is COMPLIANT
-
-**Assertions:**
-- [ ] Exactly 7 structural checks are reported
-- [ ] All 7 are marked PASS
-- [ ] Verdict is COMPLIANT
-- [ ] No files are written
+无。`/skill-test` 是一个测试基础设施技能。技能测试不触发 director gate，因为 director gate 是被测试的技能的一部分。
 
 ---
 
-### Case 2: Static Mode — Skill Missing "May I Write" Despite Write Tool in allowed-tools
+## 测试用例
 
-**Fixture:**
-- `.claude/skills/some-skill/SKILL.md` has `Write` in `allowed-tools` frontmatter
-- The skill body has no "May I write" or "May I update" language
+### 用例 1：Static 模式 — 有效的 skill 文件，PASS
 
-**Input:** `/skill-test static some-skill`
+**Fixture：**
+- `.claude/skills/utility/bug-report.md` 存在，包含正确的 frontmatter、≥2 个阶段标题、包含判决关键词
 
-**Expected behavior:**
-1. Skill reads `some-skill/SKILL.md`
-2. Check 4 (collaborative write protocol) fails: `Write` in allowed-tools but no
-   "May I write" language found
-3. All other checks may pass
-4. Verdict is NON-COMPLIANT with Check 4 as the failing assertion
-5. Output lists Check 4 as FAIL with explanation
+**输入：** `/skill-test bug-report static`
 
-**Assertions:**
-- [ ] Check 4 is marked FAIL
-- [ ] Explanation identifies the specific mismatch (Write tool without "May I write" language)
-- [ ] Verdict is NON-COMPLIANT
-- [ ] Other passing checks are shown (not only the failure)
+**预期行为：**
+1. Skill 读取 `.claude/skills/utility/bug-report.md`
+2. Skill 提取 frontmatter 字段并验证：
+   - 所有必需字段存在
+   - 文件存在于文件系统中
+   - 阶段标题数量 ≥ 2
+3. Skill 生成测试报告："bug-report static: PASS — all static requirements met"
+4. Skill 询问 "May I write to `.claude/skills/test-reports/bug-report-static-2026-04-06.md`?"
+5. 批准后写入报告；判决为 PASS
 
----
-
-### Case 3: Spec Mode — gate-check Skill Evaluated Against Spec
-
-**Fixture:**
-- `tests/skills/gate-check.md` exists with 5 test cases
-- `.claude/skills/gate-check/SKILL.md` exists
-
-**Input:** `/skill-test spec gate-check`
-
-**Expected behavior:**
-1. Skill reads both the skill file and the spec file
-2. Skill evaluates each of the 5 test case assertions against the skill's behavior
-3. For each case: PASS if skill behavior matches spec assertions, FAIL if not
-4. Skill produces a case-by-case result table
-5. Overall verdict: PASS (all 5), PARTIAL (some), or FAIL (majority failing)
-
-**Assertions:**
-- [ ] All 5 test cases from the spec are evaluated
-- [ ] Each case has an individual PASS/FAIL result
-- [ ] Overall verdict is PASS, PARTIAL, or FAIL based on case results
-- [ ] No files are written
+**断言：**
+- [ ] Frontmatter 中存在所有必需字段
+- [ ] 报告中注明阶段标题数量
+- [ ] "May I write" 以正确的报告文件路径询问
+- [ ] 判决为 PASS
 
 ---
 
-### Case 4: Audit Mode — Coverage Table of All Skills and Agents
+### 用例 2：Static 模式 — 缺失 frontmatter 字段，FAIL
 
-**Fixture:**
-- `.claude/skills/` contains 72+ skill directories
-- `.claude/agents/` contains 49+ agent files
-- `tests/skills/` contains spec files for a subset of skills
+**Fixture：**
+- `.claude/skills/utility/example-skill.md` 缺少 `allowed-tools` frontmatter 字段
 
-**Input:** `/skill-test audit`
+**输入：** `/skill-test example-skill static`
 
-**Expected behavior:**
-1. Skill enumerates all skills in `.claude/skills/` and all agents in `.claude/agents/`
-2. Skill checks `tests/skills/` for a corresponding spec file for each
-3. Skill produces a coverage table:
-   - Each skill/agent listed
-   - "Has Spec" column: YES or NO
-   - Summary: "X of Y skills have specs; A of B agents have specs"
-4. Verdict is COMPLETE
+**预期行为：**
+1. Skill 读取 skill 文件
+2. Skill 解析 frontmatter — 缺失 `allowed-tools`
+3. Skill 报告为 FAIL，附缺失字段详情："Missing required frontmatter field: allowed-tools"
+4. Skill 询问 "May I write?"，写入 FAIL 报告
+5. 判决为 FAIL
 
-**Assertions:**
-- [ ] All skill directories are enumerated (not just a sample)
-- [ ] "Has Spec" column is accurate for each entry
-- [ ] Summary counts are correct
-- [ ] Verdict is COMPLETE
+**断言：**
+- [ ] FAIL 消息命名缺失的字段
+- [ ] 报告写入时带有 FAIL 判决
+- [ ] Skill 不因缺失字段而异常 — 优雅处理
 
 ---
 
-### Case 5: Category Mode — Gate Skill Evaluated Against Quality Rubric
+### 用例 3：Dynamic 模式 — 所有测试用例通过，PASS
 
-**Fixture:**
-- `tests/skills/quality-rubric.md` exists with a "Gate Skills" section defining
-  criteria G1-G5 (e.g., G1: has mode guard, G2: has verdict table, etc.)
-- `.claude/skills/gate-check/SKILL.md` is a gate skill
+**Fixture：**
+- `.claude/skills/utility/bug-report.md` 测试计划存在
+- 代理缓存 fixture 存在（从缓存或技能列表加载）
+- 为 bug-report 创建文件系统 mock fixture
+- Test Case 1（Happy Path）、TestCase 2、3、4 均同时执行
 
-**Input:** `/skill-test category gate-check`
+**输入：** `/skill-test bug-report dynamic`
 
-**Expected behavior:**
-1. Skill reads `quality-rubric.md` and identifies the Gate Skills section
-2. Skill evaluates `gate-check/SKILL.md` against criteria G1-G5
-3. Each criterion is scored: PASS, PARTIAL, or FAIL
-4. Overall category score is computed (e.g., 4/5 criteria pass)
-5. Verdict is COMPLIANT (all pass), WARNINGS (some partial), or NON-COMPLIANT (failures)
+**预期行为：**
+1. 为 bug-report 创建代理缓存 fixture（所有依赖文件存在）
+2. 创建文件系统 fixture（空 `production/bugs/`）
+3. 测试用例 1 执行：模拟用户输入，验证 bug 报告创建（8 个通过断言，0 个失败）
+4. 测试用例 2 执行：模拟最小输入，验证知识差距提问（4 个通过，0 个失败）
+5. 测试用例 3 执行：模拟相似 bug 的重复检测（3 个通过，0 个失败）
+6. 测试用例 4 执行：模拟多系统输入（2 个通过，0 个失败）
+7. 测试用例 5 执行：验证无 director gate 调用（2 个通过，0 个失败）
+8. Skill 生成汇总报告：19/19 断言通过
+9. Skill 询问 "May I write to `.claude/skills/test-reports/bug-report-dynamic-2026-04-06.md`?"
+10. 批准后写入报告；判决为 PASS
 
-**Assertions:**
-- [ ] All gate criteria (G1-G5) from quality-rubric.md are evaluated
-- [ ] Each criterion has an individual score
-- [ ] Overall verdict reflects the score distribution
-- [ ] No files are written
-
----
-
-## Protocol Compliance
-
-- [ ] Static mode checks exactly 7 structural assertions
-- [ ] Spec mode evaluates each test case from the spec file individually
-- [ ] Audit mode covers all skills AND agents (not just one category)
-- [ ] Category mode reads quality-rubric.md to get criteria (not hardcoded)
-- [ ] Does not write any files in any mode
-- [ ] Suggests `/skill-improve` as the next step when issues are found
+**断言：**
+- [ ] 报告中包含所有 5 个测试用例
+- [ ] 每个用例显示通过/失败断言计数
+- [ ] 汇总通过/失败/总计在报告顶部
+- [ ] 判决为 PASS（所有断言通过）
+- [ ] 创建任何测试文件前询问 "May I write"
 
 ---
 
-## Coverage Notes
+### 用例 4：Dynamic 模式 — 混合结果，PASS WITH WARNINGS
 
-- The skill-test skill is self-referential (it can test itself). The static
-  mode case for skill-test's own SKILL.md is not separately fixture-tested to
-  avoid infinite recursion in test design.
-- The specific 7 structural checks are defined in the skill body; only Check 4
-  (May I write) is individually tested here because it has the most nuanced logic.
-- Audit mode counts are approximate — the exact number of skills and agents will
-  change as the system grows; assertions use "all" rather than fixed counts.
+**Fixture：**
+- Skill 测试计划有 5 个测试用例，共 24 个断言
+- 大部分测试通过，但用例 2 有 1 个断言失败（非关键）
+
+**输入：** `/skill-test example-skill dynamic`
+
+**预期行为：**
+1. 所有测试用例执行
+2. 结果：23 个断言通过，1 个失败（来自用例 2）
+3. 失败被标记：失败的具体断言和实际行为
+4. 判决为 PASS WITH WARNINGS
+5. 总结附建议："Run `/skill-improve example-skill` to address the warning"
+
+**断言：**
+- [ ] 判决为 PASS WITH WARNINGS（非 FAIL）
+- [ ] 失败断言在摘要中被注明
+- [ ] 建议 `/skill-improve` 作为后续
+- [ ] 所有测试结果（通过和失败）均显示在报告中
+
+---
+
+### 用例 5：Director Gate 检查 — 无 gate；skill-test 是测试基础设施
+
+**Fixture：**
+- 任何有效的 skill 用于测试
+
+**输入：** `/skill-test my-skill static`
+
+**预期行为：**
+1. Skill 运行测试并生成报告
+2. 在任何时候都不生成 director agent
+3. 输出中不出现 gate ID
+
+**断言：**
+- [ ] 不调用任何 director gate
+- [ ] 不出现 gate 跳过消息
+- [ ] 判决为 PASS、PASS WITH WARNINGS 或 FAIL — 不涉及 gate 判决
+
+---
+
+## 协议合规性
+
+- [ ] 在 `static` 模式下检查 frontmatter、文件存在性和结构合规性
+- [ ] 在 `dynamic` 模式下执行基于 fixture 的行为测试
+- [ ] 在创建测试报告之前询问 "May I write"
+- [ ] 报告写入 `.claude/skills/test-reports/` 目录
+- [ ] 判决为 PASS、PASS WITH WARNINGS 或 FAIL
+- [ ] 为任何 FAIL 或 WARNINGS 建议 `/skill-improve`
+
+---
+
+## 覆盖说明
+
+- /skill-test dynamic 的代理缓存和文件系统 mock 在设置阶段创建，不在此处重新断言。
+- 参数验证（不传递模式时：`/skill-test my-skill` 默认为 `static`）由 skill 正文处理。
+- 此 skill 运行其自身的测试并不特殊处理——它遵循与其他工具技能相同的测试模式。

@@ -1,175 +1,165 @@
-# Skill Test Spec: /create-control-manifest
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill 测试规格: /create-control-manifest
 
-`/create-control-manifest` reads all Accepted ADRs from `docs/architecture/` and
-generates a control manifest — a summary document that captures all architectural
-constraints, required patterns, and forbidden patterns in one place. The manifest
-is the reference document that story authors use when writing story files, ensuring
-stories inherit the correct architectural rules without having to read all ADRs
-individually.
+## Skill 概要
 
-The skill only includes Accepted ADRs; Proposed ADRs are excluded and noted. It
-has no director gates. The skill asks "May I write" before writing
-`docs/architecture/control-manifest.md`.
+`/create-control-manifest` 读取 `docs/architecture/` 中所有状态为 Accepted 的 ADR，并生成一个控制清单（control manifest）—— 一份汇总文档，将所有架构约束、必需模式和禁止模式集中记录在一个地方。该清单是故事（story）作者编写故事文件时的参考文档，确保故事能正确继承架构规则，而无需逐个阅读所有 ADR。
+
+该 skill 仅包含状态为 Accepted 的 ADR；状态为 Proposed 的 ADR 将被排除并予以注明。该 skill 不涉及任何导演关卡（director gate）。在写入 `docs/architecture/control-manifest.md` 之前，skill 会询问"May I write"。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构层面）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证 —— 无需测试夹具。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: CREATED, BLOCKED
-- [ ] Contains "May I write" collaborative protocol language (for control-manifest.md)
-- [ ] Has a next-step handoff at the end (`/create-epics` or `/create-stories`)
-- [ ] Documents that only Accepted ADRs are included (not Proposed)
-
----
-
-## Director Gate Checks
-
-No director gates — this skill spawns no director gate agents. The control
-manifest is a mechanical extraction from Accepted ADRs; no creative or technical
-review gate is needed.
+- [ ] 包含必需的前置元数据字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 包含 ≥2 个阶段标题
+- [ ] 包含判定关键词：CREATED、BLOCKED
+- [ ] 包含"May I write"协作协议用语（针对 control-manifest.md）
+- [ ] 末尾包含下一步交接指引（`/create-epics` 或 `/create-stories`）
+- [ ] 文档明确说明仅包含 Accepted 状态的 ADR（不包含 Proposed）
 
 ---
 
-## Test Cases
+## 导演关卡检查
 
-### Case 1: Happy Path — 4 Accepted ADRs create a correct manifest
-
-**Fixture:**
-- `docs/architecture/` contains 4 ADR files, all with `Status: Accepted`
-- Each ADR has a "Required Patterns" and/or "Forbidden Patterns" section
-- No existing `docs/architecture/control-manifest.md`
-
-**Input:** `/create-control-manifest`
-
-**Expected behavior:**
-1. Skill reads all ADR files in `docs/architecture/`
-2. Extracts Required Patterns, Forbidden Patterns, and key constraints from each
-3. Drafts the manifest with correct section structure
-4. Shows the draft manifest to the user
-5. Asks "May I write `docs/architecture/control-manifest.md`?"
-6. Writes the manifest after approval
-
-**Assertions:**
-- [ ] All 4 Accepted ADRs are represented in the manifest
-- [ ] Manifest includes distinct sections for Required Patterns and Forbidden Patterns
-- [ ] Manifest includes the source ADR number for each constraint
-- [ ] "May I write" is asked before writing
-- [ ] Skill does NOT write without approval
-- [ ] Verdict is CREATED after writing
+不涉及导演关卡 —— 该 skill 不会派生任何导演关卡 Agent。控制清单是对 Accepted ADR 的机械性提取，无需创意或技术审查关卡。
 
 ---
 
-### Case 2: Failure Path — No ADRs found
+## 测试用例
 
-**Fixture:**
-- `docs/architecture/` directory exists but contains no ADR files
+### 用例 1：正常流程 —— 4 个 Accepted ADR 生成正确的清单
 
-**Input:** `/create-control-manifest`
+**测试夹具：**
+- `docs/architecture/` 包含 4 个 ADR 文件，状态均为 `Status: Accepted`
+- 每个 ADR 均包含"Required Patterns"和/或"Forbidden Patterns"章节
+- 不存在现有的 `docs/architecture/control-manifest.md`
 
-**Expected behavior:**
-1. Skill reads `docs/architecture/` and finds no ADR files
-2. Skill outputs: "No ADRs found. Run `/architecture-decision` to create ADRs before generating the control manifest."
-3. Skill exits without creating any file
-4. Verdict is BLOCKED
+**输入：** `/create-control-manifest`
 
-**Assertions:**
-- [ ] Skill outputs a clear error when no ADRs are found
-- [ ] No control manifest file is written
-- [ ] Skill recommends `/architecture-decision` as the next action
-- [ ] Verdict is BLOCKED (not an error crash)
+**预期行为：**
+1. Skill 读取 `docs/architecture/` 中所有 ADR 文件
+2. 从每个 ADR 中提取 Required Patterns、Forbidden Patterns 和关键约束
+3. 按正确的章节结构起草清单
+4. 向用户展示清单草稿
+5. 询问"May I write `docs/architecture/control-manifest.md`?"
+6. 获得批准后写入清单
 
----
-
-### Case 3: Mixed ADR Statuses — Only Accepted ADRs included
-
-**Fixture:**
-- `docs/architecture/` contains 3 Accepted ADRs and 2 Proposed ADRs
-
-**Input:** `/create-control-manifest`
-
-**Expected behavior:**
-1. Skill reads all ADR files and filters by Status: Accepted
-2. Manifest is drafted from the 3 Accepted ADRs only
-3. Output notes: "2 Proposed ADRs were excluded: [adr-NNN-name, adr-NNN-name]"
-4. User sees which ADRs were excluded before approving the write
-5. Asks "May I write `docs/architecture/control-manifest.md`?"
-
-**Assertions:**
-- [ ] Only the 3 Accepted ADRs appear in the manifest content
-- [ ] Excluded Proposed ADRs are listed by name in the output
-- [ ] User sees the exclusion list before approving the write
-- [ ] Skill does NOT silently omit Proposed ADRs without noting them
+**断言：**
+- [ ] 清单中涵盖了全部 4 个 Accepted ADR
+- [ ] 清单包含 Required Patterns 和 Forbidden Patterns 的独立章节
+- [ ] 清单为每条约束标注了来源 ADR 编号
+- [ ] 写入前询问"May I write"
+- [ ] Skill 在未获批准的情况下不执行写入
+- [ ] 写入后判定结果为 CREATED
 
 ---
 
-### Case 4: Edge Case — Manifest already exists
+### 用例 2：失败路径 —— 未找到任何 ADR
 
-**Fixture:**
-- `docs/architecture/control-manifest.md` already exists (version 1, dated last week)
-- `docs/architecture/` contains Accepted ADRs (some new since last manifest)
+**测试夹具：**
+- `docs/architecture/` 目录存在但不包含任何 ADR 文件
 
-**Input:** `/create-control-manifest`
+**输入：** `/create-control-manifest`
 
-**Expected behavior:**
-1. Skill detects existing manifest and reads its version number / date
-2. Skill offers to regenerate: "control-manifest.md already exists (v1, [date]). Regenerate with current ADRs?"
-3. If user confirms: skill drafts updated manifest, increments version number
-4. Asks "May I write `docs/architecture/control-manifest.md`?" (overwrite)
-5. Writes updated manifest after approval
+**预期行为：**
+1. Skill 读取 `docs/architecture/` 发现没有 ADR 文件
+2. Skill 输出："No ADRs found. Run `/architecture-decision` to create ADRs before generating the control manifest."
+3. Skill 退出，不创建任何文件
+4. 判定结果为 BLOCKED
 
-**Assertions:**
-- [ ] Skill reads and reports the existing manifest version before offering to regenerate
-- [ ] User is offered a regenerate/skip choice — not auto-overwritten
-- [ ] Updated manifest has an incremented version number
-- [ ] "May I write" is asked before overwriting the existing file
+**断言：**
+- [ ] Skill 在未找到 ADR 时输出清晰的错误信息
+- [ ] 不写入任何控制清单文件
+- [ ] Skill 建议 `/architecture-decision` 作为下一步操作
+- [ ] 判定结果为 BLOCKED（非错误崩溃）
 
 ---
 
-### Case 5: Director Gate — No gate spawned; no review-mode.txt read
+### 用例 3：混合 ADR 状态 —— 仅包含 Accepted ADR
 
-**Fixture:**
-- 4 Accepted ADRs exist
-- `production/session-state/review-mode.txt` exists with `full`
+**测试夹具：**
+- `docs/architecture/` 包含 3 个 Accepted ADR 和 2 个 Proposed ADR
 
-**Input:** `/create-control-manifest`
+**输入：** `/create-control-manifest`
 
-**Expected behavior:**
-1. Skill reads ADRs and drafts manifest
-2. Skill does NOT read `production/session-state/review-mode.txt`
-3. No director gate agents are spawned at any point
-4. Skill proceeds directly to "May I write" after drafting
-5. Review mode setting has no effect on this skill's behavior
+**预期行为：**
+1. Skill 读取所有 ADR 文件并按 Status: Accepted 过滤
+2. 仅基于 3 个 Accepted ADR 起草清单
+3. 输出注明："2 Proposed ADRs were excluded: [adr-NNN-name, adr-NNN-name]"
+4. 用户在批准写入前可以看到被排除的 ADR 列表
+5. 询问"May I write `docs/architecture/control-manifest.md`?"
 
-**Assertions:**
-- [ ] No director gate agents are spawned (no CD-, TD-, PR-, AD- prefixed gates)
-- [ ] Skill does NOT read `production/session-state/review-mode.txt`
-- [ ] Output contains no "Gate: [GATE-ID]" or gate-skipped entries
-- [ ] The manifest is generated from ADRs alone, with no external gate review
-
----
-
-## Protocol Compliance
-
-- [ ] Reads all ADR files before drafting manifest
-- [ ] Only Accepted ADRs included — Proposed ones noted as excluded
-- [ ] Manifest draft shown to user before "May I write" ask
-- [ ] "May I write `docs/architecture/control-manifest.md`?" asked before writing
-- [ ] No director gates — no review-mode.txt read
-- [ ] Ends with next-step handoff: `/create-epics` or `/create-stories`
+**断言：**
+- [ ] 清单内容中仅出现 3 个 Accepted ADR
+- [ ] 被排除的 Proposed ADR 在输出中按名称列出
+- [ ] 用户在批准写入前可以看到排除列表
+- [ ] Skill 不会静默忽略 Proposed ADR 而不加以注明
 
 ---
 
-## Coverage Notes
+### 用例 4：边界情况 —— 清单已存在
 
-- The exact section structure of the generated manifest (constraint tables, pattern
-  lists) is defined by the skill body and not re-enumerated in test assertions.
-- The `version` field incrementing logic (v1 → v2) is tested via Case 4 but exact
-  version numbering format is not fixture-locked.
-- ADR parsing (extracting Required/Forbidden Patterns) depends on consistent ADR
-  structure — tested implicitly via Case 1's fixture.
+**测试夹具：**
+- `docs/architecture/control-manifest.md` 已存在（版本 1，日期为上周）
+- `docs/architecture/` 包含 Accepted ADR（自上次生成清单后有新增）
+
+**输入：** `/create-control-manifest`
+
+**预期行为：**
+1. Skill 检测到已有清单，读取其版本号/日期
+2. Skill 提供重新生成选项："control-manifest.md already exists (v1, [date]). Regenerate with current ADRs?"
+3. 若用户确认：skill 起草更新后的清单，递增版本号
+4. 询问"May I write `docs/architecture/control-manifest.md`?"（覆盖模式）
+5. 获得批准后写入更新后的清单
+
+**断言：**
+- [ ] Skill 在提供重新生成选项之前读取并报告已有清单的版本信息
+- [ ] 为用户提供重新生成/跳过选择 —— 不自动覆盖
+- [ ] 更新后的清单版本号已递增
+- [ ] 覆盖已有文件前询问"May I write"
+
+---
+
+### 用例 5：导演关卡 —— 不派生关卡，不读取 review-mode.txt
+
+**测试夹具：**
+- 存在 4 个 Accepted ADR
+- `production/session-state/review-mode.txt` 存在且内容为 `full`
+
+**输入：** `/create-control-manifest`
+
+**预期行为：**
+1. Skill 读取 ADR 并起草清单
+2. Skill 不读取 `production/session-state/review-mode.txt`
+3. 全程不派生任何导演关卡 Agent
+4. Skill 起草完成后直接进入"May I write"询问
+5. 审查模式设置对该 skill 的行为无任何影响
+
+**断言：**
+- [ ] 不派生任何导演关卡 Agent（无 CD-、TD-、PR-、AD- 前缀的关卡）
+- [ ] Skill 不读取 `production/session-state/review-mode.txt`
+- [ ] 输出中不含任何"Gate: [GATE-ID]"或关卡跳过条目
+- [ ] 清单仅基于 ADR 生成，无需外部关卡审查
+
+---
+
+## 协议合规性
+
+- [ ] 起草清单前读取所有 ADR 文件
+- [ ] 仅包含 Accepted ADR —— Proposed 的予以注明排除
+- [ ] 清单草稿在"May I write"询问之前展示给用户
+- [ ] 写入前询问"May I write `docs/architecture/control-manifest.md`?"
+- [ ] 不涉及导演关卡 —— 不读取 review-mode.txt
+- [ ] 末尾包含下一步交接指引：`/create-epics` 或 `/create-stories`
+
+---
+
+## 覆盖范围注释
+
+- 生成清单的具体章节结构（约束表、模式列表）由 skill 主体定义，不在测试断言中重新枚举。
+- `version` 字段递增逻辑（v1 → v2）通过用例 4 测试，但具体版本号格式不被测试夹具锁定。
+- ADR 解析（提取 Required/Forbidden Patterns）依赖于一致的 ADR 结构 —— 通过用例 1 的测试夹具隐式验证。

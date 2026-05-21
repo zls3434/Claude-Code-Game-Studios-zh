@@ -1,171 +1,166 @@
-# Skill Test Spec: /perf-profile
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# 技能测试规范：/perf-profile
 
-`/perf-profile` is a structured performance profiling workflow that identifies
-bottlenecks and recommends optimizations. If profiler data or performance logs
-are provided, it analyzes them directly. If not, it guides the user through a
-manual profiling checklist. No director gates are invoked. The skill asks
-"May I write to `production/qa/perf-[date].md`?" before persisting a report.
-Verdicts: WITHIN BUDGET, CONCERNS, or OVER BUDGET.
+## 技能摘要
+
+`/perf-profile` 是一个结构化的性能分析工作流，用于识别瓶颈并推荐优化方案。如果提供了性能分析数据或性能日志，它会直接进行分析。如果没有，它会引导用户完成一个手动性能分析清单。不会调用任何导演门禁。该技能在持久化报告之前会询问 "May I write to `production/qa/perf-[date].md`？"。判决词：WITHIN BUDGET、CONCERNS 或 OVER BUDGET。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构性）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains verdict keywords: WITHIN BUDGET, CONCERNS, OVER BUDGET
-- [ ] Contains "May I write" language (skill writes perf report)
-- [ ] Has a next-step handoff (what to do after performance findings are reviewed)
-
----
-
-## Director Gate Checks
-
-None. Performance profiling is an advisory analysis skill; no gates are invoked.
+- [ ] 具有必需的前置元数据字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有 ≥2 个阶段标题
+- [ ] 包含判决关键词：WITHIN BUDGET、CONCERNS、OVER BUDGET
+- [ ] 包含 "May I write" 相关表述（技能写入性能报告）
+- [ ] 具有后续步骤交接（性能发现结果审查后的操作指引）
 
 ---
 
-## Test Cases
+## 导演门禁检查
 
-### Case 1: Happy Path — Frame data provided, draw call spike found
-
-**Fixture:**
-- User provides `production/qa/profiler-export-2026-03-15.json` with frame time data
-- Data shows: average frame time 14ms (within 16.6ms budget), but frames 42–48 spike to 28ms
-- Spike correlates with a scene with 450 draw calls (budget: 200)
-
-**Input:** `/perf-profile production/qa/profiler-export-2026-03-15.json`
-
-**Expected behavior:**
-1. Skill reads profiler data
-2. Skill identifies average frame time is within budget
-3. Skill identifies draw call spike on frames 42–48 (450 calls vs 200 budget)
-4. Verdict is CONCERNS (average OK, but spikes indicate an issue)
-5. Skill recommends batching or culling for the identified scene
-6. Skill asks "May I write to `production/qa/perf-2026-04-06.md`?"
-
-**Assertions:**
-- [ ] Spike frames are identified by frame number
-- [ ] Draw call count and budget are compared explicitly
-- [ ] Verdict is CONCERNS when spikes exceed budget even if average is OK
-- [ ] At least one specific optimization recommendation is given
-- [ ] "May I write" prompt appears before writing report
+无。性能分析是一个建议性分析技能；不会调用任何门禁。
 
 ---
 
-### Case 2: No Profiler Data — Manual checklist output
+## 测试用例
 
-**Fixture:**
-- User runs `/perf-profile` with no arguments
-- No profiler data files exist in `production/qa/`
+### 用例 1：正常路径——提供了帧数据，发现绘制调用尖峰
 
-**Input:** `/perf-profile`
+**Fixture：**
+- 用户提供 `production/qa/profiler-export-2026-03-15.json`，包含帧时间数据
+- 数据显示：平均帧时间 14ms（在 16.6ms 预算内），但帧 42–48 飙升至 28ms
+- 尖峰与一个场景相关，该场景有 450 次绘制调用（预算：200）
 
-**Expected behavior:**
-1. Skill finds no profiler data
-2. Skill outputs a manual profiling checklist for the user to work through:
-   - Enable Godot profiler or target engine's profiler
-   - Record a 60-second play session
-   - Export frame time data
-   - Note any dropped frames or hitches
-3. Skill asks user to provide data once collected before running analysis
+**输入：** `/perf-profile production/qa/profiler-export-2026-03-15.json`
 
-**Assertions:**
-- [ ] Skill does not crash or emit a verdict when no data is provided
-- [ ] Manual profiling checklist is output (actionable steps, not just an error)
-- [ ] No verdict is emitted (there is nothing to assess yet)
-- [ ] No files are written
+**预期行为：**
+1. 技能读取性能分析数据
+2. 技能识别平均帧时间在预算内
+3. 技能识别帧 42–48 的绘制调用尖峰（450 次调用 vs 200 预算）
+4. 判决为 CONCERNS（平均 OK，但尖峰表明存在问题）
+5. 技能建议对识别的场景进行批处理或剔除优化
+6. 技能询问 "我可以写入 `production/qa/perf-2026-04-06.md` 吗？"
 
----
-
-### Case 3: Over Budget — Frame budget exceeded for target platform
-
-**Fixture:**
-- Profiler data shows consistent 22ms frame times (target: 16.6ms for 60fps)
-- All frames exceed budget; no single spike — systemic issue
-- `technical-preferences.md` specifies target platform: PC, 60fps
-
-**Input:** `/perf-profile production/qa/profiler-export-2026-03-20.json`
-
-**Expected behavior:**
-1. Skill reads profiler data and technical preferences for performance budget
-2. All frames are over the 16.6ms budget
-3. Verdict is OVER BUDGET
-4. Skill outputs a prioritized optimization list (e.g., LOD system, shader complexity, physics tick rate)
-5. Skill asks "May I write" before writing report
-
-**Assertions:**
-- [ ] Verdict is OVER BUDGET when all or most frames exceed budget
-- [ ] Target frame budget is read from `technical-preferences.md` (not hardcoded)
-- [ ] Optimization priority list is provided, not just the raw verdict
-- [ ] "May I write" prompt appears before report write
+**断言：**
+- [ ] 尖峰帧以帧号标识
+- [ ] 绘制调用计数和预算被显式对比
+- [ ] 当尖峰超出预算（即使平均值 OK）时，判决为 CONCERNS
+- [ ] 至少给出一个具体的优化建议
+- [ ] "May I write" 提示在写入报告前出现
 
 ---
 
-### Case 4: Previous Perf Report Exists — Delta comparison
+### 用例 2：无性能分析数据——输出手动清单
 
-**Fixture:**
-- `production/qa/perf-2026-03-28.md` exists with prior results (avg 15ms, max 19ms)
-- New profiler export shows: avg 13ms, max 17ms
-- Both reports are for the same scene
+**Fixture：**
+- 用户运行 `/perf-profile` 不带参数
+- `production/qa/` 中不存在性能分析数据文件
 
-**Input:** `/perf-profile production/qa/profiler-export-2026-04-05.json`
+**输入：** `/perf-profile`
 
-**Expected behavior:**
-1. Skill reads new profiler data
-2. Skill detects prior report for the same scene
-3. Skill computes deltas: avg improved 2ms, max improved 2ms
-4. Skill presents regression check: no regressions detected
-5. Verdict is WITHIN BUDGET; report notes improvement since last profile
+**预期行为：**
+1. 技能未找到性能分析数据
+2. 技能输出一个手动性能分析清单供用户操作：
+   - 启用 Godot 性能分析器或目标引擎的性能分析器
+   - 录制一段 60 秒的游戏会话
+   - 导出帧时间数据
+   - 记录任何掉帧或卡顿
+3. 技能要求用户在收集数据后提供数据，再运行分析
 
-**Assertions:**
-- [ ] Skill checks `production/qa/` for prior perf reports before writing
-- [ ] Delta comparison is shown (prior vs. current for key metrics)
-- [ ] Verdict is WITHIN BUDGET when current metrics are within budget
-- [ ] Improvement trend is noted positively in the report
-
----
-
-### Case 5: Gate Compliance — No gate; performance-analyst separate
-
-**Fixture:**
-- Profiler data shows CONCERNS-level findings (some spikes)
-- `review-mode.txt` contains `full`
-
-**Input:** `/perf-profile production/qa/profiler-export-2026-04-01.json`
-
-**Expected behavior:**
-1. Skill analyzes profiler data; verdict is CONCERNS
-2. No director gate is invoked regardless of review mode
-3. Output notes: "For in-depth analysis, consider running `/perf-profile` with the performance-analyst agent"
-4. Skill asks "May I write" and writes report on user approval
-
-**Assertions:**
-- [ ] No director gate is invoked in any review mode
-- [ ] Performance-analyst consultation is suggested (not mandated)
-- [ ] "May I write" prompt appears before report write
-- [ ] Verdict is CONCERNS for spike-based findings
+**断言：**
+- [ ] 当没有数据提供时，技能不会崩溃或发出判决
+- [ ] 手动性能分析清单被输出（可操作的步骤，而非仅一条错误）
+- [ ] 不发出任何判决（尚无内容可供评估）
+- [ ] 不写入任何文件
 
 ---
 
-## Protocol Compliance
+### 用例 3：超出预算——目标平台的帧预算被超出
 
-- [ ] Reads profiler data when provided; outputs checklist when not
-- [ ] Reads `technical-preferences.md` for target platform frame budget
-- [ ] Checks for prior perf reports to enable delta comparison
-- [ ] Always asks "May I write" before writing report
-- [ ] No director gates are invoked
-- [ ] Verdict is one of: WITHIN BUDGET, CONCERNS, OVER BUDGET
+**Fixture：**
+- 性能分析数据显示持续 22ms 的帧时间（目标：16.6ms，对应 60fps）
+- 所有帧均超出预算；不是单次尖峰——而是系统性问题
+- `technical-preferences.md` 指定目标平台：PC，60fps
+
+**输入：** `/perf-profile production/qa/profiler-export-2026-03-20.json`
+
+**预期行为：**
+1. 技能读取性能分析数据和技术偏好中的性能预算
+2. 所有帧均超过 16.6ms 预算
+3. 判决为 OVER BUDGET
+4. 技能输出优先级优化列表（例如，LOD 系统、着色器复杂度、物理 tick 速率）
+5. 技能在写入报告前询问 "May I write"
+
+**断言：**
+- [ ] 当所有或大多数帧超出预算时，判决为 OVER BUDGET
+- [ ] 目标帧预算从 `technical-preferences.md` 读取（而非硬编码）
+- [ ] 提供优化优先级列表，而非仅原始判决
+- [ ] "May I write" 提示在报告写入前出现
 
 ---
 
-## Coverage Notes
+### 用例 4：存在先前的性能报告——增量比较
 
-- Platform-specific profiling workflows (console, mobile) are not tested here;
-  the checklist output in Case 2 would be platform-specific in practice.
-- The delta comparison in Case 4 assumes reports cover the same scene; cross-scene
-  comparisons are not explicitly handled.
+**Fixture：**
+- `production/qa/perf-2026-03-28.md` 存在，包含先前结果（平均 15ms，最大 19ms）
+- 新的性能分析导出显示：平均 13ms，最大 17ms
+- 两份报告针对同一场景
+
+**输入：** `/perf-profile production/qa/profiler-export-2026-04-05.json`
+
+**预期行为：**
+1. 技能读取新的性能分析数据
+2. 技能检测到同一场景的先前报告
+3. 技能计算增量：平均值改善了 2ms，最大值改善了 2ms
+4. 技能呈现回归检查：未检测到性能回归
+5. 判决为 WITHIN BUDGET；报告注明自上次分析以来的改善
+
+**断言：**
+- [ ] 技能在写入前检查 `production/qa/` 中的先前性能报告
+- [ ] 显示增量比较（先前 vs 当前的关键指标）
+- [ ] 当前指标在预算内时，判决为 WITHIN BUDGET
+- [ ] 改善趋势在报告中积极注明
+
+---
+
+### 用例 5：门禁合规——无门禁；性能分析师（performance-analyst）是独立的
+
+**Fixture：**
+- 性能分析数据显示 CONCERNS 级别的发现（存在一些尖峰）
+- `review-mode.txt` 包含 `full`
+
+**输入：** `/perf-profile production/qa/profiler-export-2026-04-01.json`
+
+**预期行为：**
+1. 技能分析性能分析数据；判决为 CONCERNS
+2. 无论审查模式如何，均不会调用导演门禁
+3. 输出注明："如需深入分析，请考虑使用 performance-analyst Agent 运行 `/perf-profile`"
+4. 技能询问 "May I write" 并在用户批准后写入报告
+
+**断言：**
+- [ ] 在任何审查模式下均不会调用导演门禁
+- [ ] performance-analyst 咨询是建议性的（非强制）
+- [ ] "May I write" 提示在报告写入前出现
+- [ ] 基于尖峰的发现结果，判决为 CONCERNS
+
+---
+
+## 协议合规
+
+- [ ] 提供性能分析数据时读取数据；未提供时输出清单
+- [ ] 从 `technical-preferences.md` 读取目标平台帧预算
+- [ ] 检查先前的性能报告以启用增量比较
+- [ ] 在写入报告之前始终询问 "May I write"
+- [ ] 不调用任何导演门禁
+- [ ] 判决为以下之一：WITHIN BUDGET、CONCERNS、OVER BUDGET
+
+---
+
+## 覆盖说明
+
+- 特定平台的性能分析工作流（主机、移动端）未在此测试；用例 2 中的清单输出在实际使用中会是平台特定的。
+- 用例 4 中的增量比较假定报告覆盖同一场景；跨场景比较未显式处理。

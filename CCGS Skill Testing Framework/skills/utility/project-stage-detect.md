@@ -1,183 +1,170 @@
-# Skill Test Spec: /project-stage-detect
+<!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
-## Skill Summary
+# Skill 测试规范：/project-stage-detect
 
-`/project-stage-detect` automatically analyzes project artifacts to determine
-the current development stage. It runs on the Haiku model (read-only) and
-examines `production/stage.txt` (if present), design documents in `design/`,
-source code in `src/`, sprint and milestone files in `production/`, and the
-presence of engine configuration to classify the project into one of seven
-stages: Concept, Systems Design, Technical Setup, Pre-Production, Production,
-Polish, or Release.
+## Skill 摘要
 
-The skill is advisory — it never writes `stage.txt`. That file is only updated
-when `/gate-check` passes and the user confirms advancement. The skill reports
-its confidence level (HIGH if stage.txt was read directly, MEDIUM if inferred
-from artifacts, LOW if conflicting signals were found).
+`/project-stage-detect` 自动分析项目工件以确定当前开发阶段。它在 Haiku 模型上运行（只读），检查 `production/stage.txt`（如存在）、`design/` 中的设计文档、`src/` 中的源代码、`production/` 中的冲刺和里程碑文件，以及引擎配置的存在情况，将项目归类为七个阶段之一：Concept、Systems Design、Technical Setup、Pre-Production、Production、Polish 或 Release。
+
+该 skill 是建议性的——它从不写入 `stage.txt`。该文件仅在 `/gate-check` 通过且用户确认推进时更新。该 skill 报告其置信度（如果直接读取 stage.txt 则为 HIGH，如果从工件推断则为 MEDIUM，如果发现冲突信号则为 LOW）。
 
 ---
 
-## Static Assertions (Structural)
+## 静态断言（结构层面）
 
-Verified automatically by `/skill-test static` — no fixture needed.
+由 `/skill-test static` 自动验证——无需 fixture。
 
-- [ ] Has required frontmatter fields: `name`, `description`, `argument-hint`, `user-invocable`, `allowed-tools`
-- [ ] Has ≥2 phase headings
-- [ ] Contains all seven stage names: Concept, Systems Design, Technical Setup, Pre-Production, Production, Polish, Release
-- [ ] Does NOT contain "May I write" language (skill is detection-only)
-- [ ] Has a next-step handoff (e.g., `/gate-check` to formally advance stage)
-
----
-
-## Director Gate Checks
-
-None. `/project-stage-detect` is a read-only detection utility. No director
-gates apply.
+- [ ] 具有必需的 frontmatter 字段：`name`、`description`、`argument-hint`、`user-invocable`、`allowed-tools`
+- [ ] 具有 ≥2 个阶段标题
+- [ ] 包含所有七个阶段名称：Concept、Systems Design、Technical Setup、Pre-Production、Production、Polish、Release
+- [ ] 不包含 "May I write" 语言（skill 仅用于检测）
+- [ ] 有下一步交接（例如，`/gate-check` 正式推进阶段）
 
 ---
 
-## Test Cases
+## Director Gate 检查
 
-### Case 1: stage.txt Exists — Reads directly and cross-checks artifacts
-
-**Fixture:**
-- `production/stage.txt` contains `Production`
-- `design/gdd/` has 4 GDD files
-- `src/` has source code files
-- `production/sprints/sprint-002.md` exists
-
-**Input:** `/project-stage-detect`
-
-**Expected behavior:**
-1. Skill reads `production/stage.txt` — detects stage `Production`
-2. Skill cross-checks artifacts: GDDs present, source code present, sprint present
-3. Artifacts are consistent with Production stage
-4. Skill reports: Stage = Production, Confidence = HIGH (from stage.txt, confirmed by artifacts)
-5. Next step: continue with `/sprint-plan` or `/dev-story`
-
-**Assertions:**
-- [ ] Detected stage is Production
-- [ ] Confidence is reported as HIGH when stage.txt is present
-- [ ] Cross-check result (consistent vs. discrepant) is noted
-- [ ] No files are written
-- [ ] Verdict clearly states the detected stage
+无。`/project-stage-detect` 是一个只读检测工具。不适用 director gate。
 
 ---
 
-### Case 2: No stage.txt but GDDs and Epics Exist — Infers Production
+## 测试用例
 
-**Fixture:**
-- No `production/stage.txt`
-- `design/gdd/` has 3 GDD files
-- `production/epics/` has 2 epic files
-- `src/` has source code files
-- `production/sprints/sprint-001.md` exists
+### 用例 1：stage.txt 存在 — 直接读取并交叉检查工件
 
-**Input:** `/project-stage-detect`
+**Fixture：**
+- `production/stage.txt` 包含 `Production`
+- `design/gdd/` 有 4 个 GDD 文件
+- `src/` 有源代码文件
+- `production/sprints/sprint-002.md` 存在
 
-**Expected behavior:**
-1. Skill finds no stage.txt — switches to artifact inference mode
-2. Skill finds GDDs (Systems Design complete), epics (Pre-Production complete),
-   source code and sprints (Production active)
-3. Skill infers: Stage = Production
-4. Confidence is MEDIUM (inferred from artifacts, not from stage.txt)
-5. Skill recommends running `/gate-check` to formalize and write stage.txt
+**输入：** `/project-stage-detect`
 
-**Assertions:**
-- [ ] Inferred stage is Production
-- [ ] Confidence is MEDIUM (not HIGH, since stage.txt is absent)
-- [ ] Recommendation to run `/gate-check` is present
-- [ ] No stage.txt is written by this skill
+**预期行为：**
+1. Skill 读取 `production/stage.txt` — 检测到阶段 `Production`
+2. Skill 交叉检查工件：GDD 存在、源代码存在、冲刺存在
+3. 工件与 Production 阶段一致
+4. Skill 报告：Stage = Production，Confidence = HIGH（来自 stage.txt，由工件确认）
+5. 下一步：继续 `/sprint-plan` 或 `/dev-story`
 
----
-
-### Case 3: No stage.txt, No Docs, No Source — Infers Concept
-
-**Fixture:**
-- No `production/stage.txt`
-- `design/` directory exists but is empty
-- `src/` exists but contains no code files
-- `technical-preferences.md` has placeholders only
-
-**Input:** `/project-stage-detect`
-
-**Expected behavior:**
-1. Skill finds no stage.txt
-2. Artifact scan: no GDDs, no source, no epics, no sprints, engine unconfigured
-3. Skill infers: Stage = Concept
-4. Confidence is MEDIUM
-5. Skill suggests `/start` to begin the onboarding workflow
-
-**Assertions:**
-- [ ] Inferred stage is Concept
-- [ ] Output lists the artifacts that were checked (and found absent)
-- [ ] `/start` is suggested as the next step
-- [ ] No files are written
+**断言：**
+- [ ] 检测到的阶段为 Production
+- [ ] stage.txt 存在时置信度报告为 HIGH
+- [ ] 交叉检查结果（一致 vs. 不一致）被注明
+- [ ] 没有文件被写入
+- [ ] 判决清楚说明检测到的阶段
 
 ---
 
-### Case 4: Discrepancy — stage.txt says Production but no source code
+### 用例 2：无 stage.txt 但 GDD 和 Epics 存在 — 推断为 Production
 
-**Fixture:**
-- `production/stage.txt` contains `Production`
-- `design/gdd/` has GDD files
-- `src/` directory exists but contains no source code files
-- No sprint files exist
+**Fixture：**
+- 无 `production/stage.txt`
+- `design/gdd/` 有 3 个 GDD 文件
+- `production/epics/` 有 2 个 epic 文件
+- `src/` 有源代码文件
+- `production/sprints/sprint-001.md` 存在
 
-**Input:** `/project-stage-detect`
+**输入：** `/project-stage-detect`
 
-**Expected behavior:**
-1. Skill reads stage.txt — detects `Production`
-2. Cross-check finds: no source code, no sprints — inconsistent with Production
-3. Skill flags discrepancy: "stage.txt says Production but no source code or sprints found"
-4. Skill reports detected stage as Production (honoring stage.txt) but
-   confidence drops to LOW due to artifact mismatch
-5. Skill suggests reviewing stage.txt manually or running `/gate-check`
+**预期行为：**
+1. Skill 未找到 stage.txt — 切换到工件推断模式
+2. Skill 发现 GDD（Systems Design 完成）、epics（Pre-Production 完成）、源代码和冲刺（Production 活动中）
+3. Skill 推断：Stage = Production
+4. 置信度为 MEDIUM（从工件推断，非来自 stage.txt）
+5. Skill 建议运行 `/gate-check` 以正式确认并写入 stage.txt
 
-**Assertions:**
-- [ ] Discrepancy is flagged explicitly in the output
-- [ ] Confidence is LOW when artifacts contradict stage.txt
-- [ ] stage.txt value is not silently overridden
-- [ ] User is advised to verify the discrepancy manually
-
----
-
-### Case 5: Director Gate Check — No gate; detection is advisory
-
-**Fixture:**
-- Any project state with or without stage.txt
-
-**Input:** `/project-stage-detect`
-
-**Expected behavior:**
-1. Skill completes full stage detection
-2. No director agents are spawned at any point
-3. No gate IDs appear in output
-4. No write tool is called
-
-**Assertions:**
-- [ ] No director gate is invoked
-- [ ] No write tool is called
-- [ ] Detection output is purely advisory
-- [ ] Verdict names the detected stage without triggering any gate
+**断言：**
+- [ ] 推断的阶段为 Production
+- [ ] 置信度为 MEDIUM（非 HIGH，因为 stage.txt 缺失）
+- [ ] 存在运行 `/gate-check` 的建议
+- [ ] 此 skill 不写入任何 stage.txt
 
 ---
 
-## Protocol Compliance
+### 用例 3：无 stage.txt，无文档，无源代码 — 推断为 Concept
 
-- [ ] Reads stage.txt if present; falls back to artifact inference if absent
-- [ ] Always reports a confidence level (HIGH / MEDIUM / LOW)
-- [ ] Cross-checks stage.txt against artifacts and flags discrepancies
-- [ ] Does not write stage.txt (that is `/gate-check`'s responsibility)
-- [ ] Ends with a next-step recommendation appropriate to the detected stage
+**Fixture：**
+- 无 `production/stage.txt`
+- `design/` 目录存在但为空
+- `src/` 存在但不包含代码文件
+- `technical-preferences.md` 仅为占位符
+
+**输入：** `/project-stage-detect`
+
+**预期行为：**
+1. Skill 未找到 stage.txt
+2. 工件扫描：无 GDD、无源代码、无 epics、无冲刺、引擎未配置
+3. Skill 推断：Stage = Concept
+4. 置信度为 MEDIUM
+5. Skill 建议 `/start` 开始入职工作流
+
+**断言：**
+- [ ] 推断的阶段为 Concept
+- [ ] 输出列出已检查（且发现缺失）的工件
+- [ ] 建议 `/start` 作为下一步
+- [ ] 没有文件被写入
 
 ---
 
-## Coverage Notes
+### 用例 4：不一致 — stage.txt 显示 Production 但无源代码
 
-- The Technical Setup stage (engine configured, no GDDs yet) and Pre-Production
-  stage (GDDs complete, no epics yet) follow the same artifact-inference pattern
-  as Cases 2 and 3 and are not separately fixture-tested.
-- The Polish and Release stages are not fixture-tested here; they follow the
-  same high-confidence (stage.txt present) or inference logic.
-- Confidence levels are advisory — the skill does not gate any actions on them.
+**Fixture：**
+- `production/stage.txt` 包含 `Production`
+- `design/gdd/` 有 GDD 文件
+- `src/` 目录存在但不包含源代码文件
+- 无冲刺文件存在
+
+**输入：** `/project-stage-detect`
+
+**预期行为：**
+1. Skill 读取 stage.txt — 检测到 `Production`
+2. 交叉检查发现：无源代码、无冲刺 — 与 Production 不一致
+3. Skill 标记不一致："stage.txt says Production but no source code or sprints found"
+4. Skill 报告检测阶段为 Production（遵循 stage.txt），但置信度因工件不匹配降至 LOW
+5. Skill 建议手动审查 stage.txt 或运行 `/gate-check`
+
+**断言：**
+- [ ] 输出中明确标记不一致
+- [ ] 工件与 stage.txt 矛盾时置信度为 LOW
+- [ ] stage.txt 值不被静默覆盖
+- [ ] 建议用户手动验证差异
+
+---
+
+### 用例 5：Director Gate 检查 — 无 gate；检测是建议性的
+
+**Fixture：**
+- 任何有或无 stage.txt 的项目状态
+
+**输入：** `/project-stage-detect`
+
+**预期行为：**
+1. Skill 完成完整的阶段检测
+2. 在任何时候都不生成 director agent
+3. 输出中不出现 gate ID
+4. 不调用写入工具
+
+**断言：**
+- [ ] 不调用任何 director gate
+- [ ] 不调用写入工具
+- [ ] 检测输出纯为建议性
+- [ ] 判决命名检测到的阶段而不触发任何 gate
+
+---
+
+## 协议合规性
+
+- [ ] 如果 stage.txt 存在则读取；如果不存在则回退到工件推断
+- [ ] 始终报告置信度（HIGH / MEDIUM / LOW）
+- [ ] 交叉检查 stage.txt 与工件并标记不一致
+- [ ] 不写入 stage.txt（这是 `/gate-check` 的职责）
+- [ ] 以适用于检测到的阶段的下一步建议结束
+
+---
+
+## 覆盖说明
+
+- Technical Setup 阶段（引擎已配置，尚无 GDD）和 Pre-Production 阶段（GDD 完成，尚无 epics）遵循与用例 2 和 3 相同的工件推断模式，不单独 fixture 测试。
+- Polish 和 Release 阶段此处不进行 fixture 测试；它们遵循相同的高置信度（stage.txt 存在）或推断逻辑。
+- 置信度是建议性的——该 skill 不基于它们进行任何操作的门控。
