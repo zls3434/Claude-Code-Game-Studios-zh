@@ -2,6 +2,8 @@
 
 # CCGS Skill Testing Framework — Claude 使用说明
 
+**语言要求：必须始终使用简体中文与用户对话，生成的文档与代码注释也必须使用简体中文编写。**
+
 本文件夹是 Claude Code Game Studios skill/agent 框架的质量保障层。
 它是自包含的，独立于任何游戏项目。
 
