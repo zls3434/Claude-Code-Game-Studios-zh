@@ -1,5 +1,13 @@
 <!-- 翻译修改：2026-05-20, 修改人: zls3434 -->
 
+> **📖 翻译说明**
+>
+> 本项目是 [Claude Code Game Studios](https://github.com/Donchitos/Claude-Code-Game-Studios) 的中文本地化 Fork 版本。
+>
+> - **原作者**：[Donchitos](https://github.com/Donchitos)
+> - **原项目地址**：[github.com/Donchitos/Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios)
+> - **翻译说明**：原项目已发布 [v1.0 正式版本](https://github.com/Donchitos/Claude-Code-Game-Studios/releases)，本仓库基于首个发布版本进行了完整的中文本地化翻译，方便中文开发者使用。
+
 <p align="center">
   <h1 align="center">Claude Code Game Studios</h1>
   <p align="center">
