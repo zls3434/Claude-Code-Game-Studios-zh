@@ -24,6 +24,7 @@
   <a href=".claude/hooks"><img src="https://img.shields.io/badge/hooks-12-orange" alt="12 Hooks"></a>
   <a href=".claude/rules"><img src="https://img.shields.io/badge/rules-11-red" alt="11 Rules"></a>
   <a href="https://docs.anthropic.com/en/docs/claude-code"><img src="https://img.shields.io/badge/built%20for-Claude%20Code-f5f5f5?logo=anthropic" alt="Built for Claude Code"></a>
+  <a href="docs/platform-adaptation-guide.md"><img src="https://img.shields.io/badge/agent%20platforms-Codex%20%7C%20dsh%20%7C%20Trae-teal" alt="Agent Platforms: Codex, DeepSeek Harness, Trae"></a>
   <a href="https://www.buymeacoffee.com/donchitos3"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support%20this%20project-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy Me a Coffee"></a>
   <a href="https://github.com/sponsors/Donchitos"><img src="https://img.shields.io/badge/GitHub%20Sponsors-Support%20this%20project-ea4aaa?logo=githubsponsors&logoColor=white" alt="GitHub Sponsors"></a>
 </p>
@@ -286,6 +287,23 @@ Agent 遵循结构化的委托模型：
 - **设置审阅强度** —— `full`（所有导演关卡）、`lean`（仅阶段关卡）或 `solo`（无）。在 `/start` 期间设置或编辑 `production/review-mode.txt`。对任意技能使用 `--review solo` 来单次覆盖。
 
 ## 平台支持
+
+### Agent 工具平台
+
+以 `.claude/` 为规范源，通过适配脚本生成各 Agent 工具的原生配置：
+
+| 工具 | 入口 | 说明 |
+|---|---|---|
+| **Claude Code** | `CLAUDE.md` + `.claude/` | 规范源，完整能力（Hook、权限、模型层级） |
+| **Codex** | `AGENTS.md` | 开放标准入口，含子目录 `AGENTS.md` |
+| **DeepSeek Harness（dsh）** | `AGENTS.md` | dsh 原生读取 AGENTS.md，零额外配置 |
+| **Trae IDE** | `.trae/` | agents（49 个）+ rules + skills（73 个） |
+
+修改 `.claude/` 后运行 `python tools/adapters/sync_all.py` 重新生成。
+功能对照与适配规则见 [docs/platform-adaptation-guide.md](docs/platform-adaptation-guide.md) 和
+[docs/platform-comparison-matrix.md](docs/platform-comparison-matrix.md)。
+
+### 操作系统
 
 主要开发和测试在 **Windows 10** 上使用 Git Bash 进行。所有 Hook 使用 POSIX 兼容模式（`grep -E`，而非 `grep -P`），并包含缺失工具的回退方案，因此它们在 macOS 和 Linux 上应该也能运行。`notify.sh` Hook 使用 PowerShell 实现 Windows Toast 通知，在其他平台上为 no-op——macOS/Linux 的桌面通知尚未接入。跨平台测试正在进行中；如遇平台特定的问题，请提交 issue。
 
